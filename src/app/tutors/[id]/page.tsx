@@ -2,7 +2,7 @@
 "use client"
 
 import Image from "next/image"
-import { notFound, useRouter } from "next/navigation"
+import { notFound, useRouter, useParams } from "next/navigation"
 import { Star, BookOpen, Calendar, ArrowLeft } from "lucide-react"
 
 import { tutors } from "@/lib/mock-data"
@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
-export default function TutorProfilePage({ params }: { params: { id: string } }) {
+export default function TutorProfilePage() {
+  const params = useParams()
   const tutor = tutors.find((t) => t.id === params.id)
   const router = useRouter()
 
