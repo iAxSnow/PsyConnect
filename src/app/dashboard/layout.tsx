@@ -53,7 +53,7 @@ export default function DashboardLayout({
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <Link href={item.href} legacyBehavior passHref>
+                  <Link href={item.href}>
                     <SidebarMenuButton
                       isActive={pathname === item.href}
                       tooltip={item.label}
@@ -69,7 +69,7 @@ export default function DashboardLayout({
           <SidebarFooter>
             <SidebarMenu>
                <SidebarMenuItem>
-                 <Link href="/" legacyBehavior passHref>
+                 <Link href="/">
                     <SidebarMenuButton tooltip="Cerrar Sesión">
                         <LogOut/>
                         <span>Cerrar Sesión</span>
