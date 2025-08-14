@@ -2,7 +2,8 @@
 "use client"
 
 import Image from "next/image"
-import { Edit, Calendar, History, Star } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Edit, Calendar, History, Star, ArrowLeft } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,6 +29,7 @@ import { sessions, defaultUser } from "@/lib/mock-data"
 import type { Session } from "@/lib/types"
 
 export default function ProfilePage() {
+  const router = useRouter()
   const scheduledSessions = sessions.filter(s => s.status === 'scheduled');
   const pastSessions = sessions.filter(s => s.status !== 'scheduled');
 
@@ -60,7 +62,12 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardContent className="p-6 flex items-center gap-6">
+        <CardHeader>
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8">
+            <ArrowLeft />
+          </Button>
+        </CardHeader>
+        <CardContent className="p-6 pt-0 flex items-center gap-6">
           <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary">
             <Image
               src={defaultUser.imageUrl}

@@ -2,6 +2,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { ArrowLeft, Check, Upload, BookOpen, DollarSign } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -9,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { courses } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -19,6 +19,7 @@ const totalSteps = 4
 export default function BecomeTutorPage() {
   const [step, setStep] = React.useState(1)
   const { toast } = useToast()
+  const router = useRouter()
 
   const nextStep = () => setStep((prev) => (prev < totalSteps ? prev + 1 : prev))
   const prevStep = () => setStep((prev) => (prev > 1 ? prev - 1 : prev))
@@ -110,6 +111,11 @@ export default function BecomeTutorPage() {
             <>
                 <CardHeader>
                     <div className="flex items-center gap-4 mb-4">
+                        {step === 1 && (
+                            <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8">
+                                <ArrowLeft />
+                            </Button>
+                        )}
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                             <currentStepInfo.icon className="h-6 w-6"/>
                         </div>

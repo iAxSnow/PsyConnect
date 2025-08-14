@@ -1,7 +1,9 @@
 // @/app/tutors/[id]/page.tsx
+"use client"
+
 import Image from "next/image"
-import { notFound } from "next/navigation"
-import { Star, BookOpen, DollarSign, Calendar, Clock } from "lucide-react"
+import { notFound, useRouter } from "next/navigation"
+import { Star, BookOpen, DollarSign, Calendar, Clock, ArrowLeft } from "lucide-react"
 
 import { tutors } from "@/lib/mock-data"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +13,7 @@ import { Separator } from "@/components/ui/separator"
 
 export default function TutorProfilePage({ params }: { params: { id: string } }) {
   const tutor = tutors.find((t) => t.id === params.id)
+  const router = useRouter()
 
   if (!tutor) {
     notFound()
@@ -23,7 +26,12 @@ export default function TutorProfilePage({ params }: { params: { id: string } })
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <Card>
-        <CardContent className="p-6">
+        <CardHeader>
+           <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8">
+                <ArrowLeft />
+           </Button>
+        </CardHeader>
+        <CardContent className="p-6 pt-0">
           <div className="flex flex-col items-center text-center">
             <div className="relative h-40 w-40 rounded-full overflow-hidden border-4 border-primary/20">
               <Image
