@@ -30,6 +30,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { useToast } from "@/hooks/use-toast"
+import { SheetTitle } from "@/components/ui/sheet"
 
 function CloseSidebarButton() {
     const { toggleSidebar } = useSidebar();
@@ -53,10 +54,14 @@ export default function DashboardLayout({
   const [user, loading, error] = useAuthState(auth)
 
   React.useEffect(() => {
-    if (!loading && !user) {
-      router.push('/');
+    if (error) {
+      toast({
+        title: "Error de autenticación",
+        description: "Hubo un problema con tu sesión.",
+        variant: "destructive",
+      })
     }
-  }, [user, loading, router]);
+  }, [error, toast]);
 
 
   const handleSignOut = async () => {
@@ -82,6 +87,7 @@ export default function DashboardLayout({
   ]
 
   const getPageTitle = () => {
+    if (pathname === '/dashboard') return "Panel";
     const item = navItems.find(item => pathname.startsWith(item.href));
     if (item) return item.label;
     if (pathname.startsWith('/tutors/')) return "Perfil del Tutor";
@@ -92,6 +98,7 @@ export default function DashboardLayout({
     <SidebarProvider>
       <div className="flex min-h-screen">
         <Sidebar>
+            <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
           <SidebarHeader>
             <CloseSidebarButton />
             <Logo />

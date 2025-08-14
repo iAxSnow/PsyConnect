@@ -6,8 +6,8 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Edit, Calendar, History, Star, ArrowLeft } from "lucide-react"
 import { useAuthState } from "react-firebase-hooks/auth"
-import { collection, query, where, getDocs } from "firebase/firestore"
-import { auth, db } from "@/lib/firebase"
+import { auth } from "@/lib/firebase"
+import { getStudentSessions } from "@/services/sessions"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -42,9 +42,7 @@ export default function ProfilePage() {
       const fetchSessions = async () => {
         setLoadingSessions(true)
         try {
-          const sessionsQuery = query(collection(db, "sessions"), where("studentId", "==", user.uid))
-          const querySnapshot = await getDocs(sessionsQuery)
-          const sessionsList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Session))
+          const sessionsList = await getStudentSessions(user.uid)
           setSessions(sessionsList)
         } catch (error) {
           console.error("Error fetching sessions: ", error)
