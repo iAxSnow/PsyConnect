@@ -3,14 +3,13 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { Menu, PanelLeft } from "lucide-react"
+import { Menu } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
   TooltipContent,
@@ -105,7 +104,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             ref={ref}
             side={side}
-            className={cn("w-full bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden", className)}
+            className={cn("w-full bg-sidebar p-0 text-sidebar-foreground", className)}
           >
             {/* The title is required for accessibility, but we can hide it visually */}
             <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
@@ -184,7 +183,7 @@ const SidebarHeader = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn("flex flex-col gap-2 p-4", className)}
+      className={cn("relative flex flex-col gap-2 p-4", className)}
       {...props}
     />
   )

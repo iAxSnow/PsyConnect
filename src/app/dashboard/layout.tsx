@@ -10,6 +10,7 @@ import {
   BookUser,
   LogOut,
   Menu,
+  X
 } from "lucide-react"
 
 import {
@@ -23,8 +24,21 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
+  useSidebar
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
+
+function CloseSidebarButton() {
+    const { toggleSidebar } = useSidebar();
+    return (
+         <Button variant="ghost" size="icon" onClick={() => toggleSidebar()} className="h-8 w-8 absolute top-4 right-4">
+            <X/>
+            <span className="sr-only">Cerrar Menú</span>
+        </Button>
+    )
+}
+
 
 export default function DashboardLayout({
   children,
@@ -45,6 +59,7 @@ export default function DashboardLayout({
         <Sidebar>
           <SidebarHeader>
             <Logo />
+            <CloseSidebarButton />
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
