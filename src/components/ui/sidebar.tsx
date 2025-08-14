@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -105,8 +105,10 @@ const Sidebar = React.forwardRef<
           <SheetContent
             ref={ref}
             side={side}
-            className={cn("w-3/4 bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden", className)}
+            className={cn("w-full bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden", className)}
           >
+            {/* The title is required for accessibility, but we can hide it visually */}
+            <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>
