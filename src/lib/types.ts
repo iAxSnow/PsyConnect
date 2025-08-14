@@ -21,10 +21,13 @@ export interface Session {
   date: string;
   time: string;
   status: 'scheduled' | 'completed' | 'cancelled';
+  studentId?: string;
+  tutorId?: string;
 }
 
 export interface User {
   id: string;
+  uid?: string;
   name: string;
   email: string;
   imageUrl: string;

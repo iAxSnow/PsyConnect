@@ -5,31 +5,42 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Eye, EyeOff } from "lucide-react"
+import { signInWithEmailAndPassword } from "firebase/auth"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
+import { auth } from "@/lib/firebase"
 
 export function LoginForm() {
   const router = useRouter()
   const { toast } = useToast()
+  const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Inicio de Sesión Exitoso",
         description: "¡Bienvenido de vuelta!",
       })
       router.push("/dashboard")
-    }, 1000)
+    } catch (error: any) {
+        toast({
+            title: "Error de Inicio de Sesión",
+            description: error.message || "Ocurrió un error.",
+            variant: "destructive"
+        })
+    } finally {
+        setIsLoading(false)
+    }
   }
 
   return (
@@ -44,12 +55,12 @@ export function LoginForm() {
           <div className="space-y-4">
             <div className="space-y-2">
                 <Label htmlFor="email">Correo Electrónico</Label>
-                <Input id="email" type="email" placeholder="student.test@mail.udp.cl" required />
+                <Input id="email" type="email" placeholder="student.test@mail.udp.cl" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>
                 <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} required />
+                <Input id="password" type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}/>
                 <Button
                     type="button"
                     variant="ghost"

@@ -3,6 +3,10 @@
 
 import * as React from "react"
 import { Wand2, Lightbulb, Users, Loader2 } from "lucide-react"
+import { collection, getDocs } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import type { Course } from "@/lib/types"
+
 
 import {
   Card,
@@ -20,14 +24,32 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { suggestTutors } from "@/app/actions"
-import { courses as allCourses } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
 
 export function AITutorSuggester() {
   const [selectedCourses, setSelectedCourses] = React.useState<string[]>([])
+  const [allCourses, setAllCourses] = React.useState<Course[]>([])
   const [suggestions, setSuggestions] = React.useState<string[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
+  const [isCoursesLoading, setIsCoursesLoading] = React.useState(true)
   const { toast } = useToast()
+
+  React.useEffect(() => {
+    const fetchCourses = async () => {
+      setIsCoursesLoading(true)
+      try {
+        const coursesCollection = collection(db, "courses")
+        const coursesSnapshot = await getDocs(coursesCollection)
+        const coursesList = coursesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course))
+        setAllCourses(coursesList)
+      } catch (error) {
+        console.error("Error fetching courses:", error)
+      } finally {
+        setIsCoursesLoading(false)
+      }
+    }
+    fetchCourses()
+  }, [])
 
   const handleSuggest = async () => {
     if (selectedCourses.length === 0) {
@@ -82,9 +104,10 @@ export function AITutorSuggester() {
                         newSelection[index] = value;
                         setSelectedCourses(newSelection.filter(c => c));
                     }}
+                    disabled={isCoursesLoading}
                  >
                     <SelectTrigger>
-                        <SelectValue placeholder={`Seleccionar curso ${index + 1}`} />
+                        <SelectValue placeholder={isCoursesLoading ? "Cargando cursos..." : `Seleccionar curso ${index + 1}`} />
                     </SelectTrigger>
                     <SelectContent>
                         {allCourses.map((course) => (
@@ -96,7 +119,7 @@ export function AITutorSuggester() {
                 </Select>
             ))}
         </div>
-        <Button onClick={handleSuggest} disabled={isLoading}>
+        <Button onClick={handleSuggest} disabled={isLoading || isCoursesLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lightbulb className="mr-2 h-4 w-4" />}
           {isLoading ? "Analizando..." : "Sugerir un Tutor"}
         </Button>

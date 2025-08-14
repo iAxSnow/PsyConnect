@@ -1,15 +1,18 @@
 // @/app/profile/page.tsx
 "use client"
 
+import * as React from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Edit, Calendar, History, Star, ArrowLeft } from "lucide-react"
+import { useAuthState } from "react-firebase-hooks/auth"
+import { collection, query, where, getDocs } from "firebase/firestore"
+import { auth, db } from "@/lib/firebase"
 
 import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -25,11 +28,37 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { RatingDialog } from "@/components/profile/rating-dialog"
-import { sessions, defaultUser } from "@/lib/mock-data"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Session } from "@/lib/types"
 
 export default function ProfilePage() {
   const router = useRouter()
+  const [user, loadingAuth, errorAuth] = useAuthState(auth)
+  const [sessions, setSessions] = React.useState<Session[]>([])
+  const [loadingSessions, setLoadingSessions] = React.useState(true)
+  
+  React.useEffect(() => {
+    if (user) {
+      const fetchSessions = async () => {
+        setLoadingSessions(true)
+        try {
+          const sessionsQuery = query(collection(db, "sessions"), where("studentId", "==", user.uid))
+          const querySnapshot = await getDocs(sessionsQuery)
+          const sessionsList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Session))
+          setSessions(sessionsList)
+        } catch (error) {
+          console.error("Error fetching sessions: ", error)
+        } finally {
+          setLoadingSessions(false)
+        }
+      }
+      fetchSessions()
+    } else if (!loadingAuth) {
+        // Redirect to login if not authenticated
+        router.push("/")
+    }
+  }, [user, loadingAuth, router])
+
   const scheduledSessions = sessions.filter(s => s.status === 'scheduled');
   const pastSessions = sessions.filter(s => s.status !== 'scheduled');
 
@@ -58,6 +87,36 @@ export default function ProfilePage() {
       </TableCell>
     </TableRow>
   )
+  
+  if (loadingAuth || !user) {
+    return (
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-8 w-8" />
+                </CardHeader>
+                <CardContent className="p-6 pt-0 flex items-center gap-6">
+                    <Skeleton className="h-24 w-24 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                        <Skeleton className="h-8 w-48" />
+                        <Skeleton className="h-5 w-64" />
+                    </div>
+                    <Skeleton className="h-10 w-10" />
+                </CardContent>
+            </Card>
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-8 w-40" />
+                    <Skeleton className="h-5 w-full" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-40 w-full" />
+                </CardContent>
+            </Card>
+        </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -70,7 +129,7 @@ export default function ProfilePage() {
         <CardContent className="p-6 pt-0 flex items-center gap-6">
           <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary">
             <Image
-              src={defaultUser.imageUrl}
+              src={user.photoURL || 'https://placehold.co/200x200.png'}
               alt="User profile picture"
               fill
               className="object-cover"
@@ -78,8 +137,8 @@ export default function ProfilePage() {
             />
           </div>
           <div className="flex-1">
-            <h2 className="text-2xl font-bold">{defaultUser.name}</h2>
-            <p className="text-muted-foreground">{defaultUser.email}</p>
+            <h2 className="text-2xl font-bold">{user.displayName}</h2>
+            <p className="text-muted-foreground">{user.email}</p>
           </div>
           <Button variant="outline" size="icon">
             <Edit className="h-4 w-4" />
@@ -102,9 +161,6 @@ export default function ProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle>Próximas Sesiones</CardTitle>
-              <CardDescription>
-                Aquí están tus sesiones de tutoría programadas.
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -117,7 +173,9 @@ export default function ProfilePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {scheduledSessions.length > 0 ? (
+                  {loadingSessions ? (
+                     <TableRow><TableCell colSpan={4} className="text-center h-24"><Skeleton className="h-8 w-full" /></TableCell></TableRow>
+                  ) : scheduledSessions.length > 0 ? (
                     scheduledSessions.map(session => <SessionRow key={session.id} session={session} />)
                   ) : (
                     <TableRow>
@@ -135,9 +193,6 @@ export default function ProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle>Sesiones Pasadas</CardTitle>
-              <CardDescription>
-                Ve tus sesiones completadas o canceladas. ¡No olvides calificar a tus tutores!
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -150,7 +205,9 @@ export default function ProfilePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                   {pastSessions.length > 0 ? (
+                   {loadingSessions ? (
+                     <TableRow><TableCell colSpan={4} className="text-center h-24"><Skeleton className="h-8 w-full" /></TableCell></TableRow>
+                   ) : pastSessions.length > 0 ? (
                     pastSessions.map(session => <SessionRow key={session.id} session={session} />)
                   ) : (
                     <TableRow>

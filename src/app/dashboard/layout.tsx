@@ -3,15 +3,16 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
-  Home,
   User,
   BookUser,
   LogOut,
-  Menu,
   X
 } from "lucide-react"
+import { signOut } from "firebase/auth"
+import { auth } from "@/lib/firebase"
+import { useAuthState } from "react-firebase-hooks/auth"
 
 import {
   SidebarProvider,
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
+import { useToast } from "@/hooks/use-toast"
 
 function CloseSidebarButton() {
     const { toggleSidebar } = useSidebar();
@@ -46,11 +48,45 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { toast } = useToast()
+  const [user, loading, error] = useAuthState(auth)
+
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push('/');
+    }
+  }, [user, loading, router]);
+
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Sesión Cerrada",
+        description: "Has cerrado sesión exitosamente."
+      })
+      router.push("/")
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo cerrar la sesión.",
+        variant: "destructive"
+      })
+    }
+  }
 
   const navItems = [
     { href: "/profile", icon: User, label: "Perfil" },
     { href: "/become-tutor", icon: BookUser, label: "Conviértete en Tutor" },
   ]
+
+  const getPageTitle = () => {
+    const item = navItems.find(item => pathname.startsWith(item.href));
+    if (item) return item.label;
+    if (pathname.startsWith('/tutors/')) return "Perfil del Tutor";
+    return "Panel";
+  }
 
   return (
     <SidebarProvider>
@@ -66,7 +102,7 @@ export default function DashboardLayout({
                 <SidebarMenuItem key={item.href}>
                   <Link href={item.href}>
                     <SidebarMenuButton
-                      isActive={pathname === item.href}
+                      isActive={pathname.startsWith(item.href)}
                     >
                       <item.icon />
                       <span>{item.label}</span>
@@ -79,12 +115,10 @@ export default function DashboardLayout({
           <SidebarFooter>
             <SidebarMenu>
                <SidebarMenuItem>
-                 <Link href="/">
-                    <SidebarMenuButton>
+                    <SidebarMenuButton onClick={handleSignOut}>
                         <LogOut/>
                         <span>Cerrar Sesión</span>
                     </SidebarMenuButton>
-                 </Link>
                </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
@@ -93,7 +127,7 @@ export default function DashboardLayout({
           <header className="flex h-14 items-center gap-4 border-b bg-card px-6">
             <SidebarTrigger />
             <h1 className="text-lg font-semibold">
-              {navItems.find(item => item.href === pathname)?.label || "Panel"}
+              {getPageTitle()}
             </h1>
           </header>
           <main className="flex-1 overflow-auto p-4">

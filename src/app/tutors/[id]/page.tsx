@@ -1,25 +1,83 @@
 // @/app/tutors/[id]/page.tsx
 "use client"
 
+import * as React from "react"
 import Image from "next/image"
 import { notFound, useRouter, useParams } from "next/navigation"
 import { Star, BookOpen, Calendar, ArrowLeft } from "lucide-react"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import type { Tutor } from "@/lib/types"
 
-import { tutors } from "@/lib/mock-data"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function TutorProfilePage() {
   const params = useParams()
-  const tutor = tutors.find((t) => t.id === params.id)
   const router = useRouter()
+  const [tutor, setTutor] = React.useState<Tutor | null>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
 
-  if (!tutor) {
-    notFound()
+  React.useEffect(() => {
+    if (!params.id) return
+    const fetchTutor = async () => {
+      setIsLoading(true)
+      try {
+        const tutorDocRef = doc(db, "tutors", params.id as string)
+        const tutorDoc = await getDoc(tutorDocRef)
+        if (tutorDoc.exists()) {
+          setTutor({ id: tutorDoc.id, ...tutorDoc.data() } as Tutor)
+        } else {
+          notFound()
+        }
+      } catch (error) {
+        console.error("Error fetching tutor:", error)
+        notFound()
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchTutor()
+  }, [params.id])
+
+
+  if (isLoading) {
+    return (
+        <div className="mx-auto max-w-4xl space-y-8 p-4">
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-8 w-8" />
+                </CardHeader>
+                <CardContent className="p-6 pt-0">
+                    <div className="flex flex-col items-center text-center">
+                        <Skeleton className="h-40 w-40 rounded-full" />
+                        <Skeleton className="h-8 w-48 mt-4" />
+                        <Skeleton className="h-6 w-32 mt-2" />
+                        <Skeleton className="h-12 w-full mt-6" />
+                    </div>
+                    <div className="mt-8">
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-20 w-full mt-2" />
+                        <Separator className="my-6" />
+                        <Skeleton className="h-6 w-40" />
+                        <div className="mt-4 space-y-3">
+                            <Skeleton className="h-12 w-full" />
+                            <Skeleton className="h-12 w-full" />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    )
   }
 
+  if (!tutor) {
+    return notFound();
+  }
+  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(value);
   }
