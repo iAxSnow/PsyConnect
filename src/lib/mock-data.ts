@@ -1,12 +1,15 @@
 import type { Tutor, Course, Session, User } from './types';
 
 export const courses: Course[] = [
-  { id: 'cs101', name: 'Introduction to Computer Science' },
-  { id: 'ma202', name: 'Calculus II' },
-  { id: 'ph105', name: 'Physics for Engineers' },
-  { id: 'ch201', name: 'Organic Chemistry' },
-  { id: 'ec101', name: 'Principles of Microeconomics' },
-  { id: 'py101', name: 'Introduction to Psychology' },
+  { id: 'cbi1421', name: 'Cálculo I' },
+  { id: 'cbi1422', name: 'Cálculo II' },
+  { id: 'cbi1411', name: 'Álgebra y Geometría' },
+  { id: 'cbi1412', name: 'Álgebra Lineal' },
+  { id: 'fic1002', name: 'Programación' },
+  { id: 'fic1003', name: 'Estructuras de Datos' },
+  { id: 'cbi1211', name: 'Mecánica' },
+  { id: 'cbi1212', name: 'Electricidad y Magnetismo' },
+  { id: 'udp0101', name: 'Química General' },
 ];
 
 export const defaultUser: User = {
@@ -24,8 +27,8 @@ export const tutors: Tutor[] = [
     rating: 4.9,
     reviews: 120,
     hourlyRate: 25,
-    courses: ['Introduction to Computer Science', 'Calculus II'],
-    bio: 'Experienced full-stack developer with a passion for teaching. I specialize in breaking down complex programming concepts into easy-to-understand lessons. My goal is to help you not just pass, but excel.'
+    courses: ['Programación', 'Cálculo II'],
+    bio: 'Desarrolladora full-stack con experiencia y pasión por la enseñanza. Me especializo en desglosar conceptos de programación complejos en lecciones fáciles de entender. Mi objetivo es ayudarte no solo a aprobar, sino a sobresalir.'
   },
   {
     id: '2',
@@ -34,28 +37,28 @@ export const tutors: Tutor[] = [
     rating: 4.8,
     reviews: 95,
     hourlyRate: 30,
-    courses: ['Physics for Engineers', 'Calculus II'],
-    bio: 'Mechanical engineer with a love for physics. I believe in hands-on examples and practical problem-solving to build a strong foundation in physics and advanced mathematics.'
+    courses: ['Mecánica', 'Cálculo II'],
+    bio: 'Ingeniero mecánico con amor por la física. Creo en los ejemplos prácticos y la resolución de problemas para construir una base sólida en física y matemáticas avanzadas.'
   },
   {
     id: '3',
-    name: 'Sofia Martinez',
+    name: 'Sofía Martínez',
     imageUrl: 'https://placehold.co/400x400.png',
     rating: 5.0,
     reviews: 200,
     hourlyRate: 28,
-    courses: ['Organic Chemistry', 'Principles of Microeconomics'],
-    bio: 'PhD in Chemistry with a minor in Economics. I enjoy helping students navigate the challenges of organic chemistry and understand the economic principles that shape our world.'
+    courses: ['Química General', 'Cálculo I'],
+    bio: 'Doctora en Química. Disfruto ayudando a los estudiantes a navegar los desafíos de la química y a comprender los principios que dan forma a nuestro mundo.'
   },
   {
     id: '4',
-    name: 'Javier Hernandez',
+    name: 'Javier Hernández',
     imageUrl: 'https://placehold.co/400x400.png',
     rating: 4.7,
     reviews: 75,
     hourlyRate: 22,
-    courses: ['Introduction to Psychology', 'Principles of Microeconomics'],
-    bio: 'A psychology graduate with a keen interest in behavioral economics. I provide clear, concise explanations and real-world applications to make learning engaging and effective.'
+    courses: ['Álgebra y Geometría', 'Álgebra Lineal'],
+    bio: 'Un graduado con un gran interés en el álgebra. Ofrezco explicaciones claras y concisas y aplicaciones del mundo real para que el aprendizaje sea atractivo y eficaz.'
   },
   {
     id: 'default-tutor',
@@ -64,7 +67,7 @@ export const tutors: Tutor[] = [
     rating: 4.5,
     reviews: 50,
     hourlyRate: 20,
-    courses: ['Introduction to Computer Science', 'Physics for Engineers'],
+    courses: ['Programación', 'Mecánica'],
     bio: 'Este es un tutor de prueba para fines de desarrollo y demostración.'
   }
 ];
@@ -73,7 +76,7 @@ export const sessions: Session[] = [
   {
     id: 's1',
     tutor: { name: 'Ana García', imageUrl: 'https://placehold.co/100x100.png' },
-    course: 'Introduction to Computer Science',
+    course: 'Programación',
     date: '2024-08-15',
     time: '14:00',
     status: 'scheduled'
@@ -81,23 +84,23 @@ export const sessions: Session[] = [
   {
     id: 's2',
     tutor: { name: 'Carlos Rodríguez', imageUrl: 'https://placehold.co/100x100.png' },
-    course: 'Physics for Engineers',
+    course: 'Mecánica',
     date: '2024-08-16',
     time: '10:00',
     status: 'scheduled'
   },
   {
     id: 's3',
-    tutor: { name: 'Sofia Martinez', imageUrl: 'https://placehold.co/100x100.png' },
-    course: 'Organic Chemistry',
+    tutor: { name: 'Sofía Martínez', imageUrl: 'https://placehold.co/100x100.png' },
+    course: 'Química General',
     date: '2024-07-20',
     time: '16:00',
     status: 'completed'
   },
     {
     id: 's4',
-    tutor: { name: 'Javier Hernandez', imageUrl: 'https://placehold.co/100x100.png' },
-    course: 'Introduction to Psychology',
+    tutor: { name: 'Javier Hernández', imageUrl: 'https://placehold.co/100x100.png' },
+    course: 'Álgebra y Geometría',
     date: '2024-07-18',
     time: '11:00',
     status: 'completed'
@@ -105,7 +108,7 @@ export const sessions: Session[] = [
    {
     id: 's5',
     tutor: { name: 'Ana García', imageUrl: 'https://placehold.co/100x100.png' },
-    course: 'Calculus II',
+    course: 'Cálculo II',
     date: '2024-06-10',
     time: '13:00',
     status: 'completed'

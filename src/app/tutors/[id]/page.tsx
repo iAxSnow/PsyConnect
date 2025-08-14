@@ -37,20 +37,20 @@ export default function TutorProfilePage({ params }: { params: { id: string } })
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                   <span className="font-semibold text-lg">{tutor.rating.toFixed(1)}</span>
                 </div>
-                <span>({tutor.reviews} reviews)</span>
+                <span>({tutor.reviews} reseñas)</span>
               </div>
               <Button size="lg" className="mt-6 w-full">
-                <Calendar className="mr-2 h-5 w-5" /> Book a Session
+                <Calendar className="mr-2 h-5 w-5" /> Reservar una Sesión
               </Button>
             </div>
 
             <div className="md:col-span-2">
-              <h2 className="text-xl font-semibold">About Me</h2>
+              <h2 className="text-xl font-semibold">Sobre Mí</h2>
               <p className="mt-2 text-muted-foreground">{tutor.bio}</p>
               
               <Separator className="my-6" />
 
-              <h2 className="text-xl font-semibold">Courses Offered</h2>
+              <h2 className="text-xl font-semibold">Cursos Ofrecidos</h2>
               <ul className="mt-4 space-y-3">
                 {tutor.courses.map((course) => (
                   <li key={course} className="flex items-center justify-between rounded-lg bg-background p-3 border">

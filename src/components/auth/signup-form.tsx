@@ -46,8 +46,8 @@ export function SignupForm() {
     setTimeout(() => {
       setIsLoading(false)
       toast({
-        title: "Account Created",
-        description: "Your account has been successfully created. Please log in.",
+        title: "Cuenta Creada",
+        description: "Tu cuenta ha sido creada exitosamente. Por favor, inicia sesión.",
       })
       router.push("/")
     }, 1500)
@@ -57,22 +57,22 @@ export function SignupForm() {
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Create an account</CardTitle>
+          <CardTitle className="text-2xl">Crear una cuenta</CardTitle>
           <CardDescription>
-            Enter your details below to create your account.
+            Ingresa tus datos a continuación para crear tu cuenta.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">Nombre Completo</Label>
             <Input id="name" type="text" placeholder="Ana García" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Institutional Email</Label>
+            <Label htmlFor="email">Correo Institucional</Label>
             <Input id="email" type="email" placeholder="student@mail.udp.cl" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Contraseña</Label>
             <div className="relative">
               <Input id="password" type={showPassword ? "text" : "password"} required />
               <Button
@@ -87,7 +87,7 @@ export function SignupForm() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Profile Picture</Label>
+            <Label>Foto de Perfil</Label>
             <div className="flex items-center gap-2">
               <Input
                 id="profile-picture"
@@ -99,7 +99,7 @@ export function SignupForm() {
               />
               <Button type="button" variant="outline" onClick={handleFileClick}>
                 <Upload className="mr-2 h-4 w-4" />
-                Upload Photo
+                Subir Foto
               </Button>
               {fileName && <span className="text-sm text-muted-foreground truncate">{fileName}</span>}
             </div>
@@ -107,12 +107,12 @@ export function SignupForm() {
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating Account..." : "Create Account"}
+            {isLoading ? "Creando Cuenta..." : "Crear Cuenta"}
           </Button>
           <div className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
+            ¿Ya tienes una cuenta?{" "}
             <Link href="/" className="font-medium text-primary underline-offset-4 hover:underline">
-              Log in
+              Iniciar Sesión
             </Link>
           </div>
         </CardFooter>

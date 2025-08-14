@@ -33,8 +33,8 @@ export function LoginForm() {
     setTimeout(() => {
       setIsLoading(false)
       toast({
-        title: "Login Successful",
-        description: "Welcome back!",
+        title: "Inicio de Sesión Exitoso",
+        description: "¡Bienvenido de vuelta!",
       })
       router.push("/dashboard")
     }, 1000)
@@ -44,18 +44,18 @@ export function LoginForm() {
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Log In</CardTitle>
+          <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
           <CardDescription>
-            Enter your institutional email to access your account.
+            Ingresa tu correo institucional para acceder a tu cuenta.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Correo Electrónico</Label>
             <Input id="email" type="email" placeholder="student.test@mail.udp.cl" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Contraseña</Label>
             <div className="relative">
               <Input id="password" type={showPassword ? "text" : "password"} required />
               <Button
@@ -72,12 +72,12 @@ export function LoginForm() {
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Logging in..." : "Log In"}
+            {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>
           <div className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            ¿No tienes una cuenta?{" "}
             <Link href="/signup" className="font-medium text-primary underline-offset-4 hover:underline">
-              Sign up
+              Regístrate
             </Link>
           </div>
         </CardFooter>

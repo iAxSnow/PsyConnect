@@ -40,7 +40,7 @@ export function TutorCard({ tutor }: TutorCardProps) {
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <span>{tutor.rating.toFixed(1)}</span>
             </div>
-            <span>({tutor.reviews} reviews)</span>
+            <span>({tutor.reviews} reseñas)</span>
           </div>
           <div className="mt-2 flex items-center gap-2 text-sm">
              <BookOpen className="h-4 w-4 text-primary" />

@@ -32,8 +32,8 @@ export function AITutorSuggester() {
   const handleSuggest = async () => {
     if (selectedCourses.length === 0) {
       toast({
-        title: "No Courses Selected",
-        description: "Please select at least one course to get suggestions.",
+        title: "No se seleccionaron cursos",
+        description: "Por favor, selecciona al menos un curso para obtener sugerencias.",
         variant: "destructive",
       })
       return
@@ -45,7 +45,7 @@ export function AITutorSuggester() {
     setIsLoading(false)
 
     if (result.success && result.data) {
-        // The mock AI might return empty suggestions, so we'll add some if needed.
+        // La IA de prueba puede devolver sugerencias vacías, así que agregaremos algunas si es necesario.
         if (result.data.tutorSuggestions.length > 0) {
             setSuggestions(result.data.tutorSuggestions)
         } else {
@@ -54,7 +54,7 @@ export function AITutorSuggester() {
     } else {
       toast({
         title: "Error",
-        description: result.error || "Failed to get suggestions.",
+        description: result.error || "No se pudieron obtener sugerencias.",
         variant: "destructive",
       })
     }
@@ -65,15 +65,15 @@ export function AITutorSuggester() {
       <CardHeader>
         <div className="flex items-center gap-2">
             <Wand2 className="h-6 w-6 text-primary" />
-            <CardTitle>AI Tutor Recommendations</CardTitle>
+            <CardTitle>Recomendaciones de Tutores con IA</CardTitle>
         </div>
         <CardDescription>
-          Select your courses, and we'll suggest tutors that similar students have found helpful.
+          Selecciona tus cursos y te sugeriremos tutores que otros estudiantes han encontrado útiles.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {/* Allowing selection of up to 2 courses for simplicity */}
+            {/* Permitir la selección de hasta 2 cursos por simplicidad */}
             {[0, 1].map(index => (
                  <Select
                     key={index}
@@ -84,7 +84,7 @@ export function AITutorSuggester() {
                     }}
                  >
                     <SelectTrigger>
-                        <SelectValue placeholder={`Select course ${index + 1}`} />
+                        <SelectValue placeholder={`Seleccionar curso ${index + 1}`} />
                     </SelectTrigger>
                     <SelectContent>
                         {allCourses.map((course) => (
@@ -98,12 +98,12 @@ export function AITutorSuggester() {
         </div>
         <Button onClick={handleSuggest} disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lightbulb className="mr-2 h-4 w-4" />}
-          {isLoading ? "Analyzing..." : "Suggest a Tutor"}
+          {isLoading ? "Analizando..." : "Sugerir un Tutor"}
         </Button>
 
         {suggestions.length > 0 && (
           <div className="pt-4">
-            <h4 className="font-semibold mb-2">Recommended Tutors for You:</h4>
+            <h4 className="font-semibold mb-2">Tutores Recomendados para Ti:</h4>
             <div className="flex flex-wrap gap-2">
               {suggestions.map((tutor, index) => (
                 <div key={index} className="flex items-center rounded-full bg-accent/20 px-3 py-1 text-sm font-medium text-primary">

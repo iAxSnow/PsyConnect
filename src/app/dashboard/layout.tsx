@@ -37,9 +37,9 @@ export default function DashboardLayout({
   const isMobile = useIsMobile()
 
   const navItems = [
-    { href: "/dashboard", icon: Home, label: "Dashboard" },
-    { href: "/profile", icon: User, label: "Profile" },
-    { href: "/become-tutor", icon: BookUser, label: "Become a Tutor" },
+    { href: "/dashboard", icon: Home, label: "Panel" },
+    { href: "/profile", icon: User, label: "Perfil" },
+    { href: "/become-tutor", icon: BookUser, label: "Conviértete en Tutor" },
   ]
 
   return (
@@ -70,9 +70,9 @@ export default function DashboardLayout({
             <SidebarMenu>
                <SidebarMenuItem>
                  <Link href="/" legacyBehavior passHref>
-                    <SidebarMenuButton tooltip="Log Out">
+                    <SidebarMenuButton tooltip="Cerrar Sesión">
                         <LogOut/>
-                        <span>Log Out</span>
+                        <span>Cerrar Sesión</span>
                     </SidebarMenuButton>
                  </Link>
                </SidebarMenuItem>
@@ -83,7 +83,7 @@ export default function DashboardLayout({
           <header className="flex h-14 items-center gap-4 border-b bg-card px-6">
             {isMobile && <SidebarTrigger />}
             <h1 className="text-lg font-semibold md:text-xl">
-              {navItems.find(item => item.href === pathname)?.label || "Dashboard"}
+              {navItems.find(item => item.href === pathname)?.label || "Panel"}
             </h1>
           </header>
           <main className="flex-1 overflow-auto p-4 md:p-6">

@@ -27,8 +27,8 @@ export function RatingDialog() {
 
   const handleSubmit = () => {
     toast({
-      title: "Review Submitted",
-      description: "Thank you for your feedback!",
+      title: "Reseña Enviada",
+      description: "¡Gracias por tus comentarios!",
     })
     setOpen(false)
     setRating(0)
@@ -38,19 +38,19 @@ export function RatingDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">
-          <Star className="mr-2 h-4 w-4" /> Rate Session
+          <Star className="mr-2 h-4 w-4" /> Calificar Sesión
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Rate your session</DialogTitle>
+          <DialogTitle>Califica tu sesión</DialogTitle>
           <DialogDescription>
-            Your feedback helps other students find the best tutors.
+            Tus comentarios ayudan a otros estudiantes a encontrar los mejores tutores.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label>Rating</Label>
+            <Label>Calificación</Label>
             <div
               className="flex items-center gap-1"
               onMouseLeave={() => setHoverRating(0)}
@@ -71,16 +71,16 @@ export function RatingDialog() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="comment">Comments</Label>
+            <Label htmlFor="comment">Comentarios</Label>
             <Textarea
               id="comment"
-              placeholder="Tell us about your experience..."
+              placeholder="Cuéntanos sobre tu experiencia..."
               rows={4}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSubmit}>Submit Review</Button>
+          <Button onClick={handleSubmit}>Enviar Reseña</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

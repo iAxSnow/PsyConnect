@@ -49,7 +49,7 @@ export default function ProfilePage() {
       <TableCell className="hidden md:table-cell">{session.time}</TableCell>
       <TableCell>
         <Badge variant={session.status === 'completed' ? 'default' : 'secondary'} className="capitalize bg-green-100 text-green-800">
-            {session.status}
+            {session.status === 'completed' ? 'Completada' : (session.status === 'scheduled' ? 'Programada' : 'Cancelada')}
         </Badge>
       </TableCell>
       <TableCell className="text-right">
@@ -85,19 +85,19 @@ export default function ProfilePage() {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="scheduled">
             <Calendar className="mr-2 h-4 w-4" />
-            Scheduled
+            Programadas
           </TabsTrigger>
           <TabsTrigger value="history">
             <History className="mr-2 h-4 w-4" />
-            History
+            Historial
           </TabsTrigger>
         </TabsList>
         <TabsContent value="scheduled">
           <Card>
             <CardHeader>
-              <CardTitle>Upcoming Sessions</CardTitle>
+              <CardTitle>Próximas Sesiones</CardTitle>
               <CardDescription>
-                Here are your scheduled tutoring sessions.
+                Aquí están tus sesiones de tutoría programadas.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -105,10 +105,10 @@ export default function ProfilePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tutor</TableHead>
-                    <TableHead className="hidden md:table-cell">Date</TableHead>
-                    <TableHead className="hidden md:table-cell">Time</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                    <TableHead className="hidden md:table-cell">Fecha</TableHead>
+                    <TableHead className="hidden md:table-cell">Hora</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead><span className="sr-only">Acciones</span></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -117,7 +117,7 @@ export default function ProfilePage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center h-24">
-                        No upcoming sessions.
+                        No hay próximas sesiones.
                       </TableCell>
                     </TableRow>
                   )}
@@ -129,9 +129,9 @@ export default function ProfilePage() {
         <TabsContent value="history">
           <Card>
             <CardHeader>
-              <CardTitle>Past Sessions</CardTitle>
+              <CardTitle>Sesiones Pasadas</CardTitle>
               <CardDescription>
-                View your completed or cancelled sessions. Don't forget to rate your tutors!
+                Ve tus sesiones completadas o canceladas. ¡No olvides calificar a tus tutores!
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -139,10 +139,10 @@ export default function ProfilePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tutor</TableHead>
-                    <TableHead className="hidden md:table-cell">Date</TableHead>
-                    <TableHead className="hidden md:table-cell">Time</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                    <TableHead className="hidden md:table-cell">Fecha</TableHead>
+                    <TableHead className="hidden md:table-cell">Hora</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Acción</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -151,7 +151,7 @@ export default function ProfilePage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center h-24">
-                        No past sessions.
+                        No hay sesiones pasadas.
                       </TableCell>
                     </TableRow>
                   )}

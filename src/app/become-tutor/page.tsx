@@ -25,25 +25,25 @@ export default function BecomeTutorPage() {
 
   const handleSubmit = () => {
     toast({
-        title: "Application Submitted!",
-        description: "We've received your application and will review it shortly."
+        title: "¡Solicitud Enviada!",
+        description: "Hemos recibido tu solicitud y la revisaremos en breve."
     })
-    setStep(totalSteps + 1); // Go to success screen
+    setStep(totalSteps + 1); // Ir a la pantalla de éxito
   }
 
   const Step1 = () => (
     <div className="space-y-4">
         <div className="space-y-2">
-            <Label>Certificates or Transcripts</Label>
+            <Label>Certificados o Expedientes Académicos</Label>
             <Input type="file" multiple/>
-            <p className="text-sm text-muted-foreground">Upload documents to verify your expertise.</p>
+            <p className="text-sm text-muted-foreground">Sube documentos para verificar tu experiencia.</p>
         </div>
     </div>
   )
 
   const Step2 = () => (
     <div className="space-y-4">
-        <Label>Courses You Can Teach</Label>
+        <Label>Cursos que Puedes Enseñar</Label>
         <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
             {courses.map(course => (
                  <div key={course.id} className="flex items-center space-x-2">
@@ -60,7 +60,7 @@ export default function BecomeTutorPage() {
   const Step3 = () => (
     <div className="space-y-4">
         <div className="space-y-2">
-            <Label htmlFor="rate">Hourly Rate ($)</Label>
+            <Label htmlFor="rate">Tarifa por Hora ($)</Label>
             <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input id="rate" type="number" placeholder="25" className="pl-10" />
@@ -71,13 +71,13 @@ export default function BecomeTutorPage() {
 
   const Step4 = () => (
     <div className="text-center">
-        <h3 className="text-lg font-semibold">Review Your Application</h3>
-        <p className="text-muted-foreground mt-2">Please review your information before submitting.</p>
-        {/* In a real app, you would display a summary of the entered data here. */}
+        <h3 className="text-lg font-semibold">Revisa tu Solicitud</h3>
+        <p className="text-muted-foreground mt-2">Por favor, revisa tu información antes de enviarla.</p>
+        {/* En una aplicación real, aquí se mostraría un resumen de los datos ingresados. */}
         <Card className="mt-4 text-left p-4 space-y-2">
-            <p><strong>Certificates:</strong> 2 files uploaded</p>
-            <p><strong>Courses:</strong> Introduction to Computer Science, Calculus II</p>
-            <p><strong>Hourly Rate:</strong> $25/hr</p>
+            <p><strong>Certificados:</strong> 2 archivos subidos</p>
+            <p><strong>Cursos:</strong> Programación, Cálculo II</p>
+            <p><strong>Tarifa por Hora:</strong> $25/hr</p>
         </Card>
     </div>
   )
@@ -87,17 +87,17 @@ export default function BecomeTutorPage() {
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
             <Check className="h-6 w-6 text-green-600" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold">Application Submitted!</h3>
-        <p className="text-muted-foreground mt-2">Thank you. We will review your application and get back to you within 3-5 business days.</p>
-        <Button onClick={() => setStep(1)} className="mt-6">Start Over</Button>
+        <h3 className="mt-4 text-lg font-semibold">¡Solicitud Enviada!</h3>
+        <p className="text-muted-foreground mt-2">Gracias. Revisaremos tu solicitud y te responderemos en un plazo de 3 a 5 días hábiles.</p>
+        <Button onClick={() => setStep(1)} className="mt-6">Empezar de Nuevo</Button>
     </div>
   )
 
   const stepsContent = [
-      { title: "Verify Expertise", description: "Upload relevant documents.", icon: Upload, content: <Step1/> },
-      { title: "Select Courses", description: "Choose the subjects you'll teach.", icon: BookOpen, content: <Step2/> },
-      { title: "Set Your Price", description: "Define your hourly rate for sessions.", icon: DollarSign, content: <Step3/> },
-      { title: "Final Review", description: "Confirm your application details.", icon: Check, content: <Step4/> },
+      { title: "Verificar Experiencia", description: "Sube documentos relevantes.", icon: Upload, content: <Step1/> },
+      { title: "Seleccionar Cursos", description: "Elige las materias que enseñarás.", icon: BookOpen, content: <Step2/> },
+      { title: "Establecer tu Precio", description: "Define tu tarifa por hora para las sesiones.", icon: DollarSign, content: <Step3/> },
+      { title: "Revisión Final", description: "Confirma los detalles de tu solicitud.", icon: Check, content: <Step4/> },
   ]
 
   const currentStepInfo = stepsContent[step - 1]
@@ -125,12 +125,12 @@ export default function BecomeTutorPage() {
                 </CardContent>
                 <div className="flex justify-between p-6">
                     <Button variant="outline" onClick={prevStep} disabled={step === 1}>
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Anterior
                     </Button>
                     {step < totalSteps ? (
-                         <Button onClick={nextStep}>Next</Button>
+                         <Button onClick={nextStep}>Siguiente</Button>
                     ) : (
-                        <Button onClick={handleSubmit}>Submit Application</Button>
+                        <Button onClick={handleSubmit}>Enviar Solicitud</Button>
                     )}
                 </div>
             </>
