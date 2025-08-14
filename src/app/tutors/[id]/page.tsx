@@ -3,12 +3,12 @@
 
 import Image from "next/image"
 import { notFound, useRouter } from "next/navigation"
-import { Star, BookOpen, DollarSign, Calendar, Clock, ArrowLeft } from "lucide-react"
+import { Star, BookOpen, Calendar, ArrowLeft } from "lucide-react"
 
 import { tutors } from "@/lib/mock-data"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
 export default function TutorProfilePage({ params }: { params: { id: string } }) {
