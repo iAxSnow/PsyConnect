@@ -22,3 +22,10 @@ export interface Session {
   time: string;
   status: 'scheduled' | 'completed' | 'cancelled';
 }
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  imageUrl: string;
+}

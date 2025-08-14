@@ -24,7 +24,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { RatingDialog } from "@/components/profile/rating-dialog"
-import { sessions } from "@/lib/mock-data"
+import { sessions, defaultUser } from "@/lib/mock-data"
 import type { Session } from "@/lib/types"
 
 export default function ProfilePage() {
@@ -64,7 +64,7 @@ export default function ProfilePage() {
         <CardContent className="p-6 flex items-center gap-6">
           <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary">
             <Image
-              src="https://placehold.co/200x200.png"
+              src={defaultUser.imageUrl}
               alt="User profile picture"
               fill
               className="object-cover"
@@ -72,8 +72,8 @@ export default function ProfilePage() {
             />
           </div>
           <div className="flex-1">
-            <h2 className="text-2xl font-bold">Your Name</h2>
-            <p className="text-muted-foreground">student.name@mail.udp.cl</p>
+            <h2 className="text-2xl font-bold">{defaultUser.name}</h2>
+            <p className="text-muted-foreground">{defaultUser.email}</p>
           </div>
           <Button variant="outline" size="icon">
             <Edit className="h-4 w-4" />

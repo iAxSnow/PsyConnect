@@ -1,4 +1,4 @@
-import type { Tutor, Course, Session } from './types';
+import type { Tutor, Course, Session, User } from './types';
 
 export const courses: Course[] = [
   { id: 'cs101', name: 'Introduction to Computer Science' },
@@ -8,6 +8,13 @@ export const courses: Course[] = [
   { id: 'ec101', name: 'Principles of Microeconomics' },
   { id: 'py101', name: 'Introduction to Psychology' },
 ];
+
+export const defaultUser: User = {
+  id: 'user1',
+  name: 'Estudiante de Prueba',
+  email: 'student.test@mail.udp.cl',
+  imageUrl: 'https://placehold.co/200x200.png'
+};
 
 export const tutors: Tutor[] = [
   {
@@ -50,6 +57,16 @@ export const tutors: Tutor[] = [
     courses: ['Introduction to Psychology', 'Principles of Microeconomics'],
     bio: 'A psychology graduate with a keen interest in behavioral economics. I provide clear, concise explanations and real-world applications to make learning engaging and effective.'
   },
+  {
+    id: 'default-tutor',
+    name: 'Tutor de Prueba',
+    imageUrl: 'https://placehold.co/400x400.png',
+    rating: 4.5,
+    reviews: 50,
+    hourlyRate: 20,
+    courses: ['Introduction to Computer Science', 'Physics for Engineers'],
+    bio: 'Este es un tutor de prueba para fines de desarrollo y demostración.'
+  }
 ];
 
 export const sessions: Session[] = [
