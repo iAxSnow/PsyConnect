@@ -24,7 +24,7 @@ export default function TutorProfilePage({ params }: { params: { id: string } })
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-4xl space-y-8 p-4">
       <Card>
         <CardHeader>
            <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8">
