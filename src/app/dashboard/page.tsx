@@ -23,7 +23,7 @@ export default function DashboardPage() {
 
       <div>
         <h3 className="text-xl font-bold tracking-tight mb-4">Tutores Destacados</h3>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6">
           {tutors.map((tutor) => (
             <TutorCard key={tutor.id} tutor={tutor} />
           ))}

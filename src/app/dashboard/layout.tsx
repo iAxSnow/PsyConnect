@@ -25,8 +25,6 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar"
 import { Logo } from "@/components/logo"
-import { Button } from "@/components/ui/button"
-import { useIsMobile } from "@/hooks/use-mobile"
 
 export default function DashboardLayout({
   children,
@@ -34,7 +32,6 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const isMobile = useIsMobile()
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Panel" },
@@ -56,7 +53,6 @@ export default function DashboardLayout({
                   <Link href={item.href}>
                     <SidebarMenuButton
                       isActive={pathname === item.href}
-                      tooltip={item.label}
                     >
                       <item.icon />
                       <span>{item.label}</span>
@@ -70,7 +66,7 @@ export default function DashboardLayout({
             <SidebarMenu>
                <SidebarMenuItem>
                  <Link href="/">
-                    <SidebarMenuButton tooltip="Cerrar Sesión">
+                    <SidebarMenuButton>
                         <LogOut/>
                         <span>Cerrar Sesión</span>
                     </SidebarMenuButton>
@@ -81,12 +77,12 @@ export default function DashboardLayout({
         </Sidebar>
         <SidebarInset>
           <header className="flex h-14 items-center gap-4 border-b bg-card px-6">
-            {isMobile && <SidebarTrigger />}
-            <h1 className="text-lg font-semibold md:text-xl">
+            <SidebarTrigger />
+            <h1 className="text-lg font-semibold">
               {navItems.find(item => item.href === pathname)?.label || "Panel"}
             </h1>
           </header>
-          <main className="flex-1 overflow-auto p-4 md:p-6">
+          <main className="flex-1 overflow-auto p-4">
             {children}
           </main>
         </SidebarInset>

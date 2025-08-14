@@ -45,8 +45,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </TableCell>
-      <TableCell className="hidden md:table-cell">{new Date(session.date).toLocaleDateString()}</TableCell>
-      <TableCell className="hidden md:table-cell">{session.time}</TableCell>
+      <TableCell>{new Date(session.date).toLocaleDateString()}</TableCell>
       <TableCell>
         <Badge variant={session.status === 'completed' ? 'default' : 'secondary'} className="capitalize bg-green-100 text-green-800">
             {session.status === 'completed' ? 'Completada' : (session.status === 'scheduled' ? 'Programada' : 'Cancelada')}
@@ -105,8 +104,7 @@ export default function ProfilePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tutor</TableHead>
-                    <TableHead className="hidden md:table-cell">Fecha</TableHead>
-                    <TableHead className="hidden md:table-cell">Hora</TableHead>
+                    <TableHead>Fecha</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead><span className="sr-only">Acciones</span></TableHead>
                   </TableRow>
@@ -116,7 +114,7 @@ export default function ProfilePage() {
                     scheduledSessions.map(session => <SessionRow key={session.id} session={session} />)
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center h-24">
+                      <TableCell colSpan={4} className="text-center h-24">
                         No hay próximas sesiones.
                       </TableCell>
                     </TableRow>
@@ -139,8 +137,7 @@ export default function ProfilePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tutor</TableHead>
-                    <TableHead className="hidden md:table-cell">Fecha</TableHead>
-                    <TableHead className="hidden md:table-cell">Hora</TableHead>
+                    <TableHead>Fecha</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead className="text-right">Acción</TableHead>
                   </TableRow>
@@ -150,7 +147,7 @@ export default function ProfilePage() {
                     pastSessions.map(session => <SessionRow key={session.id} session={session} />)
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center h-24">
+                      <TableCell colSpan={4} className="text-center h-24">
                         No hay sesiones pasadas.
                       </TableCell>
                     </TableRow>
