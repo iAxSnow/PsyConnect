@@ -32,7 +32,7 @@ import { Logo } from "@/components/logo"
 function CloseSidebarButton() {
     const { toggleSidebar } = useSidebar();
     return (
-         <Button variant="ghost" size="icon" onClick={() => toggleSidebar()} className="h-8 w-8 absolute top-4 right-4">
+         <Button variant="ghost" size="icon" onClick={() => toggleSidebar()} className="h-8 w-8 absolute top-4 right-4 z-10">
             <X/>
             <span className="sr-only">Cerrar Menú</span>
         </Button>
@@ -48,7 +48,6 @@ export default function DashboardLayout({
   const pathname = usePathname()
 
   const navItems = [
-    { href: "/dashboard", icon: Home, label: "Panel" },
     { href: "/profile", icon: User, label: "Perfil" },
     { href: "/become-tutor", icon: BookUser, label: "Conviértete en Tutor" },
   ]
@@ -58,6 +57,7 @@ export default function DashboardLayout({
       <div className="flex min-h-screen">
         <Sidebar>
           <SidebarHeader>
+            <CloseSidebarButton />
             <Logo />
           </SidebarHeader>
           <SidebarContent>
