@@ -7,14 +7,6 @@ import Link from "next/link"
 import { Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
@@ -41,36 +33,37 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
-          <CardDescription>
-            Ingresa tu correo institucional para acceder a tu cuenta.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Correo Electrónico</Label>
-            <Input id="email" type="email" placeholder="student.test@mail.udp.cl" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
-            <div className="relative">
-              <Input id="password" type={showPassword ? "text" : "password"} required />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff /> : <Eye />}
-              </Button>
+    <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        <div className="flex-grow space-y-6">
+            <div className="text-center">
+                <h1 className="text-2xl font-bold">Iniciar Sesión</h1>
+                <p className="text-muted-foreground">
+                    Ingresa tu correo institucional para acceder a tu cuenta.
+                </p>
+            </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="email">Correo Electrónico</Label>
+                <Input id="email" type="email" placeholder="student.test@mail.udp.cl" required />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="password">Contraseña</Label>
+                <div className="relative">
+                <Input id="password" type={showPassword ? "text" : "password"} required />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                </Button>
+                </div>
             </div>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
+        </div>
+        <div className="mt-8 flex flex-col gap-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>
@@ -80,8 +73,7 @@ export function LoginForm() {
               Regístrate
             </Link>
           </div>
-        </CardFooter>
-      </Card>
+        </div>
     </form>
   )
 }
