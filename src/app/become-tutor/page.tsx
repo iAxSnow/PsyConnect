@@ -60,10 +60,10 @@ export default function BecomeTutorPage() {
   const Step3 = () => (
     <div className="space-y-4">
         <div className="space-y-2">
-            <Label htmlFor="rate">Tarifa por Hora ($)</Label>
+            <Label htmlFor="rate">Tarifa por Hora (CLP)</Label>
             <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input id="rate" type="number" placeholder="25" className="pl-10" />
+                <Input id="rate" type="number" placeholder="10000" className="pl-10" />
             </div>
         </div>
     </div>
@@ -77,7 +77,7 @@ export default function BecomeTutorPage() {
         <Card className="mt-4 text-left p-4 space-y-2">
             <p><strong>Certificados:</strong> 2 archivos subidos</p>
             <p><strong>Cursos:</strong> Programación, Cálculo II</p>
-            <p><strong>Tarifa por Hora:</strong> $25/hr</p>
+            <p><strong>Tarifa por Hora:</strong> $10.000/hr</p>
         </Card>
     </div>
   )

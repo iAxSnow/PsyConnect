@@ -19,6 +19,11 @@ interface TutorCardProps {
 }
 
 export function TutorCard({ tutor }: TutorCardProps) {
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(value);
+  }
+
   return (
     <Link href={`/tutors/${tutor.id}`}>
       <Card className="h-full transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
@@ -49,7 +54,7 @@ export function TutorCard({ tutor }: TutorCardProps) {
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <Badge variant="secondary" className="w-full justify-center text-base">
-            ${tutor.hourlyRate}/hr
+            {formatCurrency(tutor.hourlyRate)}/hr
           </Badge>
         </CardFooter>
       </Card>

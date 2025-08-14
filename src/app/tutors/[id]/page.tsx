@@ -16,6 +16,10 @@ export default function TutorProfilePage({ params }: { params: { id: string } })
     notFound()
   }
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(value);
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <Card>
@@ -59,8 +63,7 @@ export default function TutorProfilePage({ params }: { params: { id: string } })
                       <span className="font-medium">{course}</span>
                     </div>
                     <Badge variant="secondary" className="text-base">
-                      <DollarSign className="mr-1 h-4 w-4" />
-                      {tutor.hourlyRate}/hr
+                      {formatCurrency(tutor.hourlyRate)}/hr
                     </Badge>
                   </li>
                 ))}
