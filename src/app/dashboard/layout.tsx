@@ -59,7 +59,6 @@ export default function DashboardLayout({
         <Sidebar>
           <SidebarHeader>
             <Logo />
-            <CloseSidebarButton />
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
