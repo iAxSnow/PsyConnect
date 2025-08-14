@@ -108,7 +108,7 @@ export const tutors: Tutor[] = [
   {
     id: '1',
     name: 'Ana García',
-    imageUrl: 'https://placehold.co/400x400.png',
+    imageUrl: 'https://placehold.co/200x200.png',
     rating: 4.9,
     reviews: 120,
     hourlyRate: 15000,
@@ -118,7 +118,7 @@ export const tutors: Tutor[] = [
   {
     id: '2',
     name: 'Carlos Rodríguez',
-    imageUrl: 'https://placehold.co/400x400.png',
+    imageUrl: 'https://placehold.co/200x200.png',
     rating: 4.8,
     reviews: 95,
     hourlyRate: 18000,
@@ -128,7 +128,7 @@ export const tutors: Tutor[] = [
   {
     id: '3',
     name: 'Sofía Martínez',
-    imageUrl: 'https://placehold.co/400x400.png',
+    imageUrl: 'https://placehold.co/200x200.png',
     rating: 5.0,
     reviews: 200,
     hourlyRate: 17000,
@@ -138,7 +138,7 @@ export const tutors: Tutor[] = [
   {
     id: '4',
     name: 'Javier Hernández',
-    imageUrl: 'https://placehold.co/400x400.png',
+    imageUrl: 'https://placehold.co/200x200.png',
     rating: 4.7,
     reviews: 75,
     hourlyRate: 14000,
@@ -148,7 +148,7 @@ export const tutors: Tutor[] = [
   {
     id: 'default-tutor',
     name: 'Tutor de Prueba',
-    imageUrl: 'https://placehold.co/400x400.png',
+    imageUrl: 'https://placehold.co/200x200.png',
     rating: 4.5,
     reviews: 50,
     hourlyRate: 10000,
