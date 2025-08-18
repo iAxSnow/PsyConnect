@@ -45,6 +45,7 @@ export function SignupForm() {
       toast({ title: "Error", description: "Por favor, sube una foto de perfil.", variant: "destructive" })
       return
     }
+    
     setIsLoading(true)
     
     try {
