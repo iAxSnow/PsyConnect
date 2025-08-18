@@ -64,7 +64,8 @@ export function SignupForm() {
         uid: user.uid,
         name: name,
         email: email,
-        imageUrl: imageUrl
+        imageUrl: imageUrl,
+        isTutor: false, // Default role
       });
 
       toast({

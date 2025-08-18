@@ -3,9 +3,9 @@
 
 import * as React from "react"
 import { Search } from "lucide-react"
-import { collection, getDocs } from "firebase/firestore"
+import { collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import type { Tutor } from "@/lib/types"
+import type { User } from "@/lib/types"
 
 import { Input } from "@/components/ui/input"
 import { TutorCard } from "@/components/dashboard/tutor-card"
@@ -13,16 +13,17 @@ import { AITutorSuggester } from "@/components/dashboard/ai-tutor-suggester"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardPage() {
-  const [tutors, setTutors] = React.useState<Tutor[]>([])
+  const [tutors, setTutors] = React.useState<User[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
     const fetchTutors = async () => {
       setIsLoading(true)
       try {
-        const tutorsCollection = collection(db, "tutors")
-        const tutorsSnapshot = await getDocs(tutorsCollection)
-        const tutorsList = tutorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tutor))
+        const usersCollection = collection(db, "users")
+        const q = query(usersCollection, where("isTutor", "==", true))
+        const tutorsSnapshot = await getDocs(q)
+        const tutorsList = tutorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User))
         setTutors(tutorsList)
       } catch (error) {
         console.error("Error fetching tutors:", error)

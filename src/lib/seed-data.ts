@@ -1,4 +1,4 @@
-import type { Tutor, Course } from './types';
+import type { User, Course } from './types';
 
 export const courses: Omit<Course, 'id'>[] = [
   // Ingeniería Civil en Informática y Telecomunicaciones
@@ -97,10 +97,14 @@ export const courses: Omit<Course, 'id'>[] = [
   { name: 'Actividad de Titulación' },
 ];
 
-export const tutors: Omit<Tutor, 'id'>[] = [
+// We use the User type but omit 'id' and 'uid' as Firestore will generate the id
+// and these are not real Auth users, so they won't have a uid.
+export const tutors: Omit<User, 'id' | 'uid'>[] = [
   {
     name: 'Ana García',
+    email: 'ana.garcia@tutor.udp.cl',
     imageUrl: 'https://placehold.co/200x200.png',
+    isTutor: true,
     rating: 4.9,
     reviews: 120,
     hourlyRate: 15000,
@@ -109,7 +113,9 @@ export const tutors: Omit<Tutor, 'id'>[] = [
   },
   {
     name: 'Carlos Rodríguez',
+    email: 'carlos.rodriguez@tutor.udp.cl',
     imageUrl: 'https://placehold.co/200x200.png',
+    isTutor: true,
     rating: 4.8,
     reviews: 95,
     hourlyRate: 18000,
@@ -118,7 +124,9 @@ export const tutors: Omit<Tutor, 'id'>[] = [
   },
   {
     name: 'Sofía Martínez',
+    email: 'sofia.martinez@tutor.udp.cl',
     imageUrl: 'https://placehold.co/200x200.png',
+    isTutor: true,
     rating: 5.0,
     reviews: 200,
     hourlyRate: 17000,
@@ -127,7 +135,9 @@ export const tutors: Omit<Tutor, 'id'>[] = [
   },
   {
     name: 'Javier Hernández',
+    email: 'javier.hernandez@tutor.udp.cl',
     imageUrl: 'https://placehold.co/200x200.png',
+    isTutor: true,
     rating: 4.7,
     reviews: 75,
     hourlyRate: 14000,

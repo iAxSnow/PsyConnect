@@ -23,17 +23,18 @@ async function seedCourses() {
 }
 
 async function seedTutors() {
-  const tutorsCollection = collection(db, 'tutors');
-    const snapshot = await getDocs(tutorsCollection);
-  if (!snapshot.empty) {
-    console.log('La colección de tutores ya tiene datos. No se agregarán nuevos datos.');
+  const usersCollection = collection(db, 'users');
+  // Note: This is a simple check. A more robust check would query for any user with isTutor:true.
+  const snapshot = await getDocs(usersCollection); 
+  if (snapshot.docs.some(doc => doc.data().isTutor)) {
+    console.log('La colección de usuarios ya tiene tutores. No se agregarán nuevos datos.');
     return;
   }
 
-  console.log('Agregando tutores a la base de datos...');
+  console.log('Agregando tutores a la colección de usuarios...');
   for (const tutor of tutors) {
     try {
-      await addDoc(tutorsCollection, tutor);
+      await addDoc(usersCollection, tutor);
     } catch (error) {
       console.error('Error al agregar el tutor:', tutor.name, error);
     }

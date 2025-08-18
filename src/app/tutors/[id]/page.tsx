@@ -7,7 +7,7 @@ import { notFound, useRouter, useParams } from "next/navigation"
 import { Star, BookOpen, Calendar, ArrowLeft } from "lucide-react"
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import type { Tutor } from "@/lib/types"
+import type { User } from "@/lib/types"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 export default function TutorProfilePage() {
   const params = useParams()
   const router = useRouter()
-  const [tutor, setTutor] = React.useState<Tutor | null>(null)
+  const [tutor, setTutor] = React.useState<User | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
@@ -26,10 +26,10 @@ export default function TutorProfilePage() {
     const fetchTutor = async () => {
       setIsLoading(true)
       try {
-        const tutorDocRef = doc(db, "tutors", params.id as string)
+        const tutorDocRef = doc(db, "users", params.id as string)
         const tutorDoc = await getDoc(tutorDocRef)
-        if (tutorDoc.exists()) {
-          setTutor({ id: tutorDoc.id, ...tutorDoc.data() } as Tutor)
+        if (tutorDoc.exists() && tutorDoc.data().isTutor) {
+          setTutor({ id: tutorDoc.id, ...tutorDoc.data() } as User)
         } else {
           notFound()
         }
@@ -105,7 +105,7 @@ export default function TutorProfilePage() {
             <div className="mt-2 flex items-center gap-2 text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                <span className="font-semibold text-lg">{tutor.rating.toFixed(1)}</span>
+                <span className="font-semibold text-lg">{tutor.rating?.toFixed(1)}</span>
               </div>
               <span>({tutor.reviews} reseñas)</span>
             </div>
@@ -122,14 +122,14 @@ export default function TutorProfilePage() {
 
             <h2 className="text-xl font-semibold">Cursos Ofrecidos</h2>
             <ul className="mt-4 space-y-3">
-              {tutor.courses.map((course) => (
+              {tutor.courses?.map((course) => (
                 <li key={course} className="flex items-center justify-between rounded-lg bg-background p-3 border">
                   <div className="flex items-center gap-3">
                     <BookOpen className="h-5 w-5 text-primary" />
                     <span className="font-medium">{course}</span>
                   </div>
                   <Badge variant="secondary" className="text-base">
-                    {formatCurrency(tutor.hourlyRate)}/hr
+                    {formatCurrency(tutor.hourlyRate || 0)}/hr
                   </Badge>
                 </li>
               ))}

@@ -12,10 +12,10 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import type { Tutor } from "@/lib/types"
+import type { User } from "@/lib/types"
 
 interface TutorCardProps {
-  tutor: Tutor
+  tutor: User
 }
 
 export function TutorCard({ tutor }: TutorCardProps) {
@@ -43,18 +43,18 @@ export function TutorCard({ tutor }: TutorCardProps) {
           <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span>{tutor.rating.toFixed(1)}</span>
+              <span>{tutor.rating?.toFixed(1)}</span>
             </div>
             <span>({tutor.reviews} reseñas)</span>
           </div>
           <div className="mt-2 flex items-center gap-2 text-sm">
              <BookOpen className="h-4 w-4 text-primary" />
-             <span className="font-medium">{tutor.courses[0]}</span>
+             <span className="font-medium">{tutor.courses?.[0]}</span>
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <Badge variant="secondary" className="w-full justify-center text-base">
-            {formatCurrency(tutor.hourlyRate)}/hr
+            {formatCurrency(tutor.hourlyRate || 0)}/hr
           </Badge>
         </CardFooter>
       </Card>
