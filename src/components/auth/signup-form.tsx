@@ -73,9 +73,18 @@ export function SignupForm() {
       })
       router.push("/")
     } catch (error: any) {
+       let description = "Ocurrió un error inesperado al crear tu cuenta."
+       if (error.code === 'auth/email-already-in-use') {
+           description = "Este correo electrónico ya está en uso. Por favor, utiliza otro."
+       } else if (error.code === 'auth/weak-password') {
+           description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres."
+       } else if (error.code) {
+           description = error.message;
+       }
+
        toast({
         title: "Error al Crear Cuenta",
-        description: error.message || "Ocurrió un error.",
+        description: description,
         variant: "destructive"
       })
     } finally {
