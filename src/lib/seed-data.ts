@@ -104,7 +104,7 @@ export const tutors: Omit<Tutor, 'id'>[] = [
     rating: 4.9,
     reviews: 120,
     hourlyRate: 15000,
-    courses: ['Programación', 'Cálculo II'],
+    courses: ['Programación', 'Estructura de Datos y Algoritmos', 'Desarrollo Web y Móvil'],
     bio: 'Desarrolladora full-stack con experiencia y pasión por la enseñanza. Me especializo en desglosar conceptos de programación complejos en lecciones fáciles de entender. Mi objetivo es ayudarte no solo a aprobar, sino a sobresalir.'
   },
   {
@@ -113,8 +113,8 @@ export const tutors: Omit<Tutor, 'id'>[] = [
     rating: 4.8,
     reviews: 95,
     hourlyRate: 18000,
-    courses: ['Mecánica', 'Cálculo II'],
-    bio: 'Ingeniero mecánico con amor por la física. Creo en los ejemplos prácticos y la resolución de problemas para construir una base sólida en física y matemáticas avanzadas.'
+    courses: ['Cálculo I', 'Cálculo II', 'Ecuaciones Diferenciales'],
+    bio: 'Ingeniero mecánico con amor por la física y las matemáticas. Creo en los ejemplos prácticos y la resolución de problemas para construir una base sólida en matemáticas avanzadas.'
   },
   {
     name: 'Sofía Martínez',
@@ -122,8 +122,8 @@ export const tutors: Omit<Tutor, 'id'>[] = [
     rating: 5.0,
     reviews: 200,
     hourlyRate: 17000,
-    courses: ['Química', 'Cálculo I'],
-    bio: 'Doctora en Química. Disfruto ayudando a los estudiantes a navegar los desafíos de la química y a comprender los principios que dan forma a nuestro mundo.'
+    courses: ['Gestión de Operaciones', 'Evaluación de Proyectos', 'Finanzas'],
+    bio: 'Ingeniera Industrial con un MBA. Disfruto ayudando a los estudiantes a navegar los desafíos de la gestión de proyectos y las finanzas, aplicando conceptos a casos reales de negocio.'
   },
   {
     name: 'Javier Hernández',
@@ -131,16 +131,7 @@ export const tutors: Omit<Tutor, 'id'>[] = [
     rating: 4.7,
     reviews: 75,
     hourlyRate: 14000,
-    courses: ['Álgebra y Geometría', 'Álgebra Lineal'],
-    bio: 'Un graduado con un gran interés en el álgebra. Ofrezco explicaciones claras y concisas y aplicaciones del mundo real para que el aprendizaje sea atractivo y eficaz.'
-  },
-  {
-    name: 'Tutor de Prueba',
-    imageUrl: 'https://placehold.co/200x200.png',
-    rating: 4.5,
-    reviews: 50,
-    hourlyRate: 10000,
-    courses: ['Programación', 'Mecánica'],
-    bio: 'Este es un tutor de prueba para fines de desarrollo y demostración.'
+    courses: ['Análisis Estructural', 'Mecánica de Sólidos', 'Diseño en Hormigón'],
+    bio: 'Ingeniero Civil especialista en estructuras. Ofrezco explicaciones claras y concisas con aplicaciones del mundo real para que el aprendizaje sea atractivo y eficaz.'
   }
 ];
