@@ -48,18 +48,19 @@ export function SignupForm() {
     setIsLoading(true)
     
     try {
+      // 1. Create user with email and password
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Upload profile picture
+      // 2. Upload profile picture
       const storageRef = ref(storage, `profile-pictures/${user.uid}`);
       const snapshot = await uploadBytes(storageRef, profilePic);
       const imageUrl = await getDownloadURL(snapshot.ref);
 
-      // Update user profile
+      // 3. Update user profile
       await updateProfile(user, { displayName: name, photoURL: imageUrl });
       
-      // Save user data to Firestore
+      // 4. Save user data to Firestore
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         name: name,
@@ -73,16 +74,27 @@ export function SignupForm() {
         description: "Tu cuenta ha sido creada exitosamente. Por favor, inicia sesión.",
       })
       router.push("/")
+
     } catch (error: any) {
        let description = "Ocurrió un error inesperado al crear tu cuenta."
-       if (error.code === 'auth/email-already-in-use') {
-           description = "Este correo electrónico ya está en uso. Por favor, utiliza otro."
-       } else if (error.code === 'auth/weak-password') {
-           description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres."
-       } else if (error.code === 'storage/unauthorized') {
-            description = "Error de permisos al subir la imagen. Revisa las reglas de Storage."
-       } else if (error.code) {
-           description = error.message;
+       
+       if (error.code) {
+           switch (error.code) {
+               case 'auth/email-already-in-use':
+                   description = "Este correo electrónico ya está en uso. Por favor, utiliza otro."
+                   break;
+               case 'auth/weak-password':
+                   description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres."
+                   break;
+               case 'storage/unauthorized':
+                   description = "Error de permisos al subir la imagen. Revisa las reglas de seguridad de Firebase Storage."
+                   break;
+                case 'permission-denied':
+                    description = "Error de permisos al guardar en la base de datos. Revisa las reglas de seguridad de Firestore."
+                    break;
+               default:
+                   description = error.message;
+           }
        }
 
        toast({
