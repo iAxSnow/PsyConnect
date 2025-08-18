@@ -78,6 +78,8 @@ export function SignupForm() {
            description = "Este correo electrónico ya está en uso. Por favor, utiliza otro."
        } else if (error.code === 'auth/weak-password') {
            description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres."
+       } else if (error.code === 'storage/unauthorized') {
+            description = "Error de permisos al subir la imagen. Revisa las reglas de Storage."
        } else if (error.code) {
            description = error.message;
        }
