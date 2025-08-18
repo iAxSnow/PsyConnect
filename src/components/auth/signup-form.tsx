@@ -71,9 +71,13 @@ export function SignupForm() {
 
       toast({
         title: "Cuenta Creada",
-        description: "Tu cuenta ha sido creada exitosamente. Por favor, inicia sesión.",
+        description: "Tu cuenta ha sido creada exitosamente. Serás redirigido para iniciar sesión.",
       })
-      router.push("/")
+
+      // Redirect after a short delay to allow the user to see the toast
+      setTimeout(() => {
+        router.push("/")
+      }, 2000)
 
     } catch (error: any) {
        let description = "Ocurrió un error inesperado al crear tu cuenta."
@@ -103,7 +107,11 @@ export function SignupForm() {
         variant: "destructive"
       })
     } finally {
-        setIsLoading(false)
+        // Ensure isLoading is set to false regardless of outcome,
+        // but not immediately if redirecting.
+        if (!auth.currentUser) {
+            setIsLoading(false)
+        }
     }
   }
 
