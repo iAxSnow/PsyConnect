@@ -75,10 +75,7 @@ export function SignupForm() {
         description: "Tu cuenta ha sido creada exitosamente. Serás redirigido para iniciar sesión.",
       })
 
-      // Redirect after a short delay to allow the user to see the toast
-      setTimeout(() => {
-        router.push("/")
-      }, 2000)
+      router.push("/")
 
     } catch (error: any) {
        let description = "Ocurrió un error inesperado al crear tu cuenta."
@@ -108,11 +105,7 @@ export function SignupForm() {
         variant: "destructive"
       })
     } finally {
-        // Ensure isLoading is set to false regardless of outcome,
-        // but not immediately if redirecting.
-        if (!auth.currentUser) {
-            setIsLoading(false)
-        }
+        setIsLoading(false)
     }
   }
 
