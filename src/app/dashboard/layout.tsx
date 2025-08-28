@@ -6,12 +6,12 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   User,
-  BookUser,
   LogOut,
   X
 } from "lucide-react"
 import { signOut } from "firebase/auth"
-import { auth } from "@/lib/firebase"
+import { doc, getDoc } from "firebase/firestore"
+import { auth, db } from "@/lib/firebase"
 import { useAuthState } from "react-firebase-hooks/auth"
 
 import {
@@ -52,6 +52,7 @@ export default function DashboardLayout({
   const router = useRouter()
   const { toast } = useToast()
   const [user, loading, error] = useAuthState(auth)
+  const [isPsychologist, setIsPsychologist] = React.useState(false)
 
   React.useEffect(() => {
     if (error) {
@@ -62,6 +63,19 @@ export default function DashboardLayout({
       })
     }
   }, [error, toast]);
+
+  React.useEffect(() => {
+    const checkUserRole = async () => {
+        if (user) {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists() && userDoc.data().isTutor) { // isTutor is legacy for psychologist
+                setIsPsychologist(true);
+            }
+        }
+    }
+    checkUserRole();
+  }, [user])
 
 
   const handleSignOut = async () => {
@@ -83,14 +97,13 @@ export default function DashboardLayout({
 
   const navItems = [
     { href: "/profile", icon: User, label: "Perfil" },
-    { href: "/become-tutor", icon: BookUser, label: "Conviértete en Tutor" },
   ]
 
   const getPageTitle = () => {
     if (pathname === '/dashboard') return "Panel";
     const item = navItems.find(item => pathname.startsWith(item.href));
     if (item) return item.label;
-    if (pathname.startsWith('/tutors/')) return "Perfil del Tutor";
+    if (pathname.startsWith('/psychologists/')) return "Perfil del Psicólogo";
     return "Panel";
   }
 

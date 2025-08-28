@@ -3,50 +3,50 @@
 'use server';
 
 /**
- * @fileOverview An AI agent that suggests tutors based on the courses the student is taking.
+ * @fileOverview An AI agent that suggests psychologists based on user needs.
  *
- * - suggestTutors - A function that handles the tutor suggestion process.
- * - SuggestTutorsInput - The input type for the suggestTutors function.
- * - SuggestTutorsOutput - The return type for the suggestTutors function.
+ * - suggestPsychologists - A function that handles the psychologist suggestion process.
+ * - SuggestPsychologistsInput - The input type for the suggestPsychologists function.
+ * - SuggestPsychologistsOutput - The return type for the suggestPsychologists function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const SuggestTutorsInputSchema = z.object({
-  courses: z
+const SuggestPsychologistsInputSchema = z.object({
+  issues: z
     .array(z.string())
-    .describe('An array of course names that the student is taking.'),
+    .describe('An array of issues or topics the user wants help with.'),
 });
-export type SuggestTutorsInput = z.infer<typeof SuggestTutorsInputSchema>;
+export type SuggestPsychologistsInput = z.infer<typeof SuggestPsychologistsInputSchema>;
 
-const SuggestTutorsOutputSchema = z.object({
-  tutorSuggestions: z
+const SuggestPsychologistsOutputSchema = z.object({
+  psychologistSuggestions: z
     .array(z.string())
-    .describe('An array of tutor names that are suggested for the courses.'),
+    .describe('An array of psychologist names that are suggested for the user.'),
 });
-export type SuggestTutorsOutput = z.infer<typeof SuggestTutorsOutputSchema>;
+export type SuggestPsychologistsOutput = z.infer<typeof SuggestPsychologistsOutputSchema>;
 
-export async function suggestTutors(input: SuggestTutorsInput): Promise<SuggestTutorsOutput> {
-  return suggestTutorsFlow(input);
+export async function suggestPsychologists(input: SuggestPsychologistsInput): Promise<SuggestPsychologistsOutput> {
+  return suggestPsychologistsFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'suggestTutorsPrompt',
-  input: {schema: SuggestTutorsInputSchema},
-  output: {schema: SuggestTutorsOutputSchema},
-  prompt: `You are a tutor suggestion expert for university students. Based on the courses that the student is taking, suggest tutors that other students with a similar academic profile have used in the past.
+  name: 'suggestPsychologistsPrompt',
+  input: {schema: SuggestPsychologistsInputSchema},
+  output: {schema: SuggestPsychologistsOutputSchema},
+  prompt: `You are an expert system for a mental health app. Based on the issues a user is facing, suggest psychologists who specialize in those areas.
 
-Courses: {{courses}}
+Issues: {{issues}}
 
-Tutor Suggestions:`,
+Psychologist Suggestions:`,
 });
 
-const suggestTutorsFlow = ai.defineFlow(
+const suggestPsychologistsFlow = ai.defineFlow(
   {
-    name: 'suggestTutorsFlow',
-    inputSchema: SuggestTutorsInputSchema,
-    outputSchema: SuggestTutorsOutputSchema,
+    name: 'suggestPsychologistsFlow',
+    inputSchema: SuggestPsychologistsInputSchema,
+    outputSchema: SuggestPsychologistsOutputSchema,
   },
   async input => {
     const {output} = await prompt(input);

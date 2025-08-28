@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Profe UDP Connect',
-  description: 'Find the best tutors at UDP.',
+  title: 'PsyConnect',
+  description: 'Encuentra al psicólogo adecuado para ti.',
 };
 
 export default function RootLayout({

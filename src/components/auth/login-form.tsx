@@ -49,13 +49,13 @@ export function LoginForm() {
             <div className="text-center">
                 <h1 className="text-2xl font-bold">Iniciar Sesión</h1>
                 <p className="text-muted-foreground">
-                    Ingresa tu correo institucional para acceder a tu cuenta.
+                    Ingresa tu correo para acceder a tu cuenta.
                 </p>
             </div>
           <div className="space-y-4">
             <div className="space-y-2">
                 <Label htmlFor="email">Correo Electrónico</Label>
-                <Input id="email" type="email" placeholder="student.test@mail.udp.cl" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Input id="email" type="email" placeholder="tu.correo@ejemplo.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>
