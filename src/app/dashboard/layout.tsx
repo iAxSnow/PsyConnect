@@ -7,7 +7,6 @@ import { usePathname, useRouter } from "next/navigation"
 import {
   User,
   LogOut,
-  X,
   PanelLeft
 } from "lucide-react"
 import { signOut } from "firebase/auth"
@@ -26,22 +25,10 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
-  useSidebar
 } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { useToast } from "@/hooks/use-toast"
 import { SheetTitle } from "@/components/ui/sheet"
-
-function CloseSidebarButton() {
-    const { toggleSidebar } = useSidebar();
-    return (
-         <Button variant="ghost" size="icon" onClick={() => toggleSidebar()} className="h-8 w-8 absolute top-4 right-4 z-10">
-            <X/>
-            <span className="sr-only">Cerrar Menú</span>
-        </Button>
-    )
-}
 
 
 export default function DashboardLayout({
@@ -116,7 +103,6 @@ export default function DashboardLayout({
         <Sidebar>
             <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
           <SidebarHeader>
-            <CloseSidebarButton />
             <Logo />
           </SidebarHeader>
           <SidebarContent>
