@@ -1,7 +1,7 @@
 // @/app/dashboard/page.tsx
 "use client"
 
-import *d React from "react"
+import * as React from "react"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { doc, getDoc } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase"
