@@ -1,3 +1,4 @@
+
 // @/app/profile/page.tsx
 "use client"
 
@@ -32,44 +33,7 @@ import { RatingDialog } from "@/components/profile/rating-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Session, User as AppUser } from "@/lib/types"
 
-export default function ProfilePage() {
-  const router = useRouter()
-  const [user, loadingAuth] = useAuthState(auth)
-  const [appUser, setAppUser] = React.useState<AppUser | null>(null);
-  const [sessions, setSessions] = React.useState<Session[]>([])
-  const [loadingData, setLoadingData] = React.useState(true)
-  
-  React.useEffect(() => {
-    if (user) {
-      const fetchData = async () => {
-        setLoadingData(true)
-        try {
-          // Fetch user data from firestore
-          const userDocRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-              setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
-          }
-
-          // Fetch sessions
-          const sessionsList = await getStudentSessions(user.uid)
-          setSessions(sessionsList)
-        } catch (error) {
-          console.error("Error fetching user data or sessions: ", error)
-        } finally {
-          setLoadingData(false)
-        }
-      }
-      fetchData()
-    } else if (!loadingAuth) {
-        router.push("/")
-    }
-  }, [user, loadingAuth, router])
-
-  const activeSessions = sessions.filter(s => s.status === 'accepted' || s.status === 'pending');
-  const pastSessions = sessions.filter(s => s.status !== 'accepted' && s.status !== 'pending');
-
-  const getBadgeVariant = (status: Session['status']) => {
+const getBadgeVariant = (status: Session['status']) => {
     switch (status) {
         case 'completed': return 'default';
         case 'accepted': return 'success';
@@ -78,9 +42,9 @@ export default function ProfilePage() {
         case 'declined': return 'destructive'
         default: return 'outline';
     }
-  }
+}
 
-  const getStatusText = (status: Session['status']) => {
+const getStatusText = (status: Session['status']) => {
     const map: Record<Session['status'], string> = {
         'pending': 'Pendiente',
         'accepted': 'Aceptada',
@@ -89,40 +53,77 @@ export default function ProfilePage() {
         'declined': 'Rechazada'
     }
     return map[status];
-  }
+}
 
-  const SessionRow = ({ session }: { session: Session }) => (
-    <TableRow>
-      <TableCell>
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={session.tutor.imageUrl} alt={session.tutor.name} data-ai-hint="person" />
-            <AvatarFallback>{session.tutor.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="font-medium">{session.tutor.name}</div>
-            <div className="text-sm text-muted-foreground">{session.course}</div>
-          </div>
-        </div>
-      </TableCell>
-      <TableCell>{session.createdAt.toDate().toLocaleDateString()}</TableCell>
-      <TableCell>
-        <Badge variant={getBadgeVariant(session.status)} className="capitalize">
-            {getStatusText(session.status)}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-right">
-        {session.status === 'completed' && <RatingDialog />}
-        {session.status === 'accepted' && (
-             <Button variant="outline" size="sm" onClick={() => router.push(`/sessions/${session.id}`)}>
-                <MessageSquare className="mr-2 h-4 w-4"/> Ir al Chat
-            </Button>
-        )}
-      </TableCell>
-    </TableRow>
-  );
+const SessionRow = ({ session, router, isPsychologist }: { session: Session, router: ReturnType<typeof useRouter>, isPsychologist: boolean }) => {
+    const userToShow = isPsychologist ? session.student : session.tutor;
+    const userType = isPsychologist ? "Usuario" : "Psicólogo";
+
+    return (
+        <TableRow>
+          <TableCell>
+            <div className="flex items-center gap-3">
+              <Avatar>
+                <AvatarImage src={userToShow.imageUrl} alt={userToShow.name} data-ai-hint="person" />
+                <AvatarFallback>{userToShow.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-medium">{userToShow.name}</div>
+                <div className="text-sm text-muted-foreground">{session.course}</div>
+              </div>
+            </div>
+          </TableCell>
+          <TableCell>{session.createdAt.toDate().toLocaleDateString()}</TableCell>
+          <TableCell>
+            <Badge variant={getBadgeVariant(session.status)} className="capitalize">
+                {getStatusText(session.status)}
+            </Badge>
+          </TableCell>
+          <TableCell className="text-right">
+            {session.status === 'completed' && <RatingDialog />}
+            {session.status === 'accepted' && (
+                 <Button variant="outline" size="sm" onClick={() => router.push(`/sessions/${session.id}`)}>
+                    <MessageSquare className="mr-2 h-4 w-4"/> Ir al Chat
+                </Button>
+            )}
+          </TableCell>
+        </TableRow>
+    );
+};
+
+export default function ProfilePage() {
+  const router = useRouter()
+  const [user, loadingAuth] = useAuthState(auth)
+  const [appUser, setAppUser] = React.useState<AppUser | null>(null);
+  const [sessions, setSessions] = React.useState<Session[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
   
-  if (loadingAuth || loadingData || !user || !appUser) {
+  React.useEffect(() => {
+    const fetchData = async () => {
+      if (user) {
+        setIsLoading(true)
+        try {
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+              setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
+          }
+
+          const sessionsList = await getStudentSessions(user.uid)
+          setSessions(sessionsList)
+        } catch (error) {
+          console.error("Error fetching user data or sessions: ", error)
+        } finally {
+          setIsLoading(false)
+        }
+      } else if (!loadingAuth) {
+        router.push("/");
+      }
+    }
+    fetchData()
+  }, [user, loadingAuth, router])
+  
+  if (isLoading || loadingAuth) {
     return (
         <div className="space-y-6">
             <Card>
@@ -152,7 +153,13 @@ export default function ProfilePage() {
     )
   }
 
+  if (!appUser) {
+    return null; // or redirect, or show an error message
+  }
+
   const isPsychologist = appUser.isTutor;
+  const activeSessions = sessions.filter(s => s.status === 'accepted' || s.status === 'pending');
+  const pastSessions = sessions.filter(s => s.status !== 'accepted' && s.status !== 'pending');
 
   return (
     <div className="space-y-6">
@@ -210,10 +217,8 @@ export default function ProfilePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loadingData ? (
-                     <TableRow><TableCell colSpan={4} className="text-center h-24"><Skeleton className="h-8 w-full" /></TableCell></TableRow>
-                  ) : activeSessions.length > 0 ? (
-                    activeSessions.map(session => <SessionRow key={session.id} session={session} />)
+                  {activeSessions.length > 0 ? (
+                    activeSessions.map(session => <SessionRow key={session.id} session={session} router={router} isPsychologist={!!isPsychologist}/>)
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center h-24">
@@ -242,10 +247,8 @@ export default function ProfilePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                   {loadingData ? (
-                     <TableRow><TableCell colSpan={4} className="text-center h-24"><Skeleton className="h-8 w-full" /></TableCell></TableRow>
-                   ) : pastSessions.length > 0 ? (
-                    pastSessions.map(session => <SessionRow key={session.id} session={session} />)
+                   {pastSessions.length > 0 ? (
+                    pastSessions.map(session => <SessionRow key={session.id} session={session} router={router} isPsychologist={!!isPsychologist}/>)
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center h-24">
