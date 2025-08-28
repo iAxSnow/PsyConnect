@@ -1,11 +1,10 @@
-
 // @/app/profile/page.tsx
 "use client"
 
 import * as React from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Edit, Calendar, History, Star, ArrowLeft, MessageSquare } from "lucide-react"
+import { Edit, Calendar, History, ArrowLeft, MessageSquare } from "lucide-react"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { auth, db } from "@/lib/firebase"
 import { getStudentSessions } from "@/services/sessions"
@@ -55,20 +54,19 @@ const getStatusText = (status: Session['status']) => {
     return map[status];
 }
 
-const SessionRow = ({ session, router, isPsychologist }: { session: Session, router: ReturnType<typeof useRouter>, isPsychologist: boolean }) => {
+const SessionRow = ({ session, router, isPsychologist }: { session: Session; router: ReturnType<typeof useRouter>; isPsychologist: boolean }) => {
     const userToShow = isPsychologist ? session.student : session.tutor;
-    const userType = isPsychologist ? "Usuario" : "Psicólogo";
 
     return (
         <TableRow>
           <TableCell>
             <div className="flex items-center gap-3">
               <Avatar>
-                <AvatarImage src={userToShow.imageUrl} alt={userToShow.name} data-ai-hint="person" />
-                <AvatarFallback>{userToShow.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={userToShow?.imageUrl} alt={userToShow?.name} data-ai-hint="person" />
+                <AvatarFallback>{userToShow?.name?.charAt(0) ?? 'U'}</AvatarFallback>
               </Avatar>
               <div>
-                <div className="font-medium">{userToShow.name}</div>
+                <div className="font-medium">{userToShow?.name}</div>
                 <div className="text-sm text-muted-foreground">{session.course}</div>
               </div>
             </div>
@@ -80,7 +78,7 @@ const SessionRow = ({ session, router, isPsychologist }: { session: Session, rou
             </Badge>
           </TableCell>
           <TableCell className="text-right">
-            {session.status === 'completed' && <RatingDialog />}
+            {session.status === 'completed' && !isPsychologist && <RatingDialog />}
             {session.status === 'accepted' && (
                  <Button variant="outline" size="sm" onClick={() => router.push(`/sessions/${session.id}`)}>
                     <MessageSquare className="mr-2 h-4 w-4"/> Ir al Chat
@@ -101,15 +99,17 @@ export default function ProfilePage() {
   React.useEffect(() => {
     const fetchData = async () => {
       if (user) {
-        setIsLoading(true)
         try {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userDocRef);
+          // Fetch user data and sessions in parallel
+          const [userDoc, sessionsList] = await Promise.all([
+             getDoc(doc(db, "users", user.uid)),
+             getStudentSessions(user.uid)
+          ]);
+
           if (userDoc.exists()) {
               setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
           }
-
-          const sessionsList = await getStudentSessions(user.uid)
+          
           setSessions(sessionsList)
         } catch (error) {
           console.error("Error fetching user data or sessions: ", error)
@@ -117,15 +117,16 @@ export default function ProfilePage() {
           setIsLoading(false)
         }
       } else if (!loadingAuth) {
+        // If no user and auth is not loading, redirect
         router.push("/");
       }
     }
     fetchData()
   }, [user, loadingAuth, router])
   
-  if (isLoading || loadingAuth) {
+  if (isLoading) {
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-4">
             <Card>
                 <CardHeader>
                     <Skeleton className="h-8 w-8" />
@@ -143,7 +144,6 @@ export default function ProfilePage() {
             <Card>
                 <CardHeader>
                     <Skeleton className="h-8 w-40" />
-                    <Skeleton className="h-5 w-full" />
                 </CardHeader>
                 <CardContent>
                     <Skeleton className="h-40 w-full" />
@@ -154,7 +154,8 @@ export default function ProfilePage() {
   }
 
   if (!appUser) {
-    return null; // or redirect, or show an error message
+    // This case is handled by the redirect, but as a fallback:
+    return null; 
   }
 
   const isPsychologist = appUser.isTutor;
