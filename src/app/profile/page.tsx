@@ -53,7 +53,9 @@ export default function ProfilePage() {
 
           // Fetch sessions
           const sessionsList = await getStudentSessions(user.uid)
-          setSessions(sessionsList)
+          // Sort sessions client-side since we removed the orderBy from the query
+          const sortedSessions = sessionsList.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+          setSessions(sortedSessions)
         } catch (error) {
           console.error("Error fetching user data or sessions: ", error)
         } finally {
@@ -253,7 +255,7 @@ export default function ProfilePage() {
                       </TableCell>
                     </TableRow>
                   )}
-                </TableBody>
+                </</tbody>
               </Table>
             </CardContent>
           </Card>
