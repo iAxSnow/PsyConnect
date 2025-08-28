@@ -5,8 +5,9 @@ import * as React from "react"
 import Image from "next/image"
 import { notFound, useRouter, useParams } from "next/navigation"
 import { Star, Brain, Calendar, ArrowLeft } from "lucide-react"
-import { doc, getDoc } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { doc, getDoc, addDoc, collection, serverTimestamp } from "firebase/firestore"
+import { db, auth } from "@/lib/firebase"
+import { useAuthState } from "react-firebase-hooks/auth"
 import type { User } from "@/lib/types"
 
 import { Badge } from "@/components/ui/badge"
@@ -14,19 +15,26 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast"
 
 export default function PsychologistProfilePage() {
   const params = useParams()
   const router = useRouter()
+  const { toast } = useToast()
+  const [currentUser] = useAuthState(auth)
+
   const [psychologist, setPsychologist] = React.useState<User | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
+  const [isBooking, setIsBooking] = React.useState(false)
+
+  const psychologistId = params.id as string
 
   React.useEffect(() => {
-    if (!params.id) return
+    if (!psychologistId) return
     const fetchPsychologist = async () => {
       setIsLoading(true)
       try {
-        const psychologistDocRef = doc(db, "users", params.id as string)
+        const psychologistDocRef = doc(db, "users", psychologistId)
         const psychologistDoc = await getDoc(psychologistDocRef)
         if (psychologistDoc.exists() && psychologistDoc.data().isTutor) {
           setPsychologist({ id: psychologistDoc.id, ...psychologistDoc.data() } as User)
@@ -41,7 +49,52 @@ export default function PsychologistProfilePage() {
       }
     }
     fetchPsychologist()
-  }, [params.id])
+  }, [psychologistId])
+
+  const handleBookSession = async () => {
+    if (!currentUser) {
+      toast({
+        title: "Inicia sesión",
+        description: "Debes iniciar sesión para agendar una cita.",
+        variant: "destructive",
+      })
+      router.push("/")
+      return
+    }
+
+    if (!psychologist) return;
+
+    setIsBooking(true)
+    try {
+        await addDoc(collection(db, "sessions"), {
+            studentId: currentUser.uid,
+            tutorId: psychologist.id,
+            status: 'pending',
+            createdAt: serverTimestamp(),
+            course: psychologist.courses?.[0] || 'Consulta General', // Default specialty
+             tutor: { // Denormalize psychologist data
+                name: psychologist.name,
+                imageUrl: psychologist.imageUrl,
+            },
+        });
+
+        toast({
+            title: "Solicitud Enviada",
+            description: `Tu solicitud de sesión con ${psychologist.name} ha sido enviada.`,
+        })
+        router.push("/dashboard");
+
+    } catch (error) {
+        console.error("Error booking session:", error)
+        toast({
+            title: "Error",
+            description: "No se pudo agendar la sesión. Inténtalo de nuevo.",
+            variant: "destructive",
+        })
+    } finally {
+        setIsBooking(false)
+    }
+  }
 
 
   if (isLoading) {
@@ -94,7 +147,7 @@ export default function PsychologistProfilePage() {
           <div className="flex flex-col items-center text-center">
             <div className="relative h-40 w-40 rounded-full overflow-hidden border-4 border-primary/20">
               <Image
-                src={psychologist.imageUrl}
+                src={psychologist.imageUrl || 'https://placehold.co/400x400.png'}
                 alt={psychologist.name}
                 fill
                 className="object-cover"
@@ -109,8 +162,9 @@ export default function PsychologistProfilePage() {
               </div>
               <span>({psychologist.reviews} reseñas)</span>
             </div>
-            <Button size="lg" className="mt-6 w-full">
-              <Calendar className="mr-2 h-5 w-5" /> Agendar una Sesión
+            <Button size="lg" className="mt-6 w-full" onClick={handleBookSession} disabled={isBooking}>
+              <Calendar className="mr-2 h-5 w-5" /> 
+              {isBooking ? 'Agendando...' : 'Agendar una Sesión'}
             </Button>
           </div>
 

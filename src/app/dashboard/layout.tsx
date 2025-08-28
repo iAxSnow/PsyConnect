@@ -7,7 +7,8 @@ import { usePathname, useRouter } from "next/navigation"
 import {
   User,
   LogOut,
-  X
+  X,
+  PanelLeft
 } from "lucide-react"
 import { signOut } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
@@ -69,7 +70,7 @@ export default function DashboardLayout({
         if (user) {
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists() && userDoc.data().isTutor) { // isTutor is legacy for psychologist
+            if (userDoc.exists() && userDoc.data().isTutor) {
                 setIsPsychologist(true);
             }
         }
@@ -96,7 +97,8 @@ export default function DashboardLayout({
   }
 
   const navItems = [
-    { href: "/profile", icon: User, label: "Perfil" },
+    { href: "/dashboard", icon: PanelLeft, label: "Panel", psychologistOnly: false },
+    { href: "/profile", icon: User, label: "Perfil", psychologistOnly: false },
   ]
 
   const getPageTitle = () => {
@@ -104,6 +106,7 @@ export default function DashboardLayout({
     const item = navItems.find(item => pathname.startsWith(item.href));
     if (item) return item.label;
     if (pathname.startsWith('/psychologists/')) return "Perfil del Psicólogo";
+    if (pathname.startsWith('/sessions/')) return "Sala de Sesión";
     return "Panel";
   }
 
@@ -118,7 +121,7 @@ export default function DashboardLayout({
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {navItems.filter(item => isPsychologist ? true : !item.psychologistOnly).map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <Link href={item.href}>
                     <SidebarMenuButton

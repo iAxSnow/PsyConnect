@@ -4,7 +4,7 @@
 import * as React from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Edit, Calendar, History, Star, ArrowLeft } from "lucide-react"
+import { Edit, Calendar, History, Star, ArrowLeft, MessageSquare } from "lucide-react"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { auth, db } from "@/lib/firebase"
 import { getStudentSessions } from "@/services/sessions"
@@ -34,7 +34,7 @@ import type { Session, User as AppUser } from "@/lib/types"
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [user, loadingAuth, errorAuth] = useAuthState(auth)
+  const [user, loadingAuth] = useAuthState(auth)
   const [appUser, setAppUser] = React.useState<AppUser | null>(null);
   const [sessions, setSessions] = React.useState<Session[]>([])
   const [loadingData, setLoadingData] = React.useState(true)
@@ -66,8 +66,30 @@ export default function ProfilePage() {
     }
   }, [user, loadingAuth, router])
 
-  const scheduledSessions = sessions.filter(s => s.status === 'scheduled');
-  const pastSessions = sessions.filter(s => s.status !== 'scheduled');
+  const activeSessions = sessions.filter(s => s.status === 'accepted' || s.status === 'pending');
+  const pastSessions = sessions.filter(s => s.status !== 'accepted' && s.status !== 'pending');
+
+  const getBadgeVariant = (status: Session['status']) => {
+    switch (status) {
+        case 'completed': return 'default';
+        case 'accepted': return 'success';
+        case 'pending': return 'secondary';
+        case 'cancelled':
+        case 'declined': return 'destructive'
+        default: return 'outline';
+    }
+  }
+
+  const getStatusText = (status: Session['status']) => {
+    const map: Record<Session['status'], string> = {
+        'pending': 'Pendiente',
+        'accepted': 'Aceptada',
+        'completed': 'Completada',
+        'cancelled': 'Cancelada',
+        'declined': 'Rechazada'
+    }
+    return map[status];
+  }
 
   const SessionRow = ({ session }: { session: Session }) => (
     <TableRow>
@@ -83,14 +105,19 @@ export default function ProfilePage() {
           </div>
         </div>
       </TableCell>
-      <TableCell>{new Date(session.date).toLocaleDateString()}</TableCell>
+      <TableCell>{session.createdAt.toDate().toLocaleDateString()}</TableCell>
       <TableCell>
-        <Badge variant={session.status === 'completed' ? 'default' : 'secondary'} className="capitalize bg-green-100 text-green-800">
-            {session.status === 'completed' ? 'Completada' : (session.status === 'scheduled' ? 'Programada' : 'Cancelada')}
+        <Badge variant={getBadgeVariant(session.status)} className="capitalize">
+            {getStatusText(session.status)}
         </Badge>
       </TableCell>
       <TableCell className="text-right">
         {session.status === 'completed' && <RatingDialog />}
+        {session.status === 'accepted' && (
+             <Button variant="outline" size="sm" onClick={() => router.push(`/sessions/${session.id}`)}>
+                <MessageSquare className="mr-2 h-4 w-4"/> Ir al Chat
+            </Button>
+        )}
       </TableCell>
     </TableRow>
   )
@@ -156,28 +183,28 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="scheduled">
+      <Tabs defaultValue="active">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="scheduled">
+          <TabsTrigger value="active">
             <Calendar className="mr-2 h-4 w-4" />
-            Próximas Sesiones
+            Sesiones Activas
           </TabsTrigger>
           <TabsTrigger value="history">
             <History className="mr-2 h-4 w-4" />
             Historial de Sesiones
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="scheduled">
+        <TabsContent value="active">
           <Card>
             <CardHeader>
-              <CardTitle>Próximas Sesiones</CardTitle>
+              <CardTitle>Sesiones Activas</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{isPsychologist ? "Usuario" : "Psicólogo"}</TableHead>
-                    <TableHead>Fecha</TableHead>
+                    <TableHead>Fecha Solicitud</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead><span className="sr-only">Acciones</span></TableHead>
                   </TableRow>
@@ -185,12 +212,12 @@ export default function ProfilePage() {
                 <TableBody>
                   {loadingData ? (
                      <TableRow><TableCell colSpan={4} className="text-center h-24"><Skeleton className="h-8 w-full" /></TableCell></TableRow>
-                  ) : scheduledSessions.length > 0 ? (
-                    scheduledSessions.map(session => <SessionRow key={session.id} session={session} />)
+                  ) : activeSessions.length > 0 ? (
+                    activeSessions.map(session => <SessionRow key={session.id} session={session} />)
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center h-24">
-                        No hay próximas sesiones.
+                        No hay sesiones activas.
                       </TableCell>
                     </TableRow>
                   )}

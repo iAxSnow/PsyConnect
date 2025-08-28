@@ -1,7 +1,37 @@
-import type { User, Course } from './types';
+// @/lib/seed-data.ts
+import type { User, Course, Session } from './types';
+import { Timestamp } from 'firebase/firestore';
 
-// Especialidades de Psicología
-export const courses: Omit<Course, 'id'>[] = [
+
+// This data is for seeding the database for testing and demonstration purposes.
+
+// --- TEST USERS ---
+// Note: Passwords are not stored here. They should be manually created
+// or handled via a secure admin process. For this script, we'll create them with fixed UIDs.
+
+export const studentUser: Omit<User, 'id'> = {
+  uid: 'student_test_uid',
+  name: 'Usuario Anónimo',
+  email: 'student.test@gmail.com',
+  imageUrl: 'https://placehold.co/200x200/EBF4FF/76A9FA?text=A',
+  isTutor: false,
+};
+
+export const psychologistUser: Omit<User, 'id'> = {
+  uid: 'psychologist_test_uid',
+  name: 'Dra. Ana Molina',
+  email: 'psyc.test@gmail.com',
+  imageUrl: 'https://placehold.co/400x400/d1d4f7/434b8c?text=AP',
+  isTutor: true,
+  rating: 4.9,
+  reviews: 150,
+  hourlyRate: 45000,
+  courses: ['Psicología Clínica', 'Terapia Cognitivo-Conductual (TCC)', 'Trastornos de Ansiedad'],
+  bio: 'Psicóloga clínica con más de 15 años de experiencia. Me especializo en terapia cognitivo-conductual para tratar la ansiedad, la depresión y el estrés. Mi enfoque es colaborativo y centrado en soluciones.'
+};
+
+// --- SPECIALTIES (formerly Courses) ---
+export const specialties: Omit<Course, 'id'>[] = [
   { name: 'Psicología Clínica' },
   { name: 'Terapia Cognitivo-Conductual (TCC)' },
   { name: 'Psicoanálisis' },
@@ -19,50 +49,21 @@ export const courses: Omit<Course, 'id'>[] = [
   { name: 'Psicogerontología' },
 ];
 
-
-export const tutors: Omit<User, 'id' | 'uid'>[] = [
-  {
-    name: 'Dr. Alejandro Vargas',
-    email: 'alejandro.vargas@psyconnect.cl',
-    imageUrl: 'https://placehold.co/200x200.png',
-    isTutor: true, // This marks the user as a psychologist
-    rating: 4.9,
-    reviews: 150,
-    hourlyRate: 45000,
-    courses: ['Psicología Clínica', 'Terapia Cognitivo-Conductual (TCC)', 'Trastornos de Ansiedad'],
-    bio: 'Psicólogo clínico con más de 15 años de experiencia. Me especializo en terapia cognitivo-conductual para tratar la ansiedad, la depresión y el estrés. Mi enfoque es colaborativo y centrado en soluciones.'
-  },
-  {
-    name: 'Dra. Isabela Reyes',
-    email: 'isabela.reyes@psyconnect.cl',
-    imageUrl: 'https://placehold.co/200x200.png',
-    isTutor: true,
-    rating: 5.0,
-    reviews: 210,
-    hourlyRate: 50000,
-    courses: ['Terapia de Pareja y Familia', 'Psicología Humanista'],
-    bio: 'Terapeuta familiar y de pareja con un enfoque sistémico y humanista. Ayudo a las personas a mejorar sus relaciones y a encontrar un mayor bienestar a través de la comunicación y la empatía.'
-  },
-  {
-    name: 'Lic. Matías Castro',
-    email: 'matias.castro@psyconnect.cl',
-    imageUrl: 'https://placehold.co/200x200.png',
-    isTutor: true,
-    rating: 4.8,
-    reviews: 90,
-    hourlyRate: 35000,
-    courses: ['Psicología Infantil y del Adolescente', 'Mindfulness y Bienestar'],
-    bio: 'Psicólogo especializado en el trabajo con niños y adolescentes. Utilizo técnicas basadas en el juego y el mindfulness para abordar desafíos emocionales y conductuales en un entorno seguro y de confianza.'
-  },
-  {
-    name: 'Lic. Valentina Torres',
-    email: 'valentina.torres@psyconnect.cl',
-    imageUrl: 'https://placehold.co/200x200.png',
-    isTutor: true,
-    rating: 4.9,
-    reviews: 125,
-    hourlyRate: 40000,
-    courses: ['Neuropsicología', 'Depresión y Trastornos del Ánimo'],
-    bio: 'Neuropsicóloga apasionada por la relación entre el cerebro y la conducta. Ofrezco evaluación y rehabilitación neurocognitiva para adultos, y terapia de apoyo para trastornos del ánimo.'
-  }
-];
+// --- TEST SESSION ---
+// A pending session from the test student to the test psychologist
+export const testSession: Omit<Session, 'id'> = {
+    studentId: studentUser.uid,
+    tutorId: psychologistUser.uid,
+    status: 'pending',
+    course: 'Trastornos de Ansiedad',
+    // Denormalized data for easy display
+    student: {
+        name: studentUser.name,
+        imageUrl: studentUser.imageUrl,
+    },
+    tutor: {
+        name: psychologistUser.name,
+        imageUrl: psychologistUser.imageUrl,
+    },
+    createdAt: Timestamp.now(),
+}
