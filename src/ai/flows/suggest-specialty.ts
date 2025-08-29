@@ -45,7 +45,7 @@ You must choose exactly one specialty from the following list of available speci
 User's problem: "{{problemDescription}}"
 
 Based on the user's problem, recommend the single most relevant specialty from the list provided. Also, provide a brief, friendly, one-sentence explanation for why you are recommending it, addressing the user directly.
-For example: "Te recomiendo 'Terapia de Pareja y Familia' porque mencionaste que tienes problemas con tu cónyuge."
+Start your reasoning with "¡Listo! ". For example: "¡Listo! Te recomiendo 'Terapia de Pareja y Familia' porque mencionaste que tienes problemas con tu cónyuge."
 `,
 });
 

@@ -18,7 +18,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: string) => void }) {
   const [problem, setProblem] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
-  const [aiResponse, setAiResponse] = React.useState("")
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,14 +25,22 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
     if (!problem.trim()) return
     
     setIsLoading(true)
-    setAiResponse("")
     
     const result = await suggestSpecialty({ problemDescription: problem })
     setIsLoading(false)
 
     if (result.success && result.data) {
       onSpecialtySuggest(result.data.specialty)
-      setAiResponse(result.data.reasoning)
+      toast({
+        title: (
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <span className="font-bold">Sugerencia de la IA</span>
+          </div>
+        ),
+        description: result.data.reasoning,
+      })
+      setProblem("") // Clear input after successful suggestion
     } else {
       toast({
         title: "Error de la IA",
@@ -69,26 +76,6 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
             <Send />
           </Button>
        </form>
-
-        {isLoading && (
-            <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-48" />
-                </div>
-            </div>
-        )}
-
-       {aiResponse && (
-         <div className="flex items-end gap-3 animate-in fade-in">
-           <Avatar className="h-10 w-10 border-2 border-primary/50">
-             <AvatarFallback><Sparkles className="h-5 w-5"/></AvatarFallback>
-           </Avatar>
-           <div className="rounded-lg bg-primary/10 p-3">
-              <p className="text-sm text-primary-foreground">{aiResponse}</p>
-           </div>
-         </div>
-       )}
     </div>
   )
 }
