@@ -257,7 +257,7 @@ export default function ProfilePage() {
                       </TableCell>
                     </TableRow>
                   )}
-                </tbody>
+                </TableBody>
               </Table>
             </CardContent>
           </Card>
