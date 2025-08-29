@@ -25,7 +25,7 @@ export function PsychologistCard({ psychologist }: PsychologistCardProps) {
   }
 
   return (
-    <Link href={`/psychologists/${psychologist.id}`}>
+    <Link href={`/tutors/${psychologist.id}`}>
       <Card className="h-full flex flex-col transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
         <CardHeader className="p-0">
           <div className="relative h-48 w-full">
