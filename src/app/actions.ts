@@ -1,16 +1,16 @@
 // @/app/actions.ts
 "use server"
 
-import { suggestPsychologists as suggestPsychologistsFlow, SuggestPsychologistsInput } from "@/ai/flows/suggest-tutors"
+import { suggestSpecialty as suggestSpecialtyFlow, SuggestSpecialtyInput, SuggestSpecialtyOutput } from "@/ai/flows/suggest-specialty"
 
-export async function suggestPsychologists(
-  input: SuggestPsychologistsInput
-): Promise<{ success: boolean; data?: { psychologistSuggestions: string[] }; error?: string }> {
+export async function suggestSpecialty(
+  input: SuggestSpecialtyInput
+): Promise<{ success: boolean; data?: SuggestSpecialtyOutput; error?: string }> {
   try {
-    const result = await suggestPsychologistsFlow(input)
+    const result = await suggestSpecialtyFlow(input)
     return { success: true, data: result }
   } catch (error) {
-    console.error("Error in suggestPsychologists action:", error)
-    return { success: false, error: "An unexpected error occurred while fetching psychologist suggestions." }
+    console.error("Error in suggestSpecialty action:", error)
+    return { success: false, error: "An unexpected error occurred while fetching suggestions." }
   }
 }

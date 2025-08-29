@@ -1,4 +1,4 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/suggest-tutors.ts';
+import '@/ai/flows/suggest-specialty.ts';
