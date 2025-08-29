@@ -15,7 +15,7 @@ export interface Session {
   sessionDate?: Timestamp; // The scheduled date/time for the session
   // Denormalized data for easier access
   tutor: Pick<User, 'name' | 'imageUrl'>;
-  student: Pick<User, 'name' | 'imageUrl'>;
+  student?: Pick<User, 'name' | 'imageUrl'>;
 }
 
 export interface User {
