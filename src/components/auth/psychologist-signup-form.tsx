@@ -6,10 +6,11 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Upload, DollarSign, Brain } from "lucide-react"
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
-import { doc, setDoc, collection, getDocs } from "firebase/firestore"
+import { doc, setDoc } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { useToast } from "@/hooks/use-toast"
 import { auth, db, storage } from "@/lib/firebase"
+import { getAllCourses } from "@/services/courses"
 import type { Course } from "@/lib/types"
 
 import { Button } from "@/components/ui/button"
@@ -47,9 +48,7 @@ export function PsychologistSignupForm() {
     const fetchCourses = async () => {
       setIsCoursesLoading(true)
       try {
-        const coursesCollection = collection(db, "courses")
-        const coursesSnapshot = await getDocs(coursesCollection)
-        const coursesList = coursesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course))
+        const coursesList = await getAllCourses();
         setAllCourses(coursesList)
       } catch (error) {
         console.error("Error fetching courses:", error)

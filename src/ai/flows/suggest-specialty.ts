@@ -9,8 +9,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getAvailableSpecialties } from '@/services/courses';
+
 
 const SuggestSpecialtyInputSchema = z.object({
   problemDescription: z.string().describe("The user's description of their problem."),
@@ -27,13 +27,6 @@ export async function suggestSpecialty(input: SuggestSpecialtyInput): Promise<Su
   return suggestSpecialtyFlow(input);
 }
 
-// Helper to get available specialties from Firestore
-const getAvailableSpecialties = async (): Promise<string[]> => {
-    const coursesCollection = collection(db, "courses");
-    const coursesSnapshot = await getDocs(coursesCollection);
-    const coursesList = coursesSnapshot.docs.map(doc => doc.data().name as string);
-    return coursesList;
-}
 
 const prompt = ai.definePrompt({
   name: 'suggestSpecialtyPrompt',
