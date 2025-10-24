@@ -130,9 +130,9 @@ export function UserDashboard() {
 
   return (
     <div className="space-y-8">
-      {user && <SessionStatus userId={user.uid} />}
-      
       <AIAssistant onSpecialtySuggest={handleSpecialtySuggestion} />
+      
+      {user && <SessionStatus userId={user.uid} />}
 
       <div>
         <h2 className="text-2xl font-bold tracking-tight mb-4">Encuentra a tu psicólogo</h2>
