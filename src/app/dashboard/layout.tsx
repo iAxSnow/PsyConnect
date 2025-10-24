@@ -59,7 +59,7 @@ export default function DashboardLayout({
   React.useEffect(() => {
     const checkUserRole = async () => {
         if (user) {
-            // Check for admin role first
+            // Check for admin role
             if (user.email === ADMIN_EMAIL) {
                 setIsAdmin(true);
             }
@@ -70,6 +70,10 @@ export default function DashboardLayout({
             if (userDoc.exists() && userDoc.data().isTutor) {
                 setIsPsychologist(true);
             }
+        } else {
+            // Reset roles if user logs out
+            setIsAdmin(false);
+            setIsPsychologist(false);
         }
     }
     checkUserRole();

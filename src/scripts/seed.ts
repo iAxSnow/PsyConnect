@@ -1,6 +1,6 @@
 // @/scripts/seed.ts
 import { collection, doc, setDoc, writeBatch, getDocs, deleteDoc } from 'firebase/firestore';
-import { getAuth, createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db } from '../lib/firebase';
 import { specialties, studentUser, psychologistUser, adminUser, testSession } from '../lib/seed-data';
 
@@ -24,28 +24,31 @@ async function clearCollection(collectionName: string) {
 
 // Helper to create a user in Auth and Firestore
 async function seedUser(auth: any, userData: any, password: any) {
+    let user = null;
     try {
-        // We delete the user first to ensure a clean state, as Auth doesn't have a 'clear all'
-        // This is not ideal for production but works for a controlled seed script.
-        // A better approach in a real app would be using the Firebase Admin SDK.
-        // For now, this is a placeholder for manual user deletion if script fails.
         console.log(`Attempting to create user: ${userData.email}`);
         const userCredential = await createUserWithEmailAndPassword(auth, userData.email, password);
-        const user = userCredential.user;
-        
-        // Use the UID from Auth as the document ID in Firestore
-        await setDoc(doc(db, 'users', user.uid), { ...userData, uid: user.uid });
-        console.log(`Successfully created user in Auth and Firestore: ${userData.email}`);
+        user = userCredential.user;
+        console.log(`Successfully created user in Auth: ${userData.email}`);
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
-            console.log(`User ${userData.email} already exists in Auth. Skipping Auth creation, will update Firestore.`);
-            // If user exists, we still want to ensure their Firestore data is correct
-            await setDoc(doc(db, 'users', userData.uid), userData);
-            console.log(`Ensured Firestore data is up-to-date for ${userData.email}`);
+            console.log(`User ${userData.email} already exists in Auth. Skipping Auth creation, will ensure Firestore data is up-to-date.`);
         } else {
-            console.error(`Error creating user ${userData.email}:`, error.message);
+            console.error(`Critical error creating user ${userData.email} in Auth:`, error.message);
             throw error; // Throw to stop the script if a critical error occurs
         }
+    }
+    
+    // Use the predefined UID for consistency, or the newly created one.
+    const finalUid = user ? user.uid : userData.uid;
+    const dataToSet = { ...userData, uid: finalUid };
+    
+    try {
+        await setDoc(doc(db, 'users', finalUid), dataToSet);
+        console.log(`Successfully set/updated user data in Firestore for: ${userData.email}`);
+    } catch (firestoreError) {
+        console.error(`Error writing user data to Firestore for ${userData.email}:`, firestoreError);
+        throw firestoreError;
     }
 }
 
