@@ -8,7 +8,7 @@ import { ArrowLeft, Calendar, Brain, Clock, CheckCircle } from "lucide-react"
 import { doc, getDoc, addDoc, collection, serverTimestamp, Timestamp } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase"
 import { useAuthState } from "react-firebase-hooks/auth"
-import type { User } from "@/lib/types"
+import type { User as AppUser, User } from "@/lib/types"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,16 +31,23 @@ export default function BookSessionPage() {
 
   const [selectedSpecialty, setSelectedSpecialty] = React.useState<string>("")
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date())
+  const [appUser, setAppUser] = React.useState<AppUser | null>(null);
 
   const psychologistId = params.id as string
 
   React.useEffect(() => {
-    if (!psychologistId) return
-    const fetchPsychologist = async () => {
+    if (!psychologistId || !currentUser) return
+    const fetchInitialData = async () => {
       setIsLoading(true)
       try {
         const psychologistDocRef = doc(db, "users", psychologistId)
-        const psychologistDoc = await getDoc(psychologistDocRef)
+        const userDocRef = doc(db, "users", currentUser.uid);
+
+        const [psychologistDoc, userDoc] = await Promise.all([
+            getDoc(psychologistDocRef),
+            getDoc(userDocRef)
+        ]);
+
         if (psychologistDoc.exists() && psychologistDoc.data().isTutor) {
           const psychoData = { id: psychologistDoc.id, ...psychologistDoc.data() } as User
           setPsychologist(psychoData)
@@ -50,18 +57,23 @@ export default function BookSessionPage() {
         } else {
           notFound()
         }
+
+        if (userDoc.exists()) {
+          setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
+        }
+
       } catch (error) {
-        console.error("Error fetching psychologist:", error)
+        console.error("Error fetching data:", error)
         notFound()
       } finally {
         setIsLoading(false)
       }
     }
-    fetchPsychologist()
-  }, [psychologistId])
+    fetchInitialData()
+  }, [psychologistId, currentUser])
   
   const handleBookSession = async () => {
-    if (!currentUser) {
+    if (!currentUser || !appUser) {
       toast({
         title: "Inicia sesión",
         description: "Debes iniciar sesión para agendar una cita.",
@@ -82,8 +94,9 @@ export default function BookSessionPage() {
 
     setIsBooking(true)
     try {
-        const studentName = currentUser.displayName || "Usuario Anónimo";
-        const studentImageUrl = currentUser.photoURL || `https://placehold.co/200x200/EBF4FF/76A9FA?text=${studentName.charAt(0).toUpperCase()}`;
+        const studentName = appUser.name;
+        const studentImageUrl = appUser.imageUrl;
+        const studentAge = appUser.age;
 
         await addDoc(collection(db, "sessions"), {
             studentId: currentUser.uid,
@@ -98,7 +111,8 @@ export default function BookSessionPage() {
             },
             student: {
                 name: studentName,
-                imageUrl: studentImageUrl
+                imageUrl: studentImageUrl,
+                age: studentAge
             }
         });
 

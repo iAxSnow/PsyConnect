@@ -18,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Check, X, MessageSquare } from "lucide-react"
+import { Check, X, User } from "lucide-react"
 
 interface SessionRequestCardProps {
   request: Session,
@@ -64,11 +64,11 @@ export function SessionRequestCard({ request, onUpdate }: SessionRequestCardProp
         <div className="flex items-center gap-4">
           <Avatar className="h-12 w-12">
             <AvatarImage src={student?.imageUrl} alt={student?.name} data-ai-hint="person" />
-            <AvatarFallback>{student?.name.charAt(0) || 'U'}</AvatarFallback>
+            <AvatarFallback><User /></AvatarFallback>
           </Avatar>
           <div>
             <CardTitle>{student?.name}</CardTitle>
-            <CardDescription>quiere una sesión contigo.</CardDescription>
+            <CardDescription>{student?.age} años</CardDescription>
           </div>
         </div>
       </CardHeader>

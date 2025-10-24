@@ -18,6 +18,7 @@ export function SignupForm() {
   const router = useRouter()
   const { toast } = useToast()
   const [name, setName] = React.useState("")
+  const [age, setAge] = React.useState("")
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false)
@@ -32,7 +33,7 @@ export function SignupForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      const displayName = name.trim() === "" ? "Usuario Anónimo" : name;
+      const displayName = name.trim();
       
       // 2. Update Firebase Auth profile
       await updateProfile(user, { displayName: displayName, photoURL: `https://placehold.co/200x200/EBF4FF/76A9FA?text=${displayName.charAt(0).toUpperCase()}` });
@@ -44,7 +45,8 @@ export function SignupForm() {
         email: email,
         isTutor: false, // This is a regular user, not a psychologist
         name: displayName,
-        imageUrl: `https://placehold.co/200x200/EBF4FF/76A9FA?text=${displayName.charAt(0).toUpperCase()}`, // Generic anonymous avatar
+        age: Number(age),
+        imageUrl: `https://placehold.co/200x200/EBF4FF/76A9FA?text=${displayName.charAt(0).toUpperCase()}`,
       });
 
       toast({
@@ -89,13 +91,17 @@ export function SignupForm() {
             <div className="text-center">
                 <h1 className="text-2xl font-bold">Crear una cuenta de usuario</h1>
                 <p className="text-muted-foreground">
-                    Ingresa tus datos. Tu identidad real será siempre anónima.
+                    Ingresa tus datos para encontrar al psicólogo ideal.
                 </p>
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
-                  <Label htmlFor="name">Nombre de Usuario (Opcional)</Label>
-                  <Input id="name" type="text" placeholder="Usuario Anónimo" value={name} onChange={e => setName(e.target.value)} />
+                  <Label htmlFor="name">Nombre Completo</Label>
+                  <Input id="name" type="text" placeholder="Juan Pérez" required value={name} onChange={e => setName(e.target.value)} />
+              </div>
+               <div className="space-y-2">
+                  <Label htmlFor="age">Edad</Label>
+                  <Input id="age" type="number" placeholder="25" required value={age} onChange={e => setAge(e.target.value)} />
               </div>
               <div className="space-y-2">
                   <Label htmlFor="email">Correo</Label>

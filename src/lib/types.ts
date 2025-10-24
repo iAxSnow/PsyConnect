@@ -15,13 +15,14 @@ export interface Session {
   sessionDate?: Timestamp; // The scheduled date/time for the session
   // Denormalized data for easier access
   tutor: Pick<User, 'name' | 'imageUrl'>;
-  student?: Pick<User, 'name' | 'imageUrl'>;
+  student?: Pick<User, 'name' | 'imageUrl' | 'age'>;
 }
 
 export interface User {
   id: string; // Document ID from Firestore
   uid: string; // UID from Firebase Auth
-  name: string; // Can be "Usuario Anónimo"
+  name: string;
+  age: number;
   email: string;
   imageUrl: string; // Can be a generic avatar
   isTutor: boolean; // True if the user is a psychologist
