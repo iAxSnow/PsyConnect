@@ -4,9 +4,10 @@
 import * as React from "react"
 import { Search, Sparkles, Send } from "lucide-react"
 import { collection, query, where, getDocs } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
 import { suggestSpecialty } from "@/app/actions"
+import { useAuthState } from "react-firebase-hooks/auth"
 
 import { Input } from "@/components/ui/input"
 import { PsychologistCard } from "@/components/dashboard/psychologist-card"
@@ -14,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { SessionStatus } from "@/components/dashboard/session-status"
 
 function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: string) => void }) {
   const [problem, setProblem] = React.useState("")
@@ -81,6 +83,7 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
 }
 
 export function UserDashboard() {
+  const [user, loadingAuth] = useAuthState(auth)
   const [psychologists, setPsychologists] = React.useState<User[]>([])
   const [filteredPsychologists, setFilteredPsychologists] = React.useState<User[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
@@ -127,6 +130,8 @@ export function UserDashboard() {
 
   return (
     <div className="space-y-8">
+      {user && <SessionStatus userId={user.uid} />}
+      
       <AIAssistant onSpecialtySuggest={handleSpecialtySuggestion} />
 
       <div>
