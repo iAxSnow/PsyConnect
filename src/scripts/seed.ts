@@ -22,31 +22,32 @@ async function clearCollection(collectionName: string) {
     console.log(`Successfully cleared collection: ${collectionName}`);
 }
 
-// Helper to create a user in Auth and Firestore
+// Robust helper to create a user in Auth and Firestore
 async function seedUser(auth: any, userData: any, password: any) {
-    let user = null;
+    let authUid = userData.uid;
+    
     try {
-        console.log(`Attempting to create user: ${userData.email}`);
+        console.log(`Attempting to create user in Auth: ${userData.email}`);
         const userCredential = await createUserWithEmailAndPassword(auth, userData.email, password);
-        user = userCredential.user;
-        console.log(`Successfully created user in Auth: ${userData.email}`);
+        authUid = userCredential.user.uid;
+        console.log(`Successfully created user in Auth with new UID: ${authUid}`);
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
-            console.log(`User ${userData.email} already exists in Auth. Skipping Auth creation, will ensure Firestore data is up-to-date.`);
+            console.log(`User ${userData.email} already exists in Auth. Will use existing UID: ${authUid}`);
         } else {
-            console.error(`Critical error creating user ${userData.email} in Auth:`, error.message);
-            console.error(`This likely means the password "${password}" is too weak or another validation failed.`);
-            throw error; // Throw to stop the script if a critical error occurs
+            console.error(`\nCRITICAL ERROR creating user ${userData.email} in Auth:`, error.message);
+            console.error(`This might be due to a weak password or other Firebase Auth validation rules.`);
+            console.error('The script will stop to prevent inconsistent data.\n');
+            throw error; // Stop the script if a critical error occurs
         }
     }
     
-    // Use the predefined UID for consistency if auth creation was skipped, or the new UID if it was created.
-    const finalUid = user ? user.uid : userData.uid;
-    const dataToSet = { ...userData, uid: finalUid };
+    // Use the confirmed UID from Auth to write to Firestore
+    const dataToSet = { ...userData, uid: authUid };
     
     try {
-        await setDoc(doc(db, 'users', finalUid), dataToSet);
-        console.log(`Successfully set/updated user data in Firestore for: ${userData.email}`);
+        await setDoc(doc(db, 'users', authUid), dataToSet);
+        console.log(`Successfully set/updated user data in Firestore for: ${userData.email} (UID: ${authUid})`);
     } catch (firestoreError) {
         console.error(`Error writing user data to Firestore for ${userData.email}:`, firestoreError);
         throw firestoreError;
@@ -72,9 +73,9 @@ async function seedUsers() {
     const auth = getAuth();
     console.log('Seeding users...');
     // Important: Use fixed passwords for test users for predictability
+    await seedUser(auth, adminUser, 'admin123');
     await seedUser(auth, studentUser, 'password123');
     await seedUser(auth, psychologistUser, 'password123');
-    await seedUser(auth, adminUser, 'admin123');
     console.log('Successfully seeded users!');
 }
 

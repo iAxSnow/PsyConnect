@@ -59,25 +59,34 @@ export default function DashboardLayout({
   React.useEffect(() => {
     const checkUserRole = async () => {
         if (user) {
-            // Check for admin role
+            // Check for admin role first
             if (user.email === ADMIN_EMAIL) {
                 setIsAdmin(true);
+            } else {
+                setIsAdmin(false);
             }
 
             // Check for psychologist role
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists() && userDoc.data().isTutor) {
-                setIsPsychologist(true);
+            try {
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists() && userDoc.data().isTutor) {
+                    setIsPsychologist(true);
+                } else {
+                    setIsPsychologist(false);
+                }
+            } catch (e) {
+                console.error("Error fetching user role from Firestore:", e);
+                setIsPsychologist(false);
             }
-        } else {
-            // Reset roles if user logs out
+        } else if (!loading) {
+            // Reset roles if user logs out or is not loaded
             setIsAdmin(false);
             setIsPsychologist(false);
         }
     }
     checkUserRole();
-  }, [user])
+  }, [user, loading])
 
 
   const handleSignOut = async () => {
