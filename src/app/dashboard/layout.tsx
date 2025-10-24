@@ -7,7 +7,8 @@ import { usePathname, useRouter } from "next/navigation"
 import {
   User,
   LogOut,
-  PanelLeft
+  PanelLeft,
+  Shield,
 } from "lucide-react"
 import { signOut } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
@@ -31,6 +32,8 @@ import { useToast } from "@/hooks/use-toast"
 import { SheetTitle } from "@/components/ui/sheet"
 
 
+const ADMIN_EMAIL = "psyc.test@gmail.com";
+
 export default function DashboardLayout({
   children,
 }: {
@@ -41,6 +44,7 @@ export default function DashboardLayout({
   const { toast } = useToast()
   const [user, loading, error] = useAuthState(auth)
   const [isPsychologist, setIsPsychologist] = React.useState(false)
+  const [isAdmin, setIsAdmin] = React.useState(false)
 
   React.useEffect(() => {
     if (error) {
@@ -59,6 +63,9 @@ export default function DashboardLayout({
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists() && userDoc.data().isTutor) {
                 setIsPsychologist(true);
+            }
+            if (user.email === ADMIN_EMAIL) {
+                setIsAdmin(true);
             }
         }
     }
@@ -84,8 +91,9 @@ export default function DashboardLayout({
   }
 
   const navItems = [
-    { href: "/dashboard", icon: PanelLeft, label: "Panel", psychologistOnly: false },
-    { href: "/profile", icon: User, label: "Perfil", psychologistOnly: false },
+    { href: "/dashboard", icon: PanelLeft, label: "Panel", psychologistOnly: false, adminOnly: false },
+    { href: "/profile", icon: User, label: "Perfil", psychologistOnly: false, adminOnly: false },
+    { href: "/dashboard/admin", icon: Shield, label: "Panel de Administrador", psychologistOnly: false, adminOnly: true }
   ]
 
   const getPageTitle = () => {
@@ -107,7 +115,11 @@ export default function DashboardLayout({
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.filter(item => isPsychologist ? true : !item.psychologistOnly).map((item) => (
+              {navItems.filter(item => {
+                if(item.adminOnly) return isAdmin;
+                if(isPsychologist) return true;
+                return !item.psychologistOnly;
+              }).map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <Link href={item.href}>
                     <SidebarMenuButton
