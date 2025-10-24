@@ -1,4 +1,6 @@
 // @/app/dashboard/admin/page.tsx
+"use client"
+import { useRouter } from "next/navigation"
 import {
   Table,
   TableBody,
@@ -16,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal } from "lucide-react"
+import { Eye } from "lucide-react"
 
 // Mock data for demonstration
 const reports = [
@@ -24,7 +26,7 @@ const reports = [
     id: "REP001",
     reportedUser: "Usuario Anónimo 1",
     reportedBy: "Dra. Ana Molina",
-    reason: "Comportamiento inapropiado durante la sesión.",
+    reason: "Comportamiento inapropiado durante la sesión. El usuario utilizó lenguaje ofensivo y no respetó los tiempos de habla.",
     status: "Pendiente",
     date: "2023-10-26",
   },
@@ -32,7 +34,7 @@ const reports = [
     id: "REP002",
     reportedUser: "Dra. Ana Molina",
     reportedBy: "Usuario Anónimo 2",
-    reason: "La psicóloga no se presentó a la sesión agendada.",
+    reason: "La psicóloga no se presentó a la sesión agendada en la hora pactada. No hubo aviso previo.",
     status: "En Revisión",
     date: "2023-10-25",
   },
@@ -40,7 +42,7 @@ const reports = [
     id: "REP003",
     reportedUser: "Usuario Anónimo 3",
     reportedBy: "Usuario Anónimo 4",
-    reason: "Spam en el chat de la sesión.",
+    reason: "Spam en el chat de la sesión, enviando enlaces a sitios externos no relacionados con la terapia.",
     status: "Resuelto",
     date: "2023-10-24",
   },
@@ -61,6 +63,7 @@ const getStatusVariant = (status: string) => {
 
 
 export default function AdminPage() {
+    const router = useRouter()
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-bold">Panel de Administrador</h1>
@@ -87,7 +90,7 @@ export default function AdminPage() {
                         </TableHeader>
                         <TableBody>
                             {reports.map((report) => (
-                                <TableRow key={report.id}>
+                                <TableRow key={report.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/dashboard/admin/reports/${report.id}`)}>
                                     <TableCell className="font-medium">{report.reportedUser}</TableCell>
                                     <TableCell>{report.reportedBy}</TableCell>
                                     <TableCell className="max-w-xs truncate">{report.reason}</TableCell>
@@ -95,9 +98,9 @@ export default function AdminPage() {
                                     <TableCell>
                                         <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                                     </TableCell>
-                                     <TableCell>
-                                        <Button variant="ghost" size="icon">
-                                            <MoreHorizontal className="h-4 w-4" />
+                                     <TableCell className="text-right">
+                                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/reports/${report.id}`)}}>
+                                            <Eye className="mr-2 h-4 w-4" /> Ver Detalles
                                         </Button>
                                     </TableCell>
                                 </TableRow>

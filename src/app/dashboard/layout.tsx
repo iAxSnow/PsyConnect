@@ -9,6 +9,7 @@ import {
   LogOut,
   PanelLeft,
   Shield,
+  ArrowLeft
 } from "lucide-react"
 import { signOut } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
@@ -114,12 +115,16 @@ export default function DashboardLayout({
 
   const getPageTitle = () => {
     if (pathname === '/dashboard') return "Panel";
-    const item = navItems.find(item => pathname.startsWith(item.href));
+    if (pathname === '/dashboard/admin') return "Panel de Administrador";
+    if (pathname.startsWith('/dashboard/admin/reports/')) return "Detalle del Reporte";
+    const item = navItems.find(item => pathname.startsWith(item.href) && item.href !== '/dashboard');
     if (item) return item.label;
     if (pathname.startsWith('/psychologists/')) return "Perfil del Psicólogo";
     if (pathname.startsWith('/sessions/')) return "Sala de Sesión";
     return "Panel";
   }
+  
+  const showBackButton = pathname.startsWith('/dashboard/admin/reports/');
 
   return (
     <SidebarProvider>
@@ -139,7 +144,7 @@ export default function DashboardLayout({
                 <SidebarMenuItem key={item.href}>
                   <Link href={item.href}>
                     <SidebarMenuButton
-                      isActive={pathname.startsWith(item.href)}
+                      isActive={pathname.startsWith(item.href) && item.href !== "/"}
                     >
                       <item.icon />
                       <span>{item.label}</span>
@@ -163,6 +168,11 @@ export default function DashboardLayout({
         <SidebarInset>
           <header className="flex h-14 items-center gap-4 border-b bg-card px-6">
             <SidebarTrigger />
+             {showBackButton && (
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.back()}>
+                <ArrowLeft />
+              </Button>
+            )}
             <h1 className="text-lg font-semibold">
               {getPageTitle()}
             </h1>
