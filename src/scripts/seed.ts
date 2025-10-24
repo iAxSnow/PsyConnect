@@ -73,7 +73,7 @@ async function seedUsers() {
     // Important: Use fixed passwords for test users for predictability
     await seedUser(auth, studentUser, 'password123');
     await seedUser(auth, psychologistUser, 'password123');
-    await seedUser(auth, adminUser, 'admin');
+    await seedUser(auth, adminUser, 'admin123');
     console.log('Successfully seeded users!');
 }
 
@@ -102,7 +102,7 @@ async function main() {
   console.log('¡Proceso de siembra completado!');
   console.log('Por favor, reinicia tu servidor de desarrollo para ver los cambios.');
   console.log('Usuarios de prueba:');
-  console.log(`- Administrador: ${adminUser.email} (password: admin)`);
+  console.log(`- Administrador: ${adminUser.email} (password: admin123)`);
   console.log(`- Estudiante: ${studentUser.email} (password: password123)`);
   console.log(`- Psicólogo: ${psychologistUser.email} (password: password123)`);
   console.log('--------------------------------------');
