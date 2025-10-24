@@ -12,10 +12,10 @@ export interface Session {
   status: 'pending' | 'accepted' | 'declined' | 'completed' | 'cancelled';
   course: string; // The specialty for the session
   createdAt: Timestamp;
-  sessionDate?: Timestamp; // The scheduled date/time for the session
+  sessionDate?: Timestamp; // The scheduled date/time for the session, to be agreed upon in chat
   // Denormalized data for easier access
   tutor: Pick<User, 'name' | 'imageUrl'>;
-  student?: Pick<User, 'name' | 'imageUrl' | 'age'>;
+  student: Pick<User, 'name' | 'imageUrl' | 'age'>;
 }
 
 export interface User {

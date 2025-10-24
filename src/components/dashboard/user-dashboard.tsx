@@ -208,7 +208,7 @@ export function UserDashboard() {
                     <SelectValue placeholder="Ordenar por precio" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="default">Ordenar por defecto</SelectItem>
+                    <SelectItem value="default">Ordenar por precio</SelectItem>
                     <SelectItem value="low_to_high">Precio: Menor a Mayor</SelectItem>
                     <SelectItem value="high_to_low">Precio: Mayor a Menor</SelectItem>
                 </SelectContent>
