@@ -8,7 +8,7 @@ import { Edit, Calendar, History, ArrowLeft, MessageSquare } from "lucide-react"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { auth, db } from "@/lib/firebase"
 import { getStudentSessions } from "@/services/sessions"
-import { doc, getDoc } from "firebase/firestore"
+import { doc, getDoc, updateDoc } from "firebase/firestore"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -29,6 +29,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { RatingDialog } from "@/components/profile/rating-dialog"
+import { EditProfileDialog } from "@/components/profile/edit-profile-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Session, User as AppUser } from "@/lib/types"
 
@@ -96,33 +97,43 @@ export default function ProfilePage() {
   const [sessions, setSessions] = React.useState<Session[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   
-  React.useEffect(() => {
-    const fetchData = async () => {
-      if (user) {
-        try {
-          // Fetch user data and sessions in parallel
-          const [userDoc, sessionsList] = await Promise.all([
-             getDoc(doc(db, "users", user.uid)),
-             getStudentSessions(user.uid)
-          ]);
+  const fetchUserData = React.useCallback(async () => {
+    if (user) {
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        const [userDoc, sessionsList] = await Promise.all([
+           getDoc(userDocRef),
+           getStudentSessions(user.uid)
+        ]);
 
-          if (userDoc.exists()) {
-              setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
-          }
-          
-          setSessions(sessionsList)
-        } catch (error) {
-          console.error("Error fetching user data or sessions: ", error)
-        } finally {
-          setIsLoading(false)
+        if (userDoc.exists()) {
+            setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
         }
-      } else if (!loadingAuth) {
-        // If no user and auth is not loading, redirect
-        router.push("/");
+        
+        setSessions(sessionsList)
+      } catch (error) {
+        console.error("Error fetching user data or sessions: ", error)
+      } finally {
+        setIsLoading(false)
       }
+    } else if (!loadingAuth) {
+      router.push("/");
     }
+  }, [user, loadingAuth, router]);
+
+  React.useEffect(() => {
     fetchData()
-  }, [user, loadingAuth, router])
+  }, [fetchUserData])
+
+  const fetchData = () => {
+      fetchUserData();
+  }
+
+  const handleProfileUpdate = (updatedUser: Partial<AppUser>) => {
+    if (appUser) {
+        setAppUser({...appUser, ...updatedUser});
+    }
+  }
   
   if (isLoading) {
     return (
@@ -154,7 +165,6 @@ export default function ProfilePage() {
   }
 
   if (!appUser) {
-    // This case is handled by the redirect, but as a fallback:
     return null; 
   }
 
@@ -173,7 +183,7 @@ export default function ProfilePage() {
         <CardContent className="p-6 pt-0 flex items-center gap-6">
           <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-primary">
             <Image
-              src={appUser.imageUrl || 'https://placehold.co/200x200.png'}
+              src={appUser.imageUrl || `https://placehold.co/200x200/EBF4FF/76A9FA?text=${appUser.name.charAt(0).toUpperCase()}`}
               alt="User profile picture"
               fill
               className="object-cover"
@@ -183,11 +193,14 @@ export default function ProfilePage() {
           <div className="flex-1">
             <h2 className="text-2xl font-bold">{appUser.name}</h2>
             <p className="text-muted-foreground">{appUser.email}</p>
+            {appUser.age && <p className="text-muted-foreground">{appUser.age} años</p>}
              {isPsychologist && <Badge className="mt-2">Psicólogo</Badge>}
           </div>
-          <Button variant="outline" size="icon">
-            <Edit className="h-4 w-4" />
-          </Button>
+          <EditProfileDialog user={appUser} onProfileUpdate={handleProfileUpdate}>
+            <Button variant="outline" size="icon">
+              <Edit className="h-4 w-4" />
+            </Button>
+          </EditProfileDialog>
         </CardContent>
       </Card>
 
