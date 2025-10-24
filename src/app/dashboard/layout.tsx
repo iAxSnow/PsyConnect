@@ -59,13 +59,16 @@ export default function DashboardLayout({
   React.useEffect(() => {
     const checkUserRole = async () => {
         if (user) {
+            // Check for admin role first
+            if (user.email === ADMIN_EMAIL) {
+                setIsAdmin(true);
+            }
+
+            // Check for psychologist role
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists() && userDoc.data().isTutor) {
                 setIsPsychologist(true);
-            }
-            if (user.email === ADMIN_EMAIL) {
-                setIsAdmin(true);
             }
         }
     }
