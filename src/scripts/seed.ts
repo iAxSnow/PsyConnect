@@ -2,7 +2,7 @@
 import { collection, doc, setDoc, writeBatch, getDocs, deleteDoc } from 'firebase/firestore';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { db } from '../lib/firebase';
-import { specialties, studentUser, psychologistUser, adminUser, testSession } from '../lib/seed-data';
+import { specialties, studentUser, psychologistUser, testSession } from '../lib/seed-data';
 
 // --- HELPER FUNCTIONS ---
 
@@ -73,7 +73,6 @@ async function seedUsers() {
     const auth = getAuth();
     console.log('Seeding users...');
     // Important: Use fixed passwords for test users for predictability
-    await seedUser(auth, adminUser, 'admin123');
     await seedUser(auth, studentUser, 'password123');
     await seedUser(auth, psychologistUser, 'password123');
     console.log('Successfully seeded users!');
@@ -104,7 +103,6 @@ async function main() {
   console.log('¡Proceso de siembra completado!');
   console.log('Por favor, reinicia tu servidor de desarrollo para ver los cambios.');
   console.log('Usuarios de prueba:');
-  console.log(`- Administrador: ${adminUser.email} (password: admin123)`);
   console.log(`- Estudiante: ${studentUser.email} (password: password123)`);
   console.log(`- Psicólogo: ${psychologistUser.email} (password: password123)`);
   console.log('--------------------------------------');

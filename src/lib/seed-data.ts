@@ -9,14 +9,6 @@ import { Timestamp } from 'firebase/firestore';
 // Note: Passwords are not stored here. They should be manually created
 // or handled via a secure admin process. For this script, we'll create them with fixed UIDs.
 
-export const adminUser: Omit<User, 'id'> = {
-  uid: 'admin_test_uid',
-  name: 'Admin User',
-  email: 'admin1@gmail.com',
-  imageUrl: 'https://placehold.co/200x200/76A9FA/EBF4FF?text=AD',
-  isTutor: false,
-};
-
 export const studentUser: Omit<User, 'id'> = {
   uid: 'student_test_uid',
   name: 'Usuario Anónimo',

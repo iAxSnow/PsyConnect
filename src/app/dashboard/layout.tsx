@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast"
 import { SheetTitle } from "@/components/ui/sheet"
 
 
-const ADMIN_EMAIL = "admin1@gmail.com";
+const ADMIN_EMAIL = "student.test@gmail.com";
 
 export default function DashboardLayout({
   children,
