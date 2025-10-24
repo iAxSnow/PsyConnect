@@ -9,7 +9,6 @@ import type { Session } from "@/lib/types"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -17,8 +16,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -59,10 +56,10 @@ export function SessionStatus({ userId }: { userId: string }) {
       setIsLoading(true)
       try {
         const userSessions = await getStudentSessions(userId)
-        // Filter to show only pending and accepted sessions
-        const activeSessions = userSessions.filter(
-          s => s.status === 'pending' || s.status === 'accepted'
-        )
+        // Filter to show only pending and accepted sessions, and limit to 2
+        const activeSessions = userSessions
+          .filter(s => s.status === 'pending' || s.status === 'accepted')
+          .slice(0, 2);
         setSessions(activeSessions)
       } catch (error) {
         console.error("Error fetching sessions for dashboard:", error)
@@ -78,11 +75,10 @@ export function SessionStatus({ userId }: { userId: string }) {
     return (
         <Card>
             <CardHeader>
-                <Skeleton className="h-7 w-2/5"/>
-                <Skeleton className="h-4 w-4/5"/>
+                <Skeleton className="h-7 w-3/5"/>
             </CardHeader>
             <CardContent>
-                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-20 w-full" />
             </CardContent>
         </Card>
     )
@@ -95,26 +91,23 @@ export function SessionStatus({ userId }: { userId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Estado de Solicitudes de Sesión</CardTitle>
-        <CardDescription>
-          Aquí puedes ver el estado de tus solicitudes de sesión más recientes.
-        </CardDescription>
+        <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Estado de Solicitudes</CardTitle>
+            <Button asChild variant="link" size="sm">
+                <Link href="/profile">
+                    Ver Todas <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+            </Button>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Psicólogo</TableHead>
-              <TableHead>Especialidad</TableHead>
-              <TableHead>Estado</TableHead>
-            </TableRow>
-          </TableHeader>
           <TableBody>
             {sessions.map(session => (
               <TableRow key={session.id}>
-                <TableCell className="font-medium">{session.tutor.name}</TableCell>
-                <TableCell>{session.course}</TableCell>
-                <TableCell>
+                <TableCell className="font-medium p-2">{session.tutor.name}</TableCell>
+                <TableCell className="p-2 text-muted-foreground">{session.course}</TableCell>
+                <TableCell className="p-2 text-right">
                   <Badge variant={getBadgeVariant(session.status)}>
                     {getStatusText(session.status)}
                   </Badge>
@@ -123,13 +116,6 @@ export function SessionStatus({ userId }: { userId: string }) {
             ))}
           </TableBody>
         </Table>
-         <div className="mt-4 flex justify-end">
-            <Button asChild variant="link">
-                <Link href="/profile">
-                    Ver todas mis sesiones <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-            </Button>
-         </div>
       </CardContent>
     </Card>
   )
