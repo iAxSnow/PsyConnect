@@ -8,6 +8,7 @@ import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
 import { suggestSpecialty } from "@/app/actions"
 import { useAuthState } from "react-firebase-hooks/auth"
+import { getAvailableSpecialties } from "@/services/courses"
 
 import { Input } from "@/components/ui/input"
 import { PsychologistCard } from "@/components/dashboard/psychologist-card"
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SessionStatus } from "@/components/dashboard/session-status"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: string) => void }) {
   const [problem, setProblem] = React.useState("")
@@ -88,44 +90,88 @@ export function UserDashboard() {
   const [filteredPsychologists, setFilteredPsychologists] = React.useState<User[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [searchTerm, setSearchTerm] = React.useState("")
+  const [specialties, setSpecialties] = React.useState<string[]>([])
+  const [selectedSpecialty, setSelectedSpecialty] = React.useState<string>("all")
+  const [priceSort, setPriceSort] = React.useState<string>("default")
 
   React.useEffect(() => {
-    const fetchPsychologists = async () => {
+    const fetchInitialData = async () => {
       setIsLoading(true)
       try {
         const usersCollection = collection(db, "users")
         const q = query(usersCollection, where("isTutor", "==", true))
-        const psychologistsSnapshot = await getDocs(q)
+        
+        const [psychologistsSnapshot, availableSpecialties] = await Promise.all([
+          getDocs(q),
+          getAvailableSpecialties()
+        ])
+
         const psychologistsList = psychologistsSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User))
+        
         setPsychologists(psychologistsList)
         setFilteredPsychologists(psychologistsList)
+        setSpecialties(availableSpecialties)
+
       } catch (error) {
-        console.error("Error fetching psychologists:", error)
+        console.error("Error fetching data:", error)
       } finally {
         setIsLoading(false)
       }
     }
-    fetchPsychologists()
+    fetchInitialData()
   }, [])
 
-  React.useEffect(() => {
+ React.useEffect(() => {
+    let filteredData = [...psychologists];
     const lowercasedFilter = searchTerm.toLowerCase();
-    const filteredData = psychologists.filter(item => {
-      return (
-        item.name.toLowerCase().includes(lowercasedFilter) ||
-        item.courses?.some(course => course.toLowerCase().includes(lowercasedFilter))
-      );
-    });
+
+    // Text search filter
+    if (lowercasedFilter) {
+        filteredData = filteredData.filter(item => {
+            return (
+                item.name.toLowerCase().includes(lowercasedFilter) ||
+                item.courses?.some(course => course.toLowerCase().includes(lowercasedFilter))
+            );
+        });
+    }
+
+    // Specialty filter
+    if (selectedSpecialty !== "all") {
+        filteredData = filteredData.filter(item => 
+            item.courses?.includes(selectedSpecialty)
+        );
+    }
+    
+    // Price sort
+    if (priceSort === "low_to_high") {
+      filteredData.sort((a, b) => (a.hourlyRate || 0) - (b.hourlyRate || 0));
+    } else if (priceSort === "high_to_low") {
+      filteredData.sort((a, b) => (b.hourlyRate || 0) - (a.hourlyRate || 0));
+    }
+
     setFilteredPsychologists(filteredData);
-  }, [searchTerm, psychologists]);
+  }, [searchTerm, selectedSpecialty, priceSort, psychologists]);
 
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   }
+  
+  const handleSpecialtyChange = (value: string) => {
+    setSelectedSpecialty(value);
+  }
+
+  const handlePriceSortChange = (value: string) => {
+    setPriceSort(value);
+  }
 
   const handleSpecialtySuggestion = (specialty: string) => {
-    setSearchTerm(specialty);
+    const specialtyExists = specialties.includes(specialty);
+    if(specialtyExists){
+      setSelectedSpecialty(specialty);
+    } else {
+        setSearchTerm(specialty);
+    }
   };
 
   return (
@@ -136,20 +182,43 @@ export function UserDashboard() {
 
       <div>
         <h2 className="text-2xl font-bold tracking-tight mb-4">Encuentra a tu psicólogo</h2>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por especialidad o psicólogo..."
-            className="w-full rounded-lg bg-card pl-10"
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="relative sm:col-span-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por especialidad o psicólogo..."
+                className="w-full rounded-lg bg-card pl-10"
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
+            </div>
+             <Select value={selectedSpecialty} onValueChange={handleSpecialtyChange}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Filtrar por especialidad" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">Todas las especialidades</SelectItem>
+                    {specialties.map(spec => (
+                        <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Select value={priceSort} onValueChange={handlePriceSortChange}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Ordenar por precio" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="default">Ordenar por defecto</SelectItem>
+                    <SelectItem value="low_to_high">Precio: Menor a Mayor</SelectItem>
+                    <SelectItem value="high_to_low">Precio: Mayor a Menor</SelectItem>
+                </SelectContent>
+            </Select>
         </div>
       </div>
 
       <div>
         <h3 className="text-xl font-bold tracking-tight mb-4">
-          {searchTerm ? `Resultados para "${searchTerm}"` : 'Psicólogos Destacados'}
+          {searchTerm || selectedSpecialty !== 'all' ? `Resultados de la Búsqueda` : 'Psicólogos Destacados'}
         </h3>
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
