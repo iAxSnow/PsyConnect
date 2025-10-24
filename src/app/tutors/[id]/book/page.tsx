@@ -82,6 +82,9 @@ export default function BookSessionPage() {
 
     setIsBooking(true)
     try {
+        const studentName = currentUser.displayName || "Usuario Anónimo";
+        const studentImageUrl = currentUser.photoURL || `https://placehold.co/200x200/EBF4FF/76A9FA?text=${studentName.charAt(0).toUpperCase()}`;
+
         await addDoc(collection(db, "sessions"), {
             studentId: currentUser.uid,
             tutorId: psychologist.id,
@@ -94,8 +97,8 @@ export default function BookSessionPage() {
                 imageUrl: psychologist.imageUrl,
             },
             student: {
-                name: currentUser.displayName || "Usuario Anónimo",
-                imageUrl: currentUser.photoURL || `https://placehold.co/200x200/EBF4FF/76A9FA?text=A`
+                name: studentName,
+                imageUrl: studentImageUrl
             }
         });
 

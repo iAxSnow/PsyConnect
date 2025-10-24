@@ -5,7 +5,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
-import { createUserWithEmailAndPassword } from "firebase/auth"
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
 import { doc, setDoc } from "firebase/firestore"
 
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,7 @@ import { auth, db } from "@/lib/firebase"
 export function SignupForm() {
   const router = useRouter()
   const { toast } = useToast()
+  const [name, setName] = React.useState("")
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [showPassword, setShowPassword] = React.useState(false)
@@ -30,19 +31,25 @@ export function SignupForm() {
       // 1. Create user with email and password
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      
+      const displayName = name.trim() === "" ? "Usuario Anónimo" : name;
+      
+      // 2. Update Firebase Auth profile
+      await updateProfile(user, { displayName: displayName, photoURL: `https://placehold.co/200x200/EBF4FF/76A9FA?text=${displayName.charAt(0).toUpperCase()}` });
 
-      // 2. Save anonymous user data to Firestore
+
+      // 3. Save user data to Firestore
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: email,
         isTutor: false, // This is a regular user, not a psychologist
-        name: "Usuario Anónimo",
-        imageUrl: `https://placehold.co/200x200/EBF4FF/76A9FA?text=A`, // Generic anonymous avatar
+        name: displayName,
+        imageUrl: `https://placehold.co/200x200/EBF4FF/76A9FA?text=${displayName.charAt(0).toUpperCase()}`, // Generic anonymous avatar
       });
 
       toast({
         title: "Cuenta Creada",
-        description: "Tu cuenta anónima ha sido creada. Ahora puedes iniciar sesión.",
+        description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión.",
       })
 
       router.push("/")
@@ -80,31 +87,35 @@ export function SignupForm() {
     <form onSubmit={handleSubmit} className="flex flex-col h-full">
         <div className="flex-grow space-y-6">
             <div className="text-center">
-                <h1 className="text-2xl font-bold">Crear una cuenta anónima</h1>
+                <h1 className="text-2xl font-bold">Crear una cuenta de usuario</h1>
                 <p className="text-muted-foreground">
-                    Ingresa tu correo y contraseña. Tu identidad será siempre anónima.
+                    Ingresa tus datos. Tu identidad real será siempre anónima.
                 </p>
             </div>
             <div className="space-y-4">
-            <div className="space-y-2">
-                <Label htmlFor="email">Correo</Label>
-                <Input id="email" type="email" placeholder="tu.correo@ejemplo.com" required value={email} onChange={e => setEmail(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} />
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground"
-                    onClick={() => setShowPassword(!showPassword)}
-                >
-                    {showPassword ? <EyeOff /> : <Eye />}
-                </Button>
-                </div>
-            </div>
+              <div className="space-y-2">
+                  <Label htmlFor="name">Nombre de Usuario (Opcional)</Label>
+                  <Input id="name" type="text" placeholder="Usuario Anónimo" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="email">Correo</Label>
+                  <Input id="email" type="email" placeholder="tu.correo@ejemplo.com" required value={email} onChange={e => setEmail(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="password">Contraseña</Label>
+                  <div className="relative">
+                  <Input id="password" type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} />
+                  <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground"
+                      onClick={() => setShowPassword(!showPassword)}
+                  >
+                      {showPassword ? <EyeOff /> : <Eye />}
+                  </Button>
+                  </div>
+              </div>
             </div>
         </div>
         <div className="mt-8 flex flex-col gap-4">
