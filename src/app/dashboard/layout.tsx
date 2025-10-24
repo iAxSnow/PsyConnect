@@ -28,6 +28,7 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { useToast } from "@/hooks/use-toast"
 import { SheetTitle } from "@/components/ui/sheet"
