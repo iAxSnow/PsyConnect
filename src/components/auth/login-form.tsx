@@ -33,9 +33,23 @@ export function LoginForm() {
       })
       router.push("/dashboard")
     } catch (error: any) {
+        let description = "Ocurrió un error inesperado."
+        switch (error.code) {
+          case 'auth/invalid-credential':
+          case 'auth/user-not-found':
+          case 'auth/wrong-password':
+            description = "Credenciales inválidas. Por favor, revisa tu correo y contraseña."
+            break;
+          case 'auth/too-many-requests':
+            description = "Demasiados intentos fallidos. Por favor, intenta de nuevo más tarde."
+            break;
+          default:
+            description = "No se pudo iniciar sesión. Por favor, intenta de nuevo."
+            break;
+        }
         toast({
             title: "Error de Inicio de Sesión",
-            description: error.message || "Ocurrió un error.",
+            description: description,
             variant: "destructive"
         })
     } finally {

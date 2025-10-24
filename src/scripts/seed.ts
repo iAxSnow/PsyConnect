@@ -35,11 +35,12 @@ async function seedUser(auth: any, userData: any, password: any) {
             console.log(`User ${userData.email} already exists in Auth. Skipping Auth creation, will ensure Firestore data is up-to-date.`);
         } else {
             console.error(`Critical error creating user ${userData.email} in Auth:`, error.message);
+            console.error(`This likely means the password "${password}" is too weak or another validation failed.`);
             throw error; // Throw to stop the script if a critical error occurs
         }
     }
     
-    // Use the predefined UID for consistency, or the newly created one.
+    // Use the predefined UID for consistency if auth creation was skipped, or the new UID if it was created.
     const finalUid = user ? user.uid : userData.uid;
     const dataToSet = { ...userData, uid: finalUid };
     
