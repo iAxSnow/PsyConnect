@@ -80,48 +80,47 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
     setIsLoading(true)
 
     try {
-      let imageUrl = user.imageUrl
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
       const updatedData: Partial<User> = {
         name: data.name,
         age: data.age,
-      }
-      
-      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      };
 
+      let imageUrl = user.imageUrl;
+      
       if (profilePic) {
-        const profilePicRef = ref(storage, `profile-pictures/${auth.currentUser.uid}`)
-        const snapshot = await uploadBytes(profilePicRef, profilePic)
-        imageUrl = await getDownloadURL(snapshot.ref)
+        const profilePicRef = ref(storage, `profile-pictures/${auth.currentUser.uid}`);
+        const snapshot = await uploadBytes(profilePicRef, profilePic);
+        imageUrl = await getDownloadURL(snapshot.ref);
         updatedData.imageUrl = imageUrl;
       }
       
-      // Update Auth Profile
+      // Update Auth Profile first
       await updateProfile(auth.currentUser, {
-        displayName: data.name,
-        photoURL: imageUrl,
-      })
+        displayName: updatedData.name,
+        photoURL: imageUrl, // Use the potentially new imageUrl
+      });
 
       // Now, update Firestore with all changes
-      await updateDoc(userDocRef, updatedData)
+      await updateDoc(userDocRef, updatedData);
 
       toast({
         title: "Perfil Actualizado",
         description: "Tu información ha sido guardada exitosamente.",
-      })
+      });
 
       onProfileUpdate(updatedData); 
-
-      setOpen(false)
+      setOpen(false);
 
     } catch (error) {
-      console.error("Error updating profile:", error)
+      console.error("Error updating profile:", error);
       toast({
         title: "Error",
         description: "No se pudo actualizar tu perfil. Inténtalo de nuevo.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
