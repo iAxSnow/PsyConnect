@@ -86,8 +86,7 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
         age: data.age,
       }
       
-      // Define the doc reference first
-      const userDocRef = doc(db, "users", auth.currentUser.uid)
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
 
       if (profilePic) {
         const profilePicRef = ref(storage, `profile-pictures/${auth.currentUser.uid}`)
