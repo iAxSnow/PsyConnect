@@ -68,7 +68,9 @@ export function SessionRequestCard({ request, onUpdate }: SessionRequestCardProp
           </Avatar>
           <div>
             <CardTitle>{student?.name}</CardTitle>
-            <CardDescription>{student?.age} años</CardDescription>
+            {student?.age && (
+                 <CardDescription>{student.age} años</CardDescription>
+            )}
           </div>
         </div>
       </CardHeader>

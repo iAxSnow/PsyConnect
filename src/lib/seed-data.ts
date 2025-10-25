@@ -15,6 +15,7 @@ export const studentUser: Omit<User, 'id'> = {
   email: 'student.test@gmail.com',
   imageUrl: 'https://placehold.co/200x200/EBF4FF/76A9FA?text=A',
   isTutor: false,
+  age: 25, // Added age for the test user
 };
 
 export const psychologistUser: Omit<User, 'id'> = {
@@ -26,6 +27,7 @@ export const psychologistUser: Omit<User, 'id'> = {
   rating: 4.9,
   reviews: 150,
   hourlyRate: 45000,
+  age: 38,
   courses: ['Psicología Clínica', 'Terapia Cognitivo-Conductual (TCC)', 'Trastornos de Ansiedad'],
   bio: 'Psicóloga clínica con más de 15 años de experiencia. Me especializo en terapia cognitivo-conductual para tratar la ansiedad, la depresión y el estrés. Mi enfoque es colaborativo y centrado en soluciones.'
 };
@@ -60,6 +62,7 @@ export const testSession: Omit<Session, 'id'> = {
     student: {
         name: studentUser.name,
         imageUrl: studentUser.imageUrl,
+        age: studentUser.age,
     },
     tutor: {
         name: psychologistUser.name,
