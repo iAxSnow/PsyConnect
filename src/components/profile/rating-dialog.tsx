@@ -19,33 +19,58 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
-export function RatingDialog() {
+interface RatingDialogProps {
+    children?: React.ReactNode;
+    onReviewSubmit?: (review: { rating: number; comment: string }) => void;
+}
+
+
+export function RatingDialog({ children, onReviewSubmit }: RatingDialogProps) {
   const [rating, setRating] = React.useState(0)
+  const [comment, setComment] = React.useState("")
   const [hoverRating, setHoverRating] = React.useState(0)
   const [open, setOpen] = React.useState(false)
   const { toast } = useToast()
 
   const handleSubmit = () => {
+    if (rating === 0) {
+        toast({
+            title: "Calificación requerida",
+            description: "Por favor, selecciona al menos una estrella.",
+            variant: "destructive"
+        })
+        return;
+    }
+    
+    if (onReviewSubmit) {
+        onReviewSubmit({ rating, comment });
+    }
+
     toast({
       title: "Reseña Enviada",
       description: "¡Gracias por tus comentarios!",
     })
     setOpen(false)
     setRating(0)
+    setComment("")
   }
+  
+  const trigger = children || (
+    <Button variant="outline">
+        <Star className="mr-2 h-4 w-4" /> Calificar Sesión
+    </Button>
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Star className="mr-2 h-4 w-4" /> Calificar Sesión
-        </Button>
+        {trigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Califica tu sesión</DialogTitle>
           <DialogDescription>
-            Tus comentarios ayudan a otros estudiantes a encontrar los mejores tutores.
+            Tus comentarios ayudan a otros a encontrar los mejores psicólogos.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -76,6 +101,8 @@ export function RatingDialog() {
               id="comment"
               placeholder="Cuéntanos sobre tu experiencia..."
               rows={4}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
             />
           </div>
         </div>

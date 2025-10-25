@@ -4,7 +4,7 @@
 import * as React from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Edit, Calendar, History, ArrowLeft, MessageSquare } from "lucide-react"
+import { Edit, Calendar, History, ArrowLeft, MessageSquare, Star } from "lucide-react"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { auth, db } from "@/lib/firebase"
 import { getStudentSessions } from "@/services/sessions"
@@ -79,7 +79,13 @@ const SessionRow = ({ session, router, isPsychologist }: { session: Session; rou
             </Badge>
           </TableCell>
           <TableCell className="text-right">
-            {session.status === 'completed' && !isPsychologist && <RatingDialog />}
+            {session.status === 'completed' && !isPsychologist && (
+                <RatingDialog>
+                    <Button variant="outline" size="sm">
+                        <Star className="mr-2 h-4 w-4" /> Calificar
+                    </Button>
+                </RatingDialog>
+            )}
             {session.status === 'accepted' && (
                  <Button variant="outline" size="sm" onClick={() => router.push(`/sessions/${session.id}`)}>
                     <MessageSquare className="mr-2 h-4 w-4"/> Ir al Chat

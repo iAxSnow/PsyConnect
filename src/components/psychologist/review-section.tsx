@@ -10,7 +10,7 @@ import { RatingDialog } from "@/components/profile/rating-dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 
 // Mock data for reviews
-const reviews = [
+const initialReviews = [
   {
     id: 1,
     author: "Usuario Anónimo",
@@ -29,12 +29,28 @@ const reviews = [
   },
 ]
 
+type Review = typeof initialReviews[0];
+
 export function ReviewSection() {
+    const [reviews, setReviews] = React.useState<Review[]>(initialReviews);
+
+    const handleNewReview = ({ rating, comment }: { rating: number; comment: string }) => {
+        const newReview: Review = {
+            id: reviews.length + 1,
+            author: "Usuario Anónimo",
+            avatar: `https://placehold.co/100x100/EBF4FF/76A9FA?text=C`,
+            rating,
+            comment,
+            date: "Justo ahora"
+        };
+        setReviews(prevReviews => [newReview, ...prevReviews]);
+    };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Reseñas y Calificaciones</h2>
-        <RatingDialog>
+        <RatingDialog onReviewSubmit={handleNewReview}>
             <Button variant="outline">
                 <MessageSquare className="mr-2 h-4 w-4" /> Escribir una reseña
             </Button>
