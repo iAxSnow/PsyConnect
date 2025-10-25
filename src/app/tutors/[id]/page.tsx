@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ReviewSection } from "@/components/psychologist/review-section"
 
 export default function PsychologistProfilePage() {
   const params = useParams()
@@ -117,7 +118,7 @@ export default function PsychologistProfilePage() {
             </div>
             <Button size="lg" className="mt-6 w-full" onClick={handleBookSession}>
               <Calendar className="mr-2 h-5 w-5" /> 
-              Agendar una Sesión
+              Enviar Solicitud
             </Button>
           </div>
 
@@ -141,6 +142,8 @@ export default function PsychologistProfilePage() {
                 </li>
               ))}
             </ul>
+             <Separator className="my-6" />
+             <ReviewSection />
           </div>
         </CardContent>
       </Card>
