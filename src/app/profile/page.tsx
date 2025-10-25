@@ -126,7 +126,7 @@ export default function ProfilePage() {
   }, [user, loadingAuth, router])
 
   React.useEffect(() => {
-    if (!appUser) return;
+    if (!appUser?.uid) return;
 
     const fetchSessions = async () => {
       try {
@@ -137,7 +137,7 @@ export default function ProfilePage() {
       }
     };
     fetchSessions();
-  }, [appUser]);
+  }, [appUser?.uid]);
 
   const handleProfileUpdate = React.useCallback((updatedUser: Partial<AppUser>) => {
     setAppUser(prevUser => prevUser ? { ...prevUser, ...updatedUser } : null);

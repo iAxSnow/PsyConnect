@@ -54,15 +54,17 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
       age: user.age,
     },
   })
-
+  
   React.useEffect(() => {
-    if (user) {
+    if (user && open) {
         reset({
             name: user.name,
             age: user.age,
         });
+        setProfilePic(null);
+        setProfilePicName("");
     }
-  }, [user, reset]);
+  }, [user, open, reset]);
 
 
   const handleProfilePicChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,8 +108,6 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
 
       onProfileUpdate(updatedData); 
 
-      setProfilePic(null);
-      setProfilePicName("");
       setOpen(false)
 
     } catch (error) {
