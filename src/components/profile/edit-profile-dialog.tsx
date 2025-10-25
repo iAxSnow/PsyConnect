@@ -79,6 +79,7 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
 
     try {
       let imageUrl = user.imageUrl
+      // Start with name and age from form
       const updatedData: Partial<User> = {
         name: data.name,
         age: data.age,
@@ -89,17 +90,17 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
         const profilePicRef = ref(storage, `profile-pictures/${auth.currentUser.uid}`)
         const snapshot = await uploadBytes(profilePicRef, profilePic)
         imageUrl = await getDownloadURL(snapshot.ref)
+        // CRITICAL FIX: Add the new imageUrl to the updatedData object
+        updatedData.imageUrl = imageUrl;
       }
       
-      updatedData.imageUrl = imageUrl;
-
-      // 2. Update user profile in Auth
+      // 2. Update user profile in Auth (name and photo)
       await updateProfile(auth.currentUser, {
         displayName: data.name,
         photoURL: imageUrl,
       })
 
-      // 3. Update user data in Firestore
+      // 3. Update user data in Firestore (all changes)
       const userDocRef = doc(db, "users", auth.currentUser.uid)
       await updateDoc(userDocRef, updatedData)
 
@@ -107,10 +108,15 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
         title: "Perfil Actualizado",
         description: "Tu información ha sido guardada exitosamente.",
       })
-      onProfileUpdate(updatedData); // Pass the correct updated data
+
+      // 4. Pass the complete updated data (including new image URL) back to the parent
+      onProfileUpdate(updatedData); 
+
+      // 5. Reset local state
       setProfilePic(null);
       setProfilePicName("");
       setOpen(false)
+
     } catch (error) {
       console.error("Error updating profile:", error)
       toast({
