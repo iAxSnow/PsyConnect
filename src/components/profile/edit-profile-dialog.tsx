@@ -56,13 +56,13 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
   })
   
   React.useEffect(() => {
-    if (user && open) {
-        reset({
-            name: user.name,
-            age: user.age,
-        });
-        setProfilePic(null);
-        setProfilePicName("");
+    if (open) {
+      reset({
+        name: user.name,
+        age: user.age,
+      });
+      setProfilePic(null);
+      setProfilePicName("");
     }
   }, [user, open, reset]);
 
@@ -86,6 +86,9 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
         age: data.age,
       }
       
+      // Define the doc reference first
+      const userDocRef = doc(db, "users", auth.currentUser.uid)
+
       if (profilePic) {
         const profilePicRef = ref(storage, `profile-pictures/${auth.currentUser.uid}`)
         const snapshot = await uploadBytes(profilePicRef, profilePic)
@@ -93,12 +96,13 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
         updatedData.imageUrl = imageUrl;
       }
       
+      // Update Auth Profile
       await updateProfile(auth.currentUser, {
         displayName: data.name,
         photoURL: imageUrl,
       })
 
-      const userDocRef = doc(db, "users", auth.currentUser.uid)
+      // Now, update Firestore with all changes
       await updateDoc(userDocRef, updatedData)
 
       toast({
