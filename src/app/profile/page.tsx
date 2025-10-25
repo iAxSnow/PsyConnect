@@ -8,7 +8,7 @@ import { Edit, Calendar, History, ArrowLeft, MessageSquare, Star } from "lucide-
 import { useAuthState } from "react-firebase-hooks/auth"
 import { auth, db } from "@/lib/firebase"
 import { getStudentSessions } from "@/services/sessions"
-import { doc, getDoc, updateDoc } from "firebase/firestore"
+import { doc, getDoc } from "firebase/firestore"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -103,41 +103,42 @@ export default function ProfilePage() {
   const [sessions, setSessions] = React.useState<Session[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   
-  const fetchUserData = React.useCallback(async () => {
-    if (user) {
-      setIsLoading(true);
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        const [userDoc, sessionsList] = await Promise.all([
-           getDoc(userDocRef),
-           getStudentSessions(user.uid)
-        ]);
-
-        if (userDoc.exists()) {
-            setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
-        }
-        
-        setSessions(sessionsList)
-      } catch (error) {
-        console.error("Error fetching user data or sessions: ", error)
-      } finally {
-        setIsLoading(false)
-      }
-    } else if (!loadingAuth) {
-      router.push("/");
-    }
-  }, [user, loadingAuth, router]);
-
   React.useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        setIsLoading(true);
+        try {
+          const userDocRef = doc(db, "users", user.uid);
+          const [userDoc, sessionsList] = await Promise.all([
+             getDoc(userDocRef),
+             getStudentSessions(user.uid)
+          ]);
+
+          if (userDoc.exists()) {
+              setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
+          }
+          
+          setSessions(sessionsList)
+        } catch (error) {
+          console.error("Error fetching user data or sessions: ", error)
+        } finally {
+          setIsLoading(false)
+        }
+      } else if (!loadingAuth) {
+        router.push("/");
+      }
+    };
+
     fetchUserData();
-  }, [fetchUserData])
+  }, [user, loadingAuth, router])
 
 
   const handleProfileUpdate = (updatedUser: Partial<AppUser>) => {
     if (appUser) {
-        setAppUser({...appUser, ...updatedUser});
-        // Refetch all data to ensure consistency
-        fetchUserData();
+        setAppUser(prevUser => {
+            if (!prevUser) return null;
+            return { ...prevUser, ...updatedUser };
+        });
     }
   }
   
