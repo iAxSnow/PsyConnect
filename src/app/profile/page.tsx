@@ -139,9 +139,9 @@ export default function ProfilePage() {
     fetchSessions();
   }, [appUser]);
 
-  const handleProfileUpdate = (updatedUser: Partial<AppUser>) => {
+  const handleProfileUpdate = React.useCallback((updatedUser: Partial<AppUser>) => {
     setAppUser(prevUser => prevUser ? { ...prevUser, ...updatedUser } : null);
-  }
+  }, []);
   
   if (isLoading || loadingAuth) {
     return (
