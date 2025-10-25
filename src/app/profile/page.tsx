@@ -109,18 +109,12 @@ export default function ProfilePage() {
         setIsLoading(true);
         try {
           const userDocRef = doc(db, "users", user.uid);
-          const [userDoc, sessionsList] = await Promise.all([
-             getDoc(userDocRef),
-             getStudentSessions(user.uid)
-          ]);
-
+          const userDoc = await getDoc(userDocRef);
           if (userDoc.exists()) {
               setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
           }
-          
-          setSessions(sessionsList)
         } catch (error) {
-          console.error("Error fetching user data or sessions: ", error)
+          console.error("Error fetching user data: ", error)
         } finally {
           setIsLoading(false)
         }
@@ -128,21 +122,28 @@ export default function ProfilePage() {
         router.push("/");
       }
     };
-
     fetchUserData();
   }, [user, loadingAuth, router])
 
+  React.useEffect(() => {
+    if (!appUser) return;
+
+    const fetchSessions = async () => {
+      try {
+        const sessionsList = await getStudentSessions(appUser.uid);
+        setSessions(sessionsList);
+      } catch (error) {
+        console.error("Error fetching sessions: ", error);
+      }
+    };
+    fetchSessions();
+  }, [appUser]);
 
   const handleProfileUpdate = (updatedUser: Partial<AppUser>) => {
-    if (appUser) {
-        setAppUser(prevUser => {
-            if (!prevUser) return null;
-            return { ...prevUser, ...updatedUser };
-        });
-    }
+    setAppUser(prevUser => prevUser ? { ...prevUser, ...updatedUser } : null);
   }
   
-  if (isLoading) {
+  if (isLoading || loadingAuth) {
     return (
         <div className="space-y-6 p-4">
             <Card>

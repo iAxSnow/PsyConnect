@@ -47,13 +47,23 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
   const [profilePicName, setProfilePicName] = React.useState("")
   const profilePicInputRef = React.useRef<HTMLInputElement>(null)
 
-  const { register, handleSubmit, formState: { errors } } = useForm<ProfileFormValues>({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user.name,
       age: user.age,
     },
   })
+
+  React.useEffect(() => {
+    if (user) {
+        reset({
+            name: user.name,
+            age: user.age,
+        });
+    }
+  }, [user, reset]);
+
 
   const handleProfilePicChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -69,12 +79,19 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
 
     try {
       let imageUrl = user.imageUrl
+      const updatedData: Partial<User> = {
+        name: data.name,
+        age: data.age,
+      }
+      
       // 1. Upload new profile picture if selected
       if (profilePic) {
         const profilePicRef = ref(storage, `profile-pictures/${auth.currentUser.uid}`)
         const snapshot = await uploadBytes(profilePicRef, profilePic)
         imageUrl = await getDownloadURL(snapshot.ref)
       }
+      
+      updatedData.imageUrl = imageUrl;
 
       // 2. Update user profile in Auth
       await updateProfile(auth.currentUser, {
@@ -84,11 +101,6 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
 
       // 3. Update user data in Firestore
       const userDocRef = doc(db, "users", auth.currentUser.uid)
-      const updatedData: Partial<User> = {
-        name: data.name,
-        age: data.age,
-        imageUrl: imageUrl,
-      }
       await updateDoc(userDocRef, updatedData)
 
       toast({
@@ -96,6 +108,8 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
         description: "Tu información ha sido guardada exitosamente.",
       })
       onProfileUpdate(updatedData); // Pass the correct updated data
+      setProfilePic(null);
+      setProfilePicName("");
       setOpen(false)
     } catch (error) {
       console.error("Error updating profile:", error)
