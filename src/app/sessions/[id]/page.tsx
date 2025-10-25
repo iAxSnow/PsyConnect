@@ -6,7 +6,7 @@ import { useParams, useRouter, notFound } from "next/navigation"
 import Image from "next/image"
 import { doc, getDoc, onSnapshot, updateDoc, collection, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore"
 import { useAuthState } from "react-firebase-hooks/auth"
-import { Send, ArrowLeft, Paperclip, Video, Phone } from "lucide-react"
+import { Send, ArrowLeft, Paperclip, Video, Phone, AlertCircle } from "lucide-react"
 
 import { db, auth } from "@/lib/firebase"
 import type { Session, User } from "@/lib/types"
@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
+import { ReportDialog } from "@/components/report-dialog"
 
 
 export default function SessionPage() {
@@ -26,6 +27,7 @@ export default function SessionPage() {
   
   const [session, setSession] = React.useState<Session | null>(null)
   const [otherUser, setOtherUser] = React.useState<User | null>(null)
+  const [appUser, setAppUser] = React.useState<User | null>(null)
   const [loading, setLoading] = React.useState(true)
 
   const sessionId = params.id as string
@@ -50,10 +52,16 @@ export default function SessionPage() {
 
         // Fetch the other user's data for display
         const otherUserId = sessionData.studentId === currentUser.uid ? sessionData.tutorId : sessionData.studentId;
-        const userDocRef = doc(db, "users", otherUserId);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-            setOtherUser({ id: userDoc.id, ...userDoc.data() } as User);
+        const [otherUserDoc, appUserDoc] = await Promise.all([
+            getDoc(doc(db, "users", otherUserId)),
+            getDoc(doc(db, "users", currentUser.uid))
+        ]);
+
+        if (otherUserDoc.exists()) {
+            setOtherUser({ uid: otherUserDoc.id, ...otherUserDoc.data() } as User);
+        }
+         if (appUserDoc.exists()) {
+            setAppUser({ uid: appUserDoc.id, ...appUserDoc.data() } as User);
         }
 
         setLoading(false)
@@ -83,7 +91,7 @@ export default function SessionPage() {
     )
   }
 
-  if (!session || !otherUser) {
+  if (!session || !otherUser || !appUser) {
     return notFound()
   }
 
@@ -91,7 +99,7 @@ export default function SessionPage() {
   
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] max-w-4xl mx-auto w-full">
-      <header className="p-4 border-b flex items-center justify-between">
+      <header className="p-4 border-b flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft />
@@ -106,6 +114,11 @@ export default function SessionPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+             <ReportDialog reportedUser={otherUser} reporterUser={appUser}>
+                <Button variant="ghost" size="sm" className="text-muted-foreground">
+                    <AlertCircle className="mr-2 h-4 w-4" /> Reportar
+                </Button>
+             </ReportDialog>
             <Button variant="outline" size="icon" disabled={isChatDisabled}>
                 <Phone/>
                 <span className="sr-only">Llamar</span>

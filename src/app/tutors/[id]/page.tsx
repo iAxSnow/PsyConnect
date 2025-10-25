@@ -4,10 +4,11 @@
 import * as React from "react"
 import Image from "next/image"
 import { notFound, useRouter, useParams } from "next/navigation"
-import { Star, Brain, Calendar, ArrowLeft } from "lucide-react"
+import { Star, Brain, Calendar, ArrowLeft, AlertCircle } from "lucide-react"
 import { doc, getDoc } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
+import { useAuthState } from "react-firebase-hooks/auth"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,12 +16,15 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ReviewSection } from "@/components/psychologist/review-section"
+import { ReportDialog } from "@/components/report-dialog"
 
 export default function PsychologistProfilePage() {
   const params = useParams()
   const router = useRouter()
+  const [currentUser] = useAuthState(auth);
 
   const [psychologist, setPsychologist] = React.useState<User | null>(null)
+  const [appUser, setAppUser] = React.useState<User | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
 
   const psychologistId = params.id as string
@@ -33,9 +37,17 @@ export default function PsychologistProfilePage() {
         const psychologistDocRef = doc(db, "users", psychologistId)
         const psychologistDoc = await getDoc(psychologistDocRef)
         if (psychologistDoc.exists() && psychologistDoc.data().isTutor) {
-          setPsychologist({ id: psychologistDoc.id, ...psychologistDoc.data() } as User)
+          setPsychologist({ uid: psychologistDoc.id, ...psychologistDoc.data() } as User)
         } else {
           notFound()
+        }
+
+        if(currentUser) {
+            const userDocRef = doc(db, "users", currentUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                setAppUser({ uid: userDoc.id, ...userDoc.data() } as User)
+            }
         }
       } catch (error) {
         console.error("Error fetching psychologist:", error)
@@ -45,7 +57,7 @@ export default function PsychologistProfilePage() {
       }
     }
     fetchPsychologist()
-  }, [psychologistId])
+  }, [psychologistId, currentUser])
 
   const handleBookSession = () => {
     router.push(`/tutors/${psychologistId}/book`);
@@ -92,10 +104,17 @@ export default function PsychologistProfilePage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row justify-between items-start">
            <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8">
                 <ArrowLeft />
            </Button>
+            {appUser && appUser.uid !== psychologist.uid && (
+                <ReportDialog reportedUser={psychologist} reporterUser={appUser}>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground">
+                        <AlertCircle className="mr-2 h-4 w-4" /> Reportar
+                    </Button>
+                </ReportDialog>
+            )}
         </CardHeader>
         <CardContent className="p-6 pt-0">
           <div className="flex flex-col items-center text-center">
@@ -116,10 +135,12 @@ export default function PsychologistProfilePage() {
               </div>
               <span>({psychologist.reviews} reseñas)</span>
             </div>
-            <Button size="lg" className="mt-6 w-full" onClick={handleBookSession}>
-              <Calendar className="mr-2 h-5 w-5" /> 
-              Enviar Solicitud
-            </Button>
+            { currentUser?.uid !== psychologist.uid && (
+              <Button size="lg" className="mt-6 w-full" onClick={handleBookSession}>
+                <Calendar className="mr-2 h-5 w-5" /> 
+                Enviar Solicitud
+              </Button>
+            )}
           </div>
 
           <div className="mt-8">

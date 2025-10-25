@@ -3,6 +3,10 @@
 
 import * as React from "react"
 import { useParams, notFound } from 'next/navigation'
+import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import type { Report } from "@/lib/types"
+
 import {
   Card,
   CardContent,
@@ -18,34 +22,6 @@ import { Shield, User, Calendar, MessageSquare, Check, X, Archive } from "lucide
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 
-
-// Mock data - in a real app, this would be fetched from a database
-const reports = [
-  {
-    id: "REP001",
-    reportedUser: "Usuario Anónimo 1",
-    reportedBy: "Dra. Ana Molina",
-    reason: "Comportamiento inapropiado durante la sesión. El usuario utilizó lenguaje ofensivo y no respetó los tiempos de habla.",
-    status: "Pendiente",
-    date: "2023-10-26",
-  },
-  {
-    id: "REP002",
-    reportedUser: "Dra. Ana Molina",
-    reportedBy: "Usuario Anónimo 2",
-    reason: "La psicóloga no se presentó a la sesión agendada en la hora pactada. No hubo aviso previo.",
-    status: "En Revisión",
-    date: "2023-10-25",
-  },
-  {
-    id: "REP003",
-    reportedUser: "Usuario Anónimo 3",
-    reportedBy: "Usuario Anónimo 4",
-    reason: "Spam en el chat de la sesión, enviando enlaces a sitios externos no relacionados con la terapia.",
-    status: "Resuelto",
-    date: "2023-10-24",
-  },
-]
 
 const getStatusVariant = (status: string) => {
   switch (status) {
@@ -70,27 +46,45 @@ export default function ReportDetailsPage() {
     const { toast } = useToast();
     const reportId = params.id as string;
     
-    const [report, setReport] = React.useState<(typeof reports)[0] | undefined>(undefined);
+    const [report, setReport] = React.useState<Report | null>(null);
     const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
-        // Simulate fetching data
-        const foundReport = reports.find(r => r.id === reportId);
-        setTimeout(() => {
-            if (foundReport) {
-                setReport(foundReport);
+        if (!reportId) return;
+        const reportDocRef = doc(db, "reports", reportId);
+        
+        const unsubscribe = onSnapshot(reportDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setReport({ id: docSnap.id, ...docSnap.data() } as Report);
+            } else {
+                notFound();
             }
             setIsLoading(false);
-        }, 500)
+        }, (error) => {
+            console.error("Error fetching report:", error);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [reportId]);
     
-    const handleStatusChange = (newStatus: ReportStatus) => {
+    const handleStatusChange = async (newStatus: ReportStatus) => {
         if (report) {
-            setReport({...report, status: newStatus});
-            toast({
-                title: "Estado Actualizado",
-                description: `El reporte ha sido marcado como "${newStatus}".`,
-            })
+            const reportDocRef = doc(db, "reports", report.id);
+            try {
+                await updateDoc(reportDocRef, { status: newStatus });
+                toast({
+                    title: "Estado Actualizado",
+                    description: `El reporte ha sido marcado como "${newStatus}".`,
+                });
+            } catch (error) {
+                 toast({
+                    title: "Error al actualizar",
+                    description: "No se pudo actualizar el estado del reporte.",
+                    variant: "destructive"
+                });
+                console.error("Error updating report status:", error);
+            }
         }
     }
 
@@ -126,7 +120,7 @@ export default function ReportDetailsPage() {
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                              <Calendar className="h-4 w-4" />
-                             <span>{report.date}</span>
+                             <span>{report.createdAt.toDate().toLocaleDateString()}</span>
                         </div>
                        <Badge variant={getStatusVariant(report.status)} className="text-base">{report.status}</Badge>
                     </div>
@@ -135,11 +129,11 @@ export default function ReportDetailsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <h3 className="font-semibold flex items-center gap-2"><User className="text-destructive"/> Usuario Reportado</h3>
-                            <p className="text-muted-foreground">{report.reportedUser}</p>
+                            <p className="text-muted-foreground">{report.reportedUserName}</p>
                         </div>
                         <div className="space-y-2">
                             <h3 className="font-semibold flex items-center gap-2"><Shield className="text-primary"/> Reportado Por</h3>
-                            <p className="text-muted-foreground">{report.reportedBy}</p>
+                            <p className="text-muted-foreground">{report.reportedByUserName}</p>
                         </div>
                     </div>
                      <Separator />

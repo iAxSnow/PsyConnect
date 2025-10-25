@@ -33,3 +33,14 @@ export interface User {
   courses?: string[]; // Represents specialties
   bio?: string;
 }
+
+export interface Report {
+    id: string;
+    reportedUserId: string;
+    reportedUserName: string;
+    reportedByUserId: string;
+    reportedByUserName: string;
+    reason: string;
+    status: 'Pendiente' | 'En Revisión' | 'Resuelto' | 'Descartado';
+    createdAt: Timestamp;
+}
