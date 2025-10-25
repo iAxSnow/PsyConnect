@@ -105,6 +105,7 @@ export default function ProfilePage() {
   
   const fetchUserData = React.useCallback(async () => {
     if (user) {
+      setIsLoading(true);
       try {
         const userDocRef = doc(db, "users", user.uid);
         const [userDoc, sessionsList] = await Promise.all([
@@ -128,16 +129,15 @@ export default function ProfilePage() {
   }, [user, loadingAuth, router]);
 
   React.useEffect(() => {
-    fetchData()
+    fetchUserData();
   }, [fetchUserData])
 
-  const fetchData = () => {
-      fetchUserData();
-  }
 
   const handleProfileUpdate = (updatedUser: Partial<AppUser>) => {
     if (appUser) {
         setAppUser({...appUser, ...updatedUser});
+        // Refetch all data to ensure consistency
+        fetchUserData();
     }
   }
   
