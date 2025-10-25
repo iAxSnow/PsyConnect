@@ -95,7 +95,7 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
         title: "Perfil Actualizado",
         description: "Tu información ha sido guardada exitosamente.",
       })
-      onProfileUpdate(updatedData);
+      onProfileUpdate(updatedData); // Pass the correct updated data
       setOpen(false)
     } catch (error) {
       console.error("Error updating profile:", error)
