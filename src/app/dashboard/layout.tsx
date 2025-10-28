@@ -9,7 +9,9 @@ import {
   LogOut,
   PanelLeft,
   Shield,
-  ArrowLeft
+  ArrowLeft,
+  FileText,
+  Users
 } from "lucide-react"
 import { signOut } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
@@ -111,13 +113,19 @@ export default function DashboardLayout({
   const navItems = [
     { href: "/dashboard", icon: PanelLeft, label: "Panel", psychologistOnly: false, adminOnly: false },
     { href: "/profile", icon: User, label: "Perfil", psychologistOnly: false, adminOnly: false },
-    { href: "/dashboard/admin", icon: Shield, label: "Panel de Administrador", psychologistOnly: false, adminOnly: true }
+  ];
+  
+  const adminNavItems = [
+     { href: "/dashboard/admin/users", icon: Users, label: "Gestionar Usuarios", adminOnly: true },
+     { href: "/dashboard/admin", icon: FileText, label: "Ver Reportes", adminOnly: true }
   ]
 
   const getPageTitle = () => {
     if (pathname === '/dashboard') return "Panel";
-    if (pathname === '/dashboard/admin') return "Panel de Administrador";
+    if (pathname === '/dashboard/admin') return "Todos los Reportes";
+    if (pathname === '/dashboard/admin/users') return "Gestionar Usuarios";
     if (pathname.startsWith('/dashboard/admin/reports/')) return "Detalle del Reporte";
+    if (pathname.startsWith('/dashboard/admin/users/')) return "Detalle de Usuario";
     const item = navItems.find(item => pathname.startsWith(item.href) && item.href !== '/dashboard');
     if (item) return item.label;
     if (pathname.startsWith('/psychologists/')) return "Perfil del Psicólogo";
@@ -125,7 +133,7 @@ export default function DashboardLayout({
     return "Panel";
   }
   
-  const showBackButton = pathname.startsWith('/dashboard/admin/reports/');
+  const showBackButton = pathname.startsWith('/dashboard/admin/reports/') || pathname.startsWith('/dashboard/admin/users/');
 
   return (
     <SidebarProvider>
@@ -145,7 +153,7 @@ export default function DashboardLayout({
                 <SidebarMenuItem key={item.href}>
                   <Link href={item.href}>
                     <SidebarMenuButton
-                      isActive={pathname.startsWith(item.href) && item.href !== "/"}
+                      isActive={pathname === item.href}
                     >
                       <item.icon />
                       <span>{item.label}</span>
@@ -153,6 +161,27 @@ export default function DashboardLayout({
                   </Link>
                 </SidebarMenuItem>
               ))}
+              {isAdmin && (
+                <>
+                <SidebarMenuItem>
+                    <div className="p-3 pt-6 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+                        Admin
+                    </div>
+                </SidebarMenuItem>
+                {adminNavItems.map(item => (
+                     <SidebarMenuItem key={item.href}>
+                        <Link href={item.href}>
+                            <SidebarMenuButton
+                            isActive={pathname.startsWith(item.href)}
+                            >
+                            <item.icon />
+                            <span>{item.label}</span>
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                ))}
+                </>
+              )}
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>

@@ -6,12 +6,13 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Eye, EyeOff } from "lucide-react"
 import { signInWithEmailAndPassword } from "firebase/auth"
+import { doc, getDoc } from "firebase/firestore"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { auth } from "@/lib/firebase"
+import { auth, db } from "@/lib/firebase"
 
 export function LoginForm() {
   const router = useRouter()
@@ -26,7 +27,25 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Check if user account is disabled
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists() && userDoc.data().isDisabled) {
+        // Log the user out immediately
+        await auth.signOut();
+        toast({
+          title: "Cuenta Suspendida",
+          description: "Esta cuenta ha sido suspendida. Por favor, contacta a soporte.",
+          variant: "destructive",
+        })
+        setIsLoading(false);
+        return;
+      }
+      
       toast({
         title: "Inicio de Sesión Exitoso",
         description: "¡Bienvenido de vuelta!",

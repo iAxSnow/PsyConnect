@@ -33,12 +33,14 @@ const getStatusVariant = (status: string) => {
       return 'secondary'
     case 'Resuelto':
       return 'success'
+    case 'Descartado':
+        return 'outline'
     default:
-      return 'outline'
+      return 'default'
   }
 }
 
-export default function AdminPage() {
+export default function AdminReportsPage() {
     const router = useRouter()
     const [reports, setReports] = React.useState<Report[]>([])
     const [isLoading, setIsLoading] = React.useState(true)
@@ -62,12 +64,11 @@ export default function AdminPage() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold">Panel de Administrador</h1>
             <Card>
                 <CardHeader>
-                    <CardTitle>Reportes de Usuarios</CardTitle>
+                    <CardTitle>Todos los Reportes</CardTitle>
                     <CardDescription>
-                        Gestiona los reportes enviados por los usuarios y psicólogos.
+                        Visualiza y gestiona los reportes enviados por los usuarios y psicólogos.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -103,7 +104,7 @@ export default function AdminPage() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/reports/${report.id}`)}}>
-                                                <Eye className="mr-2 h-4 w-4" /> Ver Detalles
+                                                <Eye className="mr-2 h-4 w-4" /> Ver
                                             </Button>
                                         </TableCell>
                                     </TableRow>

@@ -210,7 +210,7 @@ export function UserDashboard() {
                     <SelectValue placeholder="Filtrar por precio" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">Cualquier Precio</SelectItem>
+                    <SelectItem value="all">Seleccionar Precio</SelectItem>
                     <SelectItem value="0-40000">$0 - $40.000</SelectItem>
                     <SelectItem value="40001-70000">$40.001 - $70.000</SelectItem>
                     <SelectItem value="70001-100000">$70.001 - $100.000</SelectItem>

@@ -26,6 +26,7 @@ export interface User {
   email: string;
   imageUrl: string; // Can be a generic avatar
   isTutor: boolean; // True if the user is a psychologist
+  isDisabled?: boolean; // For banning users
   // Psychologist-specific fields (optional)
   rating?: number;
   reviews?: number;
