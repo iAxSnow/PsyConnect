@@ -10,8 +10,6 @@ import {
   PanelLeft,
   Shield,
   ArrowLeft,
-  FileText,
-  Users
 } from "lucide-react"
 import { signOut } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
@@ -116,14 +114,12 @@ export default function DashboardLayout({
   ];
   
   const adminNavItems = [
-     { href: "/dashboard/admin/users", icon: Users, label: "Gestionar Usuarios", adminOnly: true },
-     { href: "/dashboard/admin", icon: FileText, label: "Ver Reportes", adminOnly: true }
+     { href: "/dashboard/admin", icon: Shield, label: "Panel de Admin", adminOnly: true }
   ]
 
   const getPageTitle = () => {
     if (pathname === '/dashboard') return "Panel";
-    if (pathname === '/dashboard/admin') return "Todos los Reportes";
-    if (pathname === '/dashboard/admin/users') return "Gestionar Usuarios";
+    if (pathname.startsWith('/dashboard/admin')) return "Panel de Administrador";
     if (pathname.startsWith('/dashboard/admin/reports/')) return "Detalle del Reporte";
     if (pathname.startsWith('/dashboard/admin/users/')) return "Detalle de Usuario";
     const item = navItems.find(item => pathname.startsWith(item.href) && item.href !== '/dashboard');
