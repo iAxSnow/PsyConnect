@@ -92,7 +92,7 @@ export function UserDashboard() {
   const [searchTerm, setSearchTerm] = React.useState("")
   const [specialties, setSpecialties] = React.useState<string[]>([])
   const [selectedSpecialty, setSelectedSpecialty] = React.useState<string>("all")
-  const [priceSort, setPriceSort] = React.useState<string>("default")
+  const [priceRange, setPriceRange] = React.useState<string>("all")
 
   React.useEffect(() => {
     const fetchInitialData = async () => {
@@ -142,15 +142,17 @@ export function UserDashboard() {
         );
     }
     
-    // Price sort
-    if (priceSort === "low_to_high") {
-      filteredData.sort((a, b) => (a.hourlyRate || 0) - (b.hourlyRate || 0));
-    } else if (priceSort === "high_to_low") {
-      filteredData.sort((a, b) => (b.hourlyRate || 0) - (a.hourlyRate || 0));
+    // Price range filter
+    if (priceRange !== "all") {
+      const [min, max] = priceRange.split('-').map(Number);
+      filteredData = filteredData.filter(item => {
+        const rate = item.hourlyRate || 0;
+        return rate >= min && rate <= max;
+      });
     }
 
     setFilteredPsychologists(filteredData);
-  }, [searchTerm, selectedSpecialty, priceSort, psychologists]);
+  }, [searchTerm, selectedSpecialty, priceRange, psychologists]);
 
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,8 +163,8 @@ export function UserDashboard() {
     setSelectedSpecialty(value);
   }
 
-  const handlePriceSortChange = (value: string) => {
-    setPriceSort(value);
+  const handlePriceRangeChange = (value: string) => {
+    setPriceRange(value);
   }
 
   const handleSpecialtySuggestion = (specialty: string) => {
@@ -203,14 +205,15 @@ export function UserDashboard() {
                     ))}
                 </SelectContent>
             </Select>
-            <Select value={priceSort} onValueChange={handlePriceSortChange}>
+            <Select value={priceRange} onValueChange={handlePriceRangeChange}>
                 <SelectTrigger>
-                    <SelectValue placeholder="Ordenar por precio" />
+                    <SelectValue placeholder="Filtrar por precio" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="default">Ordenar por precio</SelectItem>
-                    <SelectItem value="low_to_high">Precio: Menor a Mayor</SelectItem>
-                    <SelectItem value="high_to_low">Precio: Mayor a Menor</SelectItem>
+                    <SelectItem value="all">Cualquier Precio</SelectItem>
+                    <SelectItem value="0-40000">$0 - $40.000</SelectItem>
+                    <SelectItem value="40001-70000">$40.001 - $70.000</SelectItem>
+                    <SelectItem value="70001-100000">$70.001 - $100.000</SelectItem>
                 </SelectContent>
             </Select>
         </div>
