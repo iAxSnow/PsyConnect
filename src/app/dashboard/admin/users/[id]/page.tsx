@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { User as UserIcon, Stethoscope, FileText, Ban, CheckCircle, AlertTriangle } from "lucide-react"
+import { User as UserIcon, Stethoscope, FileText, Ban, CheckCircle, AlertTriangle, Eye } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 export default function UserDetailsPage() {
