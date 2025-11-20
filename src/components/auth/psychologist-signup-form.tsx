@@ -217,6 +217,7 @@ export function PsychologistSignupForm() {
                         <Button type="button" variant="outline" onClick={() => titleInputRef.current?.click()}> <Upload className="mr-2 h-4 w-4" /> Subir Título </Button>
                          {professionalTitleFileName && <span className="text-sm text-muted-foreground truncate">{professionalTitleFileName}</span>}
                     </div>
+                    <p className="text-xs text-muted-foreground px-1">En caso de ser practicante, poner su carta de solicitud u otro certificado firmado por su universidad.</p>
                 </div>
                  <div className="space-y-2">
                     <Label>Especialidades</Label>
