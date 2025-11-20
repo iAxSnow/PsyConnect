@@ -31,6 +31,8 @@ export function PsychologistSignupForm() {
   const [profilePic, setProfilePic] = React.useState<File | null>(null)
   const [profilePicName, setProfilePicName] = React.useState("")
   const [certificates, setCertificates] = React.useState<File[]>([])
+  const [professionalTitleFile, setProfessionalTitleFile] = React.useState<File | null>(null)
+  const [professionalTitleFileName, setProfessionalTitleFileName] = React.useState("")
   const [bio, setBio] = React.useState("")
   const [specialties, setSpecialties] = React.useState<string[]>([])
   const [hourlyRate, setHourlyRate] = React.useState("")
@@ -43,6 +45,8 @@ export function PsychologistSignupForm() {
 
   const profilePicInputRef = React.useRef<HTMLInputElement>(null)
   const certificatesInputRef = React.useRef<HTMLInputElement>(null)
+  const titleInputRef = React.useRef<HTMLInputElement>(null);
+
 
   React.useEffect(() => {
     const fetchCourses = async () => {
@@ -74,6 +78,15 @@ export function PsychologistSignupForm() {
     }
   }
 
+  const handleTitleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setProfessionalTitleFile(file);
+      setProfessionalTitleFileName(file.name);
+    }
+  };
+
+
   const handleSpecialtyChange = (specialtyName: string, checked: boolean) => {
     setSpecialties(prev =>
       checked ? [...prev, specialtyName] : prev.filter(name => name !== specialtyName)
@@ -82,8 +95,8 @@ export function PsychologistSignupForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!profilePic || certificates.length === 0) {
-      toast({ title: "Error", description: "Por favor, sube una foto de perfil y al menos un certificado.", variant: "destructive" })
+    if (!profilePic || certificates.length === 0 || !professionalTitleFile) {
+      toast({ title: "Error", description: "Por favor, sube una foto de perfil, tu título y al menos un certificado.", variant: "destructive" })
       return
     }
     
@@ -99,9 +112,12 @@ export function PsychologistSignupForm() {
       const snapshot = await uploadBytes(profilePicRef, profilePic);
       const imageUrl = await getDownloadURL(snapshot.ref);
 
-      // 3. Upload certificates (we just store them, not linking to user doc for simplicity here)
+      // 3. Upload certificates and title
+      const titleRef = ref(storage, `documents/${user.uid}/title/${professionalTitleFile.name}`);
+      await uploadBytes(titleRef, professionalTitleFile);
+      
       for (const file of certificates) {
-        const certificateRef = ref(storage, `certificates/${user.uid}/${file.name}`);
+        const certificateRef = ref(storage, `documents/${user.uid}/certificates/${file.name}`);
         await uploadBytes(certificateRef, file);
       }
       
@@ -186,11 +202,19 @@ export function PsychologistSignupForm() {
                     <Textarea placeholder="Cuéntanos sobre ti, tu enfoque y experiencia..." value={bio} onChange={(e) => setBio(e.target.value)} required />
                 </div>
                  <div className="space-y-2">
-                    <Label>Certificados y Títulos</Label>
+                    <Label>Certificados y Licencia</Label>
                     <div className="flex items-center gap-2">
                         <Input id="certificates" type="file" multiple className="hidden" ref={certificatesInputRef} onChange={handleCertificatesChange} required />
                         <Button type="button" variant="outline" onClick={() => certificatesInputRef.current?.click()}> <Upload className="mr-2 h-4 w-4" /> Subir Archivos </Button>
                          {certificates.length > 0 && <span className="text-sm text-muted-foreground">{certificates.length} archivo(s)</span>}
+                    </div>
+                </div>
+                 <div className="space-y-2">
+                    <Label>Título Profesional</Label>
+                    <div className="flex items-center gap-2">
+                        <Input id="title-file" type="file" className="hidden" ref={titleInputRef} onChange={handleTitleFileChange} accept="application/pdf,image/*" required />
+                        <Button type="button" variant="outline" onClick={() => titleInputRef.current?.click()}> <Upload className="mr-2 h-4 w-4" /> Subir Título </Button>
+                         {professionalTitleFileName && <span className="text-sm text-muted-foreground truncate">{professionalTitleFileName}</span>}
                     </div>
                 </div>
                  <div className="space-y-2">
@@ -230,3 +254,5 @@ export function PsychologistSignupForm() {
     </form>
   )
 }
+
+    
