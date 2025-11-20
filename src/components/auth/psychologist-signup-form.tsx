@@ -96,7 +96,7 @@ export function PsychologistSignupForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!profilePic || certificates.length === 0 || !professionalTitleFile) {
-      toast({ title: "Error", description: "Por favor, sube una foto de perfil, tu título y al menos un certificado.", variant: "destructive" })
+      toast({ title: "Archivos Faltantes", description: "Por favor, sube una foto de perfil, tu título y al menos un certificado.", variant: "destructive" })
       return
     }
     
