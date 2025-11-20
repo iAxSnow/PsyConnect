@@ -29,7 +29,9 @@ export const psychologistUser: Omit<User, 'id'> = {
   hourlyRate: 45000,
   age: 38,
   courses: ['Psicología Clínica', 'Terapia Cognitivo-Conductual (TCC)', 'Trastornos de Ansiedad'],
-  bio: 'Psicóloga clínica con más de 15 años de experiencia. Me especializo en terapia cognitivo-conductual para tratar la ansiedad, la depresión y el estrés. Mi enfoque es colaborativo y centrado en soluciones.'
+  bio: 'Psicóloga clínica con más de 15 años de experiencia. Me especializo en terapia cognitivo-conductual para tratar la ansiedad, la depresión y el estrés. Mi enfoque es colaborativo y centrado en soluciones.',
+  validationStatus: 'pending', // Set to pending for admin review
+  isDisabled: true, // Account is disabled until approved
 };
 
 // --- SPECIALTIES (formerly Courses) ---
