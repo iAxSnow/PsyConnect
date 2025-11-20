@@ -208,6 +208,7 @@ export function PsychologistSignupForm() {
                         <Button type="button" variant="outline" onClick={() => certificatesInputRef.current?.click()}> <Upload className="mr-2 h-4 w-4" /> Subir Archivos </Button>
                          {certificates.length > 0 && <span className="text-sm text-muted-foreground">{certificates.length} archivo(s)</span>}
                     </div>
+                    <p className="text-xs text-muted-foreground px-1">Es necesario subir la licencia profesional. En caso de no hacerlo, su registro podría ser rechazado.</p>
                 </div>
                  <div className="space-y-2">
                     <Label>Título Profesional</Label>
@@ -254,5 +255,3 @@ export function PsychologistSignupForm() {
     </form>
   )
 }
-
-    
