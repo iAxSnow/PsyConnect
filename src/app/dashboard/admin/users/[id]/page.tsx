@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { User as UserIcon, Stethoscope, FileText, Ban, CheckCircle, AlertTriangle, Eye, Download, FileArchive } from "lucide-react"
+import { User as UserIcon, Stethoscope, FileText, Ban, CheckCircle, AlertTriangle, Eye, Download, FileArchive, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 export default function UserDetailsPage() {
@@ -128,6 +128,32 @@ export default function UserDetailsPage() {
         }
     }
 
+    const handleValidation = async (status: 'approved' | 'rejected') => {
+        if (!user || !user.isTutor) return;
+
+        const userDocRef = doc(db, "users", user.id);
+        const updateData: Partial<User> = { validationStatus: status };
+        if (status === 'approved') {
+            updateData.isDisabled = false; // Enable account on approval
+        }
+
+        try {
+            await updateDoc(userDocRef, updateData);
+            toast({
+                title: `Registro ${status === 'approved' ? 'Aprobado' : 'Rechazado'}`,
+                description: `El psicólogo ${user.name} ha sido ${status === 'approved' ? 'aprobado' : 'rechazado'}.`
+            });
+            router.push('/dashboard/admin');
+        } catch (error) {
+            console.error("Error updating validation status:", error);
+            toast({
+                title: "Error",
+                description: "No se pudo actualizar el estado de validación.",
+                variant: "destructive"
+            });
+        }
+    }
+
 
     if (isLoading) {
         return <Skeleton className="h-96 w-full" />
@@ -162,14 +188,25 @@ export default function UserDetailsPage() {
                         </div>
                     </div>
                 </CardHeader>
-                 <CardFooter className="border-t pt-4">
-                    <Button 
-                        variant={user.isDisabled ? "success" : "destructive"}
-                        onClick={handleAccountStatusToggle}
-                    >
-                        {user.isDisabled ? <CheckCircle className="mr-2"/> : <Ban className="mr-2"/>}
-                        {user.isDisabled ? 'Reactivar Cuenta' : 'Suspender Cuenta'}
-                    </Button>
+                 <CardFooter className="border-t pt-4 flex justify-between">
+                     {user.isTutor && user.validationStatus === 'pending' ? (
+                        <div className="flex gap-2">
+                             <Button variant="success" onClick={() => handleValidation('approved')}>
+                                <ShieldCheck className="mr-2"/> Aprobar Registro
+                             </Button>
+                              <Button variant="destructive" onClick={() => handleValidation('rejected')}>
+                                <ShieldX className="mr-2"/> Rechazar Registro
+                             </Button>
+                        </div>
+                     ) : (
+                        <Button 
+                            variant={user.isDisabled ? "success" : "destructive"}
+                            onClick={handleAccountStatusToggle}
+                        >
+                            {user.isDisabled ? <CheckCircle className="mr-2"/> : <Ban className="mr-2"/>}
+                            {user.isDisabled ? 'Reactivar Cuenta' : 'Suspender Cuenta'}
+                        </Button>
+                     )}
                 </CardFooter>
             </Card>
 

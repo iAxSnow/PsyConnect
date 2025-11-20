@@ -130,12 +130,14 @@ export function PsychologistSignupForm() {
         name: name,
         email: email,
         imageUrl: imageUrl,
-        isTutor: true, // This user is a psychologist
+        isTutor: true,
         bio: bio,
         courses: specialties,
         hourlyRate: Number(hourlyRate),
-        rating: 5.0, // Initial rating
+        rating: 5.0, 
         reviews: 0,
+        isDisabled: true, // Account is disabled until approved
+        validationStatus: 'pending', // Awaiting admin validation
       });
 
       toast({

@@ -2,7 +2,7 @@
 "use client"
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { collection, query, onSnapshot, orderBy, getDocs } from "firebase/firestore"
+import { collection, query, onSnapshot, orderBy, getDocs, where } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import type { User, Report } from "@/lib/types"
 
@@ -23,7 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Eye, Stethoscope, User as UserIcon } from "lucide-react"
+import { Eye, Stethoscope, User as UserIcon, Check, ShieldAlert } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -122,25 +122,24 @@ function ReportsTable() {
     );
 }
 
-function UsersTable() {
+function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
     const router = useRouter();
     const [users, setUsers] = React.useState<UserWithReportCount[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
 
      React.useEffect(() => {
-        const usersQuery = query(collection(db, "users"));
-        
-        const unsubscribe = onSnapshot(usersQuery, async () => {
-            // Refetch both users and reports to ensure data consistency
-            const reportsQuery = query(collection(db, "reports"));
-            const [usersSnapshot, reportsSnapshot] = await Promise.all([
-                getDocs(usersQuery),
-                getDocs(reportsQuery)
-            ]);
+        let usersQuery = query(collection(db, "users"));
 
+        if (filter === 'pending') {
+            usersQuery = query(usersQuery, where("isTutor", "==", true), where("validationStatus", "==", "pending"));
+        }
+        
+        const unsubscribe = onSnapshot(usersQuery, async (querySnapshot) => {
+            const reportsQuery = query(collection(db, "reports"));
+            const reportsSnapshot = await getDocs(reportsQuery);
             const reportsData = reportsSnapshot.docs.map(doc => doc.data() as Report);
 
-            const usersData = usersSnapshot.docs.map(doc => {
+            const usersData = querySnapshot.docs.map(doc => {
                 const user = { id: doc.id, ...doc.data() } as User;
                 const reportsReceived = reportsData.filter(r => r.reportedUserId === user.uid).length;
                 const reportsMade = reportsData.filter(r => r.reportedByUserId === user.uid).length;
@@ -155,7 +154,7 @@ function UsersTable() {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [filter]);
 
     if (isLoading) {
         return (
@@ -206,12 +205,16 @@ function UsersTable() {
                         </TableCell>
                         <TableCell>{user.reportsMade}</TableCell>
                         <TableCell>
-                            <Badge variant={user.isDisabled ? "destructive" : "success"}>
-                                {user.isDisabled ? 'Suspendida' : 'Activa'}
-                            </Badge>
+                            {user.isTutor && user.validationStatus === 'pending' ? (
+                                <Badge variant="destructive"><ShieldAlert className="mr-1 h-3 w-3" /> Pendiente</Badge>
+                            ) : (
+                                <Badge variant={user.isDisabled ? "destructive" : "success"}>
+                                    {user.isDisabled ? 'Suspendida' : 'Activa'}
+                                </Badge>
+                            )}
                         </TableCell>
                         <TableCell className="text-right">
-                            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/users/${user.id}`)}}>
+                             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/users/${user.id}`)}}>
                                 <Eye className="mr-2 h-4 w-4" /> Ver Perfil
                             </Button>
                         </TableCell>
@@ -219,7 +222,7 @@ function UsersTable() {
                 )) : (
                     <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">
-                            No hay usuarios.
+                            {filter === 'pending' ? "No hay registros pendientes de validación." : "No hay usuarios."}
                         </TableCell>
                     </TableRow>
                 )}
@@ -236,13 +239,19 @@ export default function AdminDashboardPage() {
                 <CardHeader>
                     <CardTitle>Panel de Administrador</CardTitle>
                     <CardDescription>
-                        Gestiona los reportes y usuarios de la plataforma desde aquí.
+                        Gestiona los reportes, usuarios y validaciones de la plataforma.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <TabsList>
                         <TabsTrigger value="reports">Reportes</TabsTrigger>
                         <TabsTrigger value="users">Usuarios</TabsTrigger>
+                        <TabsTrigger value="validation">
+                            <div className="flex items-center gap-2">
+                                <Check className="h-4 w-4" />
+                                Registros por Validar
+                            </div>
+                        </TabsTrigger>
                     </TabsList>
                 </CardContent>
             </Card>
@@ -269,7 +278,20 @@ export default function AdminDashboardPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <UsersTable />
+                        <UsersTable filter="all" />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="validation">
+                <Card>
+                     <CardHeader>
+                        <CardTitle>Registros de Psicólogos por Validar</CardTitle>
+                        <CardDescription>
+                            Revisa los perfiles y documentos de los nuevos psicólogos para aprobar o rechazar su registro.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <UsersTable filter="pending" />
                     </CardContent>
                 </Card>
             </TabsContent>

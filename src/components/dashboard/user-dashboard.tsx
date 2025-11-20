@@ -99,7 +99,11 @@ export function UserDashboard() {
       setIsLoading(true)
       try {
         const usersCollection = collection(db, "users")
-        const q = query(usersCollection, where("isTutor", "==", true))
+        const q = query(
+            usersCollection, 
+            where("isTutor", "==", true),
+            where("validationStatus", "==", "approved") // Only show approved tutors
+        );
         
         const [psychologistsSnapshot, availableSpecialties] = await Promise.all([
           getDocs(q),
@@ -210,7 +214,7 @@ export function UserDashboard() {
                     <SelectValue placeholder="Filtrar por precio" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">Seleccionar Precio</SelectItem>
+                    <SelectItem value="all">Cualquier Precio</SelectItem>
                     <SelectItem value="0-40000">$0 - $40.000</SelectItem>
                     <SelectItem value="40001-70000">$40.001 - $70.000</SelectItem>
                     <SelectItem value="70001-100000">$70.001 - $100.000</SelectItem>
@@ -221,7 +225,7 @@ export function UserDashboard() {
 
       <div>
         <h3 className="text-xl font-bold tracking-tight mb-4">
-          {searchTerm || selectedSpecialty !== 'all' ? `Resultados de la Búsqueda` : 'Psicólogos Destacados'}
+          {searchTerm || selectedSpecialty !== 'all' || priceRange !== 'all' ? `Resultados de la Búsqueda` : 'Psicólogos Destacados'}
         </h3>
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
