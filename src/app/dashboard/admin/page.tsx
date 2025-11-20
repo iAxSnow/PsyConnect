@@ -173,11 +173,11 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
                     <TableHead>Usuario</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Rol</TableHead>
-                    <TableHead>Reportes Recibidos</TableHead>
-                    <TableHead>Reportes Realizados</TableHead>
+                    {filter !== 'pending' && <TableHead>Reportes Recibidos</TableHead>}
+                    {filter !== 'pending' && <TableHead>Reportes Realizados</TableHead>}
                     <TableHead>Estado</TableHead>
-                    <TableHead>
-                        <span className="sr-only">Acciones</span>
+                    <TableHead className="text-right">
+                        Acción
                     </TableHead>
                 </TableRow>
             </TableHeader>
@@ -200,13 +200,15 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
                                 {user.isTutor ? 'Psicólogo' : 'Usuario'}
                             </Badge>
                         </TableCell>
-                        <TableCell>
-                            <Badge variant={user.reportsReceived > 0 ? "destructive" : "default"}>{user.reportsReceived}</Badge>
-                        </TableCell>
-                        <TableCell>{user.reportsMade}</TableCell>
+                        {filter !== 'pending' && (
+                             <TableCell>
+                                <Badge variant={user.reportsReceived > 0 ? "destructive" : "default"}>{user.reportsReceived}</Badge>
+                            </TableCell>
+                        )}
+                       {filter !== 'pending' && <TableCell>{user.reportsMade}</TableCell>}
                         <TableCell>
                             {user.isTutor && user.validationStatus === 'pending' ? (
-                                <Badge variant="destructive"><ShieldAlert className="mr-1 h-3 w-3" /> Pendiente</Badge>
+                                <Badge variant="destructive"><ShieldAlert className="mr-1 h-3 w-3" /> Pendiente de Validación</Badge>
                             ) : (
                                 <Badge variant={user.isDisabled ? "destructive" : "success"}>
                                     {user.isDisabled ? 'Suspendida' : 'Activa'}
@@ -215,13 +217,13 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
                         </TableCell>
                         <TableCell className="text-right">
                              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/users/${user.id}`)}}>
-                                <Eye className="mr-2 h-4 w-4" /> Ver Perfil
+                                <Eye className="mr-2 h-4 w-4" /> {filter === 'pending' ? 'Revisar Perfil' : 'Ver Perfil'}
                             </Button>
                         </TableCell>
                     </TableRow>
                 )) : (
                     <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
+                        <TableCell colSpan={filter === 'pending' ? 5 : 7} className="h-24 text-center">
                             {filter === 'pending' ? "No hay registros pendientes de validación." : "No hay usuarios."}
                         </TableCell>
                     </TableRow>
