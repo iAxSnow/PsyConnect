@@ -5,7 +5,8 @@ import * as React from "react"
 import { useParams, notFound, useRouter } from 'next/navigation'
 import Image from "next/image"
 import { doc, onSnapshot, getDocs, collection, query, where, updateDoc } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { db, storage } from "@/lib/firebase"
+import { ref, listAll, getDownloadURL } from "firebase/storage"
 import type { User, Report } from "@/lib/types"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -15,7 +16,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { User as UserIcon, Stethoscope, FileText, Ban, CheckCircle, AlertTriangle, Eye } from "lucide-react"
+import { User as UserIcon, Stethoscope, FileText, Ban, CheckCircle, AlertTriangle, Eye, Download, FileArchive } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 export default function UserDetailsPage() {
@@ -28,6 +29,9 @@ export default function UserDetailsPage() {
     const [reportsAgainst, setReportsAgainst] = React.useState<Report[]>([]);
     const [reportsBy, setReportsBy] = React.useState<Report[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
+    const [certificateUrls, setCertificateUrls] = React.useState<string[]>([]);
+    const [titleUrl, setTitleUrl] = React.useState<string | null>(null);
+    const [isDocsLoading, setIsDocsLoading] = React.useState(true);
 
     React.useEffect(() => {
         if (!userId) return;
@@ -35,7 +39,11 @@ export default function UserDetailsPage() {
         const userDocRef = doc(db, "users", userId);
         const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
             if (docSnap.exists()) {
-                setUser({ id: docSnap.id, ...docSnap.data() } as User);
+                const userData = { id: docSnap.id, ...docSnap.data() } as User;
+                setUser(userData);
+                if (userData.isTutor) {
+                    fetchDocuments(userData.uid);
+                }
             } else {
                 notFound();
             }
@@ -61,10 +69,42 @@ export default function UserDetailsPage() {
              setReportsBy(bySnapshot.docs.map(d => ({id: d.id, ...d.data()} as Report)));
         }
 
+        const fetchDocuments = async (uid: string) => {
+            setIsDocsLoading(true);
+            try {
+                // Fetch Title
+                const titleFolderRef = ref(storage, `documents/${uid}/title`);
+                const titleList = await listAll(titleFolderRef);
+                if (titleList.items.length > 0) {
+                    const url = await getDownloadURL(titleList.items[0]);
+                    setTitleUrl(url);
+                }
+
+                // Fetch Certificates
+                const certificatesFolderRef = ref(storage, `documents/${uid}/certificates`);
+                const certificatesList = await listAll(certificatesFolderRef);
+                const urls = await Promise.all(
+                    certificatesList.items.map(itemRef => getDownloadURL(itemRef))
+                );
+                setCertificateUrls(urls);
+
+            } catch (error) {
+                console.error("Error fetching documents:", error);
+                toast({
+                    title: "Error al cargar documentos",
+                    description: "No se pudieron obtener los certificados o el título.",
+                    variant: "destructive"
+                });
+            } finally {
+                setIsDocsLoading(false);
+            }
+        };
+
+
         fetchReports();
 
         return () => unsubscribeUser();
-    }, [userId]);
+    }, [userId, toast]);
     
     const handleAccountStatusToggle = async () => {
         if (!user) return;
@@ -132,6 +172,55 @@ export default function UserDetailsPage() {
                     </Button>
                 </CardFooter>
             </Card>
+
+            {user.isTutor && (
+                 <div className="grid md:grid-cols-2 gap-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                               <FileText /> Título Profesional
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                             {isDocsLoading ? (
+                                <Skeleton className="h-10 w-full"/>
+                            ) : titleUrl ? (
+                                <Button asChild variant="outline">
+                                    <a href={titleUrl} target="_blank" rel="noopener noreferrer">
+                                        <Download className="mr-2 h-4 w-4"/> Ver Título
+                                    </a>
+                                </Button>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">No se encontró el título.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-lg">
+                                <FileArchive /> Certificados y Licencia
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                           {isDocsLoading ? (
+                                <Skeleton className="h-10 w-full"/>
+                            ) : certificateUrls.length > 0 ? (
+                                <div className="space-y-2">
+                                    {certificateUrls.map((url, index) => (
+                                         <Button asChild variant="outline" key={index} className="w-full justify-start">
+                                            <a href={url} target="_blank" rel="noopener noreferrer">
+                                                <Download className="mr-2 h-4 w-4"/> Ver Certificado {index + 1}
+                                            </a>
+                                        </Button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">No se encontraron certificados.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                 </div>
+            )}
 
             <div className="grid md:grid-cols-2 gap-6">
                 <Card>
