@@ -128,10 +128,12 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
     const [isLoading, setIsLoading] = React.useState(true);
 
      React.useEffect(() => {
-        let usersQuery = query(collection(db, "users"));
-
+        let usersQuery;
+        
         if (filter === 'pending') {
-            usersQuery = query(usersQuery, where("isTutor", "==", true), where("validationStatus", "==", "pending"));
+            usersQuery = query(collection(db, "users"), where("isTutor", "==", true), where("validationStatus", "==", "pending"));
+        } else {
+            usersQuery = query(collection(db, "users"));
         }
         
         const unsubscribe = onSnapshot(usersQuery, async (querySnapshot) => {
