@@ -22,7 +22,7 @@ export const psychologistUser: Omit<User, 'id'> = {
   uid: 'psychologist_test_uid',
   name: 'Dra. Ana Molina',
   email: 'psyc.test@gmail.com',
-  imageUrl: 'https://placehold.co/400x400/d1d4f7/434b8c?text=AP',
+  imageUrl: 'https://placehold.co/400x400/d1d4f7/434b8c?text=AM',
   isTutor: true,
   rating: 4.9,
   reviews: 150,
@@ -33,6 +33,23 @@ export const psychologistUser: Omit<User, 'id'> = {
   validationStatus: 'pending', // Set to pending for admin review
   isDisabled: true, // Account is disabled until approved
 };
+
+export const approvedPsychologistUser: Omit<User, 'id'> = {
+  uid: 'approved_psychologist_uid',
+  name: 'Dra. Sofía Reyes',
+  email: 'sofia.reyes.test@gmail.com',
+  imageUrl: 'https://placehold.co/400x400/f7d1e4/8c4369?text=SR',
+  isTutor: true,
+  rating: 4.8,
+  reviews: 88,
+  hourlyRate: 50000,
+  age: 42,
+  courses: ['Terapia de Pareja y Familia', 'Psicología Humanista', 'Mindfulness y Bienestar'],
+  bio: 'Con un enfoque humanista, ayudo a individuos y parejas a navegar por los desafíos de la vida. Creo firmemente en el poder de la conexión y el crecimiento personal para sanar.',
+  validationStatus: 'approved', // This user is already approved
+  isDisabled: false, // This account is active
+};
+
 
 // --- SPECIALTIES (formerly Courses) ---
 export const specialties: Omit<Course, 'id'>[] = [
