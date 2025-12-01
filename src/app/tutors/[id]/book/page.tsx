@@ -22,7 +22,7 @@ export default function BookSessionPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
-  const [currentUser] = useAuthState(auth)
+  const [currentUser, loadingAuth] = useAuthState(auth)
 
   const [psychologist, setPsychologist] = React.useState<User | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
@@ -34,7 +34,20 @@ export default function BookSessionPage() {
   const psychologistId = params.id as string
 
   React.useEffect(() => {
-    if (!psychologistId || !currentUser) return
+    if (loadingAuth) return; // Wait until auth state is loaded
+    
+    if (!currentUser) {
+      // If user is not logged in at all, redirect them.
+      toast({ title: "Inicia sesión", description: "Debes iniciar sesión para continuar.", variant: "destructive" });
+      router.push("/");
+      return;
+    }
+
+    if (!psychologistId) {
+        notFound();
+        return;
+    }
+
     const fetchInitialData = async () => {
       setIsLoading(true)
       try {
@@ -46,6 +59,17 @@ export default function BookSessionPage() {
             getDoc(userDocRef)
         ]);
 
+        if (!userDoc.exists()) {
+            // THIS IS THE FIX: User is authenticated but has no DB record.
+            console.error("User profile not found in Firestore. Logging out.");
+            toast({ title: "Error de Cuenta", description: "No se encontró tu perfil de usuario. Por favor, inicia sesión de nuevo.", variant: "destructive" });
+            auth.signOut(); // Sign out the "ghost" user
+            router.push("/");
+            return;
+        }
+        setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
+
+
         if (psychologistDoc.exists() && psychologistDoc.data().isTutor) {
           const psychoData = { id: psychologistDoc.id, ...psychologistDoc.data() } as User
           setPsychologist(psychoData)
@@ -56,10 +80,6 @@ export default function BookSessionPage() {
           notFound()
         }
 
-        if (userDoc.exists()) {
-          setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
-        }
-
       } catch (error) {
         console.error("Error fetching data:", error)
         notFound()
@@ -68,7 +88,7 @@ export default function BookSessionPage() {
       }
     }
     fetchInitialData()
-  }, [psychologistId, currentUser])
+  }, [psychologistId, currentUser, loadingAuth, router, toast]);
   
   const handleBookSession = async () => {
     if (!currentUser || !appUser) {
@@ -131,7 +151,7 @@ export default function BookSessionPage() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || loadingAuth) {
     return (
         <div className="mx-auto max-w-lg space-y-8 p-4">
             <Skeleton className="h-10 w-24" />
