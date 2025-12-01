@@ -4,13 +4,16 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Upload, DollarSign, Brain } from "lucide-react"
+import { Eye, EyeOff, DollarSign } from "lucide-react"
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
 import { doc, setDoc } from "firebase/firestore"
 import { useToast } from "@/hooks/use-toast"
 import { auth, db } from "@/lib/firebase"
 import { getAllCourses } from "@/services/courses"
 import type { Course } from "@/lib/types"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
+
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -59,7 +62,7 @@ export function PsychologistSignupForm() {
     )
   }
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+ const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (specialties.length === 0) {
         toast({ title: "Especialidades Faltantes", description: "Debes seleccionar al menos una especialidad.", variant: "destructive" });
@@ -73,18 +76,15 @@ export function PsychologistSignupForm() {
     setIsLoading(true);
 
     try {
-        // Step 1: Create user in Firebase Auth
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Step 2: Define a placeholder image URL
         const placeholderImageUrl = `https://placehold.co/200x200/EBF4FF/76A9FA?text=${name.charAt(0).toUpperCase()}`;
 
-        // Step 3: Update Firebase Auth profile
         await updateProfile(user, { displayName: name, photoURL: placeholderImageUrl });
         
-        // Step 4: Save user data to Firestore
-        await setDoc(doc(db, "users", user.uid), {
+        const userDocRef = doc(db, "users", user.uid);
+        const userData = {
             uid: user.uid,
             name: name,
             email: email,
@@ -95,19 +95,34 @@ export function PsychologistSignupForm() {
             hourlyRate: Number(hourlyRate),
             rating: 5.0,
             reviews: 0,
-            isDisabled: true, // Account is disabled until approved by an admin
-            validationStatus: 'pending', // Set to pending for admin review
-        });
-        
-        toast({
-            title: "Solicitud de Registro Enviada",
-            description: "Tu cuenta ha sido creada y está pendiente de revisión. Te notificaremos pronto.",
-        });
+            isDisabled: true,
+            validationStatus: 'pending',
+        };
 
-        // Step 5: Redirect on success
-        router.push("/");
+        setDoc(userDocRef, userData)
+            .then(() => {
+                toast({
+                    title: "Solicitud de Registro Enviada",
+                    description: "Tu cuenta ha sido creada y está pendiente de revisión. Te notificaremos pronto.",
+                });
+                router.push("/");
+            })
+            .catch(async (serverError) => {
+                setIsLoading(false);
+                if (serverError.code === 'permission-denied') {
+                    const permissionError = new FirestorePermissionError({
+                      path: userDocRef.path,
+                      operation: 'create',
+                      requestResourceData: userData,
+                    });
+                    errorEmitter.emit('permission-error', permissionError);
+                } else {
+                     toast({ title: "Error de Base de Datos", description: serverError.message, variant: "destructive" });
+                }
+            });
 
     } catch (error: any) {
+        setIsLoading(false);
         console.error("Signup Error:", error);
         let description = "Ocurrió un error inesperado durante el registro.";
         
@@ -118,16 +133,11 @@ export function PsychologistSignupForm() {
             case 'auth/weak-password':
                 description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
                 break;
-            case 'permission-denied':
-                 description = "Error de permisos de Firestore. No se pudo guardar el perfil de usuario. Revisa tus reglas de seguridad."
-                 break;
             default:
                 description = error.message || description;
                 break;
         }
         toast({ title: "Error de Registro", description, variant: "destructive" });
-    } finally {
-        setIsLoading(false);
     }
 };
 
