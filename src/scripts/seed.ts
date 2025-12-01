@@ -33,10 +33,8 @@ async function seedUser(auth: any, userData: any, password: any) {
         console.log(`Successfully created user in Auth with new UID: ${authUid}`);
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
-            console.error(`\nCRITICAL ERROR: User ${userData.email} already exists in Firebase Auth.`);
-            console.error('The seed script cannot overwrite an existing user\'s password.');
-            console.error('Please delete the user from the Firebase Authentication console and run the script again.');
-            throw new Error(`User ${userData.email} already exists.`);
+            console.warn(`WARNING: User ${userData.email} already exists in Firebase Auth. The script will proceed assuming the UID is correct, but the password is not updated. If you face login issues, delete the user from Firebase Auth console and re-run the seed.`);
+            // We proceed because the Firestore data might need updating anyway.
         } else {
             console.error(`\nCRITICAL ERROR creating user ${userData.email} in Auth:`, error.message);
             console.error(`This might be due to a weak password or other Firebase Auth validation rules.`);
@@ -49,8 +47,9 @@ async function seedUser(auth: any, userData: any, password: any) {
     const dataToSet = { ...userData, uid: authUid };
     
     try {
-        await setDoc(doc(db, 'users', authUid), dataToSet);
-        console.log(`Successfully set user data in Firestore for: ${userData.email} (UID: ${authUid})`);
+        // Use the original UID for the document ID to keep it consistent
+        await setDoc(doc(db, 'users', userData.uid), dataToSet);
+        console.log(`Successfully set user data in Firestore for: ${userData.email} (Doc ID: ${userData.uid})`);
     } catch (firestoreError) {
         console.error(`Error writing user data to Firestore for ${userData.email}:`, firestoreError);
         throw firestoreError;
@@ -74,12 +73,23 @@ async function seedSpecialties() {
 
 async function seedUsers() {
     const auth = getAuth();
-    const testPassword = 'password123'; // Use a valid password
+    const testPassword = 'password123456'; // Use a valid password
     console.log('Seeding users...');
-    await seedUser(auth, studentUser, testPassword);
-    await seedUser(auth, psychologistUser, testPassword);
-    await seedUser(auth, approvedPsychologistUser, testPassword);
-    console.log('Successfully seeded users!');
+    
+    // We are seeding with PRE-DEFINED UIDs. Auth will generate new UIDs, but we use the fixed ones for document IDs
+    // This part of the script is flawed if not handled carefully, but we'll try to make it work.
+    try {
+        await seedUser(auth, studentUser, testPassword);
+        await seedUser(auth, psychologistUser, testPassword);
+        await seedUser(auth, approvedPsychologistUser, testPassword);
+        console.log('Successfully seeded users!');
+    } catch (error) {
+        console.error("\n--- A critical error occurred during user seeding. ---");
+        console.error("This usually happens if the test users already exist in Firebase Authentication.");
+        console.error("The script has stopped to prevent data corruption.");
+        console.error("Please go to your Firebase Console -> Authentication and DELETE the test users (e.g., student.test@gmail.com) and then run `npm run db:seed` again.");
+        throw error; // re-throw to stop the main process
+    }
 }
 
 async function seedSessions() {
@@ -92,36 +102,36 @@ async function seedSessions() {
 
 async function main() {
   console.log('--- Starting database seed process ---');
-  const testPassword = 'password123';
+  const testPassword = 'password123456';
 
   // Clear existing data to ensure a clean slate
-  // Note: This does not clear Firebase Auth users. That must be done manually in the Firebase Console.
   console.log('Clearing Firestore collections...');
+  // This is the key change: we wipe the collections clean first.
   await clearCollection('users');
   await clearCollection('sessions');
   await clearCollection('courses');
   console.log('Firestore collections cleared.');
   
   // Seed new data
-  await seedSpecialties();
-  await seedUsers();
-  await seedSessions();
+  try {
+    await seedSpecialties();
+    await seedUsers();
+    await seedSessions();
 
-  console.log('--------------------------------------');
-  console.log('¡Proceso de siembra completado!');
-  console.log('IMPORTANTE: Si los usuarios de prueba ya existían en Firebase Authentication, este script habrá fallado.');
-  console.log('Para un estado limpio, elimina los usuarios de prueba de la sección "Authentication" en tu Firebase Console.');
-  console.log('\nUsuarios de prueba creados:');
-  console.log(`- Estudiante: ${studentUser.email} (password: ${testPassword})`);
-  console.log(`- Psicólogo por validar: ${psychologistUser.email} (password: ${testPassword})`);
-  console.log(`- Psicólogo aprobado: ${approvedPsychologistUser.email} (password: ${testPassword})`);
-  console.log('--------------------------------------');
-  process.exit(0);
+    console.log('--------------------------------------');
+    console.log('¡Proceso de siembra completado!');
+    console.log('\nUsuarios de prueba creados (si no existían en Auth):');
+    console.log(`- Estudiante: ${studentUser.email} (password: ${testPassword})`);
+    console.log(`- Psicólogo por validar: ${psychologistUser.email} (password: ${testPassword})`);
+    console.log(`- Psicólogo aprobado: ${approvedPsychologistUser.email} (password: ${testPassword})`);
+    console.log('--------------------------------------');
+    process.exit(0);
+
+  } catch (error) {
+    console.error('\nSe produjo un error durante el proceso de siembra. El script se ha detenido.');
+    // The specific error messages are logged within the seedUser function.
+    process.exit(1);
+  }
 }
 
-main().catch((error) => {
-  console.error('\nSe produjo un error durante el proceso de siembra. El script se ha detenido.');
-  // Don't log the full error object as it can be verbose and unhelpful.
-  // The specific error messages are logged within the seedUser function.
-  process.exit(1);
-});
+main();
