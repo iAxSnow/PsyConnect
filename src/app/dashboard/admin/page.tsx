@@ -2,7 +2,7 @@
 "use client"
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { collection, query, onSnapshot, orderBy, getDocs, where } from "firebase/firestore"
+import { collection, query, onSnapshot, orderBy, where } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import type { User, Report } from "@/lib/types"
 
@@ -27,11 +27,6 @@ import { Eye, Stethoscope, User as UserIcon, Check, ShieldAlert } from "lucide-r
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
-interface UserWithReportCount extends User {
-    reportsReceived: number;
-    reportsMade: number;
-}
 
 const getStatusVariant = (status: string) => {
   switch (status) {
@@ -124,29 +119,25 @@ function ReportsTable() {
 
 function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
     const router = useRouter();
-    const [users, setUsers] = React.useState<UserWithReportCount[]>([]);
+    const [users, setUsers] = React.useState<User[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
 
      React.useEffect(() => {
-        const usersQuery = query(collection(db, "users"));
+        // This is the simplified query. We fetch ALL users for 'all' filter
+        // and only tutors for 'pending' filter, then filter client-side.
+        const usersQuery = filter === 'pending' 
+            ? query(collection(db, "users"), where("isTutor", "==", true))
+            : query(collection(db, "users"));
         
-        const unsubscribe = onSnapshot(usersQuery, async (querySnapshot) => {
-            const reportsQuery = query(collection(db, "reports"));
-            const reportsSnapshot = await getDocs(reportsQuery);
-            const reportsData = reportsSnapshot.docs.map(doc => doc.data() as Report);
-
-            let usersData = querySnapshot.docs.map(doc => {
-                const user = { id: doc.id, ...doc.data() } as User;
-                const reportsReceived = reportsData.filter(r => r.reportedUserId === user.uid).length;
-                const reportsMade = reportsData.filter(r => r.reportedByUserId === user.uid).length;
-                return { ...user, reportsReceived, reportsMade };
-            });
+        const unsubscribe = onSnapshot(usersQuery, (querySnapshot) => {
+            let usersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
             if (filter === 'pending') {
-                usersData = usersData.filter(user => user.isTutor && user.validationStatus === 'pending');
+                // Client-side filtering for pending validation
+                usersData = usersData.filter(user => user.validationStatus === 'pending');
             }
 
-            setUsers(usersData.sort((a,b) => b.reportsReceived - a.reportsReceived));
+            setUsers(usersData);
             setIsLoading(false);
         }, (error) => {
             console.error("Error fetching users:", error);
@@ -173,8 +164,6 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
                     <TableHead>Usuario</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Rol</TableHead>
-                    {filter !== 'pending' && <TableHead>Reportes Recibidos</TableHead>}
-                    {filter !== 'pending' && <TableHead>Reportes Realizados</TableHead>}
                     <TableHead>Estado</TableHead>
                     <TableHead className="text-right">
                         Acción
@@ -200,12 +189,6 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
                                 {user.isTutor ? 'Psicólogo' : 'Usuario'}
                             </Badge>
                         </TableCell>
-                        {filter !== 'pending' && (
-                             <TableCell>
-                                <Badge variant={user.reportsReceived > 0 ? "destructive" : "default"}>{user.reportsReceived}</Badge>
-                            </TableCell>
-                        )}
-                       {filter !== 'pending' && <TableCell>{user.reportsMade}</TableCell>}
                         <TableCell>
                             {user.isTutor && user.validationStatus === 'pending' ? (
                                 <Badge variant="destructive"><ShieldAlert className="mr-1 h-3 w-3" /> Pendiente de Validación</Badge>
@@ -223,7 +206,7 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
                     </TableRow>
                 )) : (
                     <TableRow>
-                        <TableCell colSpan={filter === 'pending' ? 5 : 7} className="h-24 text-center">
+                        <TableCell colSpan={5} className="h-24 text-center">
                             {filter === 'pending' ? "No hay registros pendientes de validación." : "No hay usuarios."}
                         </TableCell>
                     </TableRow>
@@ -300,3 +283,5 @@ export default function AdminDashboardPage() {
         </Tabs>
     )
 }
+
+    
