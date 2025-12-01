@@ -89,9 +89,13 @@ const SessionRow = ({ session, router, isPsychologist }: { session: Session; rou
             {session.status === 'accepted' && !isPsychologist && (
                 <div className="flex items-center justify-end gap-1 text-xs">
                     <span className="text-muted-foreground">contacta mandando un correo aqui:</span>
-                    <a href={`mailto:${session.tutor.email}`} className="text-primary hover:underline font-semibold">
-                       {session.tutor.email}
-                    </a>
+                     {session.tutor.email ? (
+                        <a href={`mailto:${session.tutor.email}`} className="text-primary hover:underline font-semibold">
+                            {session.tutor.email}
+                        </a>
+                     ) : (
+                        <span className="text-destructive font-semibold">Correo no disponible. Por favor, cancela y vuelve a enviar la solicitud.</span>
+                     )}
                 </div>
             )}
           </TableCell>
