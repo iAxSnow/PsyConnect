@@ -4,49 +4,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    match /courses/{courseId} {
-      allow read: if true;
-      allow write: if false; 
-    }
-
-    match /users/{userId} {
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-    }
-
-    match /sessions/{sessionId} {
-        allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid;
-        allow read, update: if request.auth != null && (request.resource.data.studentId == request.auth.uid || request.resource.data.tutorId == request.auth.uid);
-    }
-
-    match /reports/{reportId} {
-        allow create: if request.auth != null && request.resource.data.reportedByUserId == request.auth.uid;
-        allow read, update: if request.auth != null; 
+    // TEMPORARY DEVELOPMENT RULE: Allow any authenticated user to do anything.
+    // This is insecure for production but useful for debugging.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
 
 service firebase.storage {
   match /b/{bucket}/o {
-    match /profile-pictures/{userId} {
-        // Allow public read for profile pictures
-        allow read: if true;
-        // Allow a user to write to their own profile picture path
-        allow write: if request.auth != null && request.auth.uid == userId;
-    }
     
-    match /documents/{userId}/title/{fileName} {
-      // Allow read for admins/relevant users if needed in the future
-      allow read: if request.auth != null;
-      // Allow a user to write to their own title folder
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    match /documents/{userId}/certificates/{fileName} {
-      // Allow read for admins/relevant users
-      allow read: if request.auth != null;
-       // Allow a user to write to their own certificates folder
-      allow write: if request.auth != null && request.auth.uid == userId;
+    // TEMPORARY DEVELOPMENT RULE: Allow any authenticated user to read/write any file.
+    // This is insecure for production.
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
