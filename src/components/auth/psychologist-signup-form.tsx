@@ -94,75 +94,80 @@ export function PsychologistSignupForm() {
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
     if (!profilePic || certificates.length === 0 || !professionalTitleFile) {
-      toast({ title: "Archivos Faltantes", description: "Por favor, sube una foto de perfil, tu título y al menos un certificado.", variant: "destructive" })
-      return
+        toast({ title: "Archivos Faltantes", description: "Por favor, sube una foto de perfil, tu título y al menos un certificado.", variant: "destructive" });
+        return;
     }
-    
-    setIsLoading(true)
-    
+
+    setIsLoading(true);
+
     try {
-      // 1. Create user
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+        // 1. Create user in Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
 
-      // 2. Upload profile picture
-      const profilePicRef = ref(storage, `profile-pictures/${user.uid}`);
-      const snapshot = await uploadBytes(profilePicRef, profilePic);
-      const imageUrl = await getDownloadURL(snapshot.ref);
+        // 2. Upload files and get URLs
+        const profilePicRef = ref(storage, `profile-pictures/${user.uid}/${profilePic.name}`);
+        await uploadBytes(profilePicRef, profilePic);
+        const imageUrl = await getDownloadURL(profilePicRef);
 
-      // 3. Upload certificates and title
-      const titleRef = ref(storage, `documents/${user.uid}/title/${professionalTitleFile.name}`);
-      await uploadBytes(titleRef, professionalTitleFile);
-      
-      for (const file of certificates) {
-        const certificateRef = ref(storage, `documents/${user.uid}/certificates/${file.name}`);
-        await uploadBytes(certificateRef, file);
-      }
-      
-      // 4. Update user profile in Auth
-      await updateProfile(user, { displayName: name, photoURL: imageUrl });
-      
-      // 5. Save user data to Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        name: name,
-        email: email,
-        imageUrl: imageUrl,
-        isTutor: true,
-        bio: bio,
-        courses: specialties,
-        hourlyRate: Number(hourlyRate),
-        rating: 5.0, 
-        reviews: 0,
-        isDisabled: true, // Account is disabled until approved
-        validationStatus: 'pending', // Awaiting admin validation
-      });
+        const titleRef = ref(storage, `documents/${user.uid}/title/${professionalTitleFile.name}`);
+        await uploadBytes(titleRef, professionalTitleFile);
+        
+        for (const file of certificates) {
+            const certificateRef = ref(storage, `documents/${user.uid}/certificates/${file.name}`);
+            await uploadBytes(certificateRef, file);
+        }
 
-      toast({
-        title: "Solicitud de Registro Enviada",
-        description: "Tu cuenta ha sido creada y está pendiente de revisión. Te notificaremos pronto.",
-      })
+        // 3. Update Firebase Auth profile
+        await updateProfile(user, { displayName: name, photoURL: imageUrl });
 
-      router.push("/")
+        // 4. Save all data to Firestore
+        await setDoc(doc(db, "users", user.uid), {
+            uid: user.uid,
+            name: name,
+            email: email,
+            imageUrl: imageUrl,
+            isTutor: true,
+            bio: bio,
+            courses: specialties,
+            hourlyRate: Number(hourlyRate),
+            rating: 5.0,
+            reviews: 0,
+            isDisabled: true, // Account is disabled until approved
+            validationStatus: 'pending', // Awaiting admin validation
+        });
+
+        toast({
+            title: "Solicitud de Registro Enviada",
+            description: "Tu cuenta ha sido creada y está pendiente de revisión. Te notificaremos pronto.",
+        });
+
+        router.push("/");
 
     } catch (error: any) {
-       let description = "Ocurrió un error inesperado."
-       if (error.code) {
-           switch (error.code) {
-               case 'auth/email-already-in-use': description = "Este correo ya está en uso."; break;
-               case 'auth/weak-password': description = "La contraseña debe tener al menos 6 caracteres."; break;
-               case 'storage/unauthorized': description = "Error de permisos al subir archivos. Revisa las reglas de Storage."; break;
-               case 'permission-denied': description = "Error de permisos al guardar en la base de datos. Revisa las reglas de Firestore."; break;
-               default: description = error.message;
-           }
-       }
-       toast({ title: "Error de Registro", description, variant: "destructive" })
+        console.error("Signup Error:", error);
+        let description = "Ocurrió un error inesperado durante el registro.";
+        switch (error.code) {
+            case 'auth/email-already-in-use':
+                description = "Este correo electrónico ya está en uso. Por favor, utiliza otro.";
+                break;
+            case 'auth/weak-password':
+                description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
+                break;
+            case 'storage/unauthorized':
+                description = "Error de permisos al subir archivos. Revisa las reglas de seguridad de Firebase Storage.";
+                break;
+            default:
+                description = error.message || description;
+                break;
+        }
+        toast({ title: "Error de Registro", description, variant: "destructive" });
     } finally {
-        setIsLoading(false)
+        setIsLoading(false);
     }
-  }
+};
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col h-full">
@@ -176,16 +181,16 @@ export function PsychologistSignupForm() {
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="name">Nombre Completo</Label>
-                    <Input id="name" type="text" placeholder="Dr. Juan Pérez" required value={name} onChange={e => setName(e.target.value)} />
+                    <Input id="name" type="text" placeholder="Dra. Ana Molina" required value={name} onChange={e => setName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="email">Correo Profesional</Label>
-                    <Input id="email" type="email" placeholder="juan.perez@dominio.com" required value={email} onChange={e => setEmail(e.target.value)} />
+                    <Input id="email" type="email" placeholder="ana.molina@dominio.com" required value={email} onChange={e => setEmail(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="password">Contraseña</Label>
                     <div className="relative">
-                        <Input id="password" type={showPassword ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} />
+                        <Input id="password" type={showPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" required value={password} onChange={e => setPassword(e.target.value)} />
                         <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground" onClick={() => setShowPassword(!showPassword)} >
                             {showPassword ? <EyeOff /> : <Eye />}
                         </Button>
