@@ -33,7 +33,10 @@ async function seedUser(auth: any, userData: any, password: any) {
         console.log(`Successfully created user in Auth with new UID: ${authUid}`);
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
-            console.log(`User ${userData.email} already exists in Auth. Will use existing UID: ${authUid}`);
+            console.error(`\nCRITICAL ERROR: User ${userData.email} already exists in Firebase Auth.`);
+            console.error('The seed script cannot overwrite an existing user\'s password.');
+            console.error('Please delete the user from the Firebase Authentication console and run the script again.');
+            throw new Error(`User ${userData.email} already exists.`);
         } else {
             console.error(`\nCRITICAL ERROR creating user ${userData.email} in Auth:`, error.message);
             console.error(`This might be due to a weak password or other Firebase Auth validation rules.`);
@@ -47,7 +50,7 @@ async function seedUser(auth: any, userData: any, password: any) {
     
     try {
         await setDoc(doc(db, 'users', authUid), dataToSet);
-        console.log(`Successfully set/updated user data in Firestore for: ${userData.email} (UID: ${authUid})`);
+        console.log(`Successfully set user data in Firestore for: ${userData.email} (UID: ${authUid})`);
     } catch (firestoreError) {
         console.error(`Error writing user data to Firestore for ${userData.email}:`, firestoreError);
         throw firestoreError;
@@ -71,11 +74,11 @@ async function seedSpecialties() {
 
 async function seedUsers() {
     const auth = getAuth();
+    const testPassword = 'password123'; // Use a valid password
     console.log('Seeding users...');
-    // Important: Use fixed passwords for test users for predictability
-    await seedUser(auth, studentUser, 'password123');
-    await seedUser(auth, psychologistUser, 'password123');
-    await seedUser(auth, approvedPsychologistUser, 'password123');
+    await seedUser(auth, studentUser, testPassword);
+    await seedUser(auth, psychologistUser, testPassword);
+    await seedUser(auth, approvedPsychologistUser, testPassword);
     console.log('Successfully seeded users!');
 }
 
@@ -89,11 +92,15 @@ async function seedSessions() {
 
 async function main() {
   console.log('--- Starting database seed process ---');
+  const testPassword = 'password123';
 
   // Clear existing data to ensure a clean slate
+  // Note: This does not clear Firebase Auth users. That must be done manually in the Firebase Console.
+  console.log('Clearing Firestore collections...');
   await clearCollection('users');
   await clearCollection('sessions');
   await clearCollection('courses');
+  console.log('Firestore collections cleared.');
   
   // Seed new data
   await seedSpecialties();
@@ -102,16 +109,19 @@ async function main() {
 
   console.log('--------------------------------------');
   console.log('¡Proceso de siembra completado!');
-  console.log('Por favor, reinicia tu servidor de desarrollo para ver los cambios.');
-  console.log('Usuarios de prueba:');
-  console.log(`- Estudiante: ${studentUser.email} (password: password123)`);
-  console.log(`- Psicólogo por validar: ${psychologistUser.email} (password: password123)`);
-  console.log(`- Psicólogo aprobado: ${approvedPsychologistUser.email} (password: password123)`);
+  console.log('IMPORTANTE: Si los usuarios de prueba ya existían en Firebase Authentication, este script habrá fallado.');
+  console.log('Para un estado limpio, elimina los usuarios de prueba de la sección "Authentication" en tu Firebase Console.');
+  console.log('\nUsuarios de prueba creados:');
+  console.log(`- Estudiante: ${studentUser.email} (password: ${testPassword})`);
+  console.log(`- Psicólogo por validar: ${psychologistUser.email} (password: ${testPassword})`);
+  console.log(`- Psicólogo aprobado: ${approvedPsychologistUser.email} (password: ${testPassword})`);
   console.log('--------------------------------------');
   process.exit(0);
 }
 
 main().catch((error) => {
-  console.error('Se produjo un error durante el proceso de siembra:', error);
+  console.error('\nSe produjo un error durante el proceso de siembra. El script se ha detenido.');
+  // Don't log the full error object as it can be verbose and unhelpful.
+  // The specific error messages are logged within the seedUser function.
   process.exit(1);
 });
