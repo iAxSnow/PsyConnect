@@ -1,0 +1,150 @@
+
+{
+  "entities": {
+    "Course": {
+      "title": "Course",
+      "description": "Represents a psychological specialty.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "name"]
+    },
+    "Session": {
+      "title": "Session",
+      "description": "Represents a tutoring session between a user and a psychologist.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tutorId": {
+          "type": "string"
+        },
+        "studentId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "accepted", "declined", "completed", "cancelled"]
+        },
+        "course": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sessionDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tutor": {
+          "$ref": "#/entities/User"
+        },
+        "student": {
+          "$ref": "#/entities/User"
+        }
+      },
+      "required": ["id", "tutorId", "studentId", "status", "course", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Represents a user of the application.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "age": {
+          "type": "number"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "isTutor": {
+          "type": "boolean"
+        },
+        "isDisabled": {
+          "type": "boolean"
+        },
+        "validationStatus": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected"]
+        },
+        "rating": {
+          "type": "number"
+        },
+        "reviews": {
+          "type": "number"
+        },
+        "hourlyRate": {
+          "type": "number"
+        },
+        "courses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "bio": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "uid", "name", "age", "email", "imageUrl", "isTutor"]
+    },
+     "Report": {
+      "title": "Report",
+      "description": "Represents a report made by a user against another user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "reportedUserId": { "type": "string" },
+        "reportedUserName": { "type": "string" },
+        "reportedByUserId": { "type": "string" },
+        "reportedByUserName": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pendiente", "En Revisión", "Resuelto", "Descartado"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "reportedUserId", "reportedUserName", "reportedByUserId", "reportedByUserName", "reason", "status", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": ["email"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profile information."
+    },
+    "/sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/Session" },
+      "description": "Stores tutoring session details."
+    },
+    "/courses/{courseId}": {
+      "schema": { "$ref": "#/entities/Course" },
+      "description": "Stores the available psychological specialties."
+    },
+    "/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/Report" },
+      "description": "Stores user-generated reports."
+    }
+  }
+}
