@@ -147,6 +147,9 @@ export function PsychologistSignupForm() {
             case 'auth/weak-password':
                 description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
                 break;
+            case 'storage/retry-limit-exceeded':
+                description = "Se superó el tiempo de espera para subir archivos. Revisa tu conexión de red e inténtalo de nuevo.";
+                break;
             case 'storage/unauthorized':
                  description = "Error de permisos al subir archivos. Revisa las reglas de seguridad de Storage.";
                  break;

@@ -43,6 +43,8 @@ export default function UserDetailsPage() {
                 setUser(userData);
                 if (userData.isTutor) {
                     fetchDocuments(userData.uid);
+                } else {
+                    setIsDocsLoading(false);
                 }
             } else {
                 notFound();

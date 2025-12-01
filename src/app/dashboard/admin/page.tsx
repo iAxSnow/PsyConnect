@@ -124,15 +124,20 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
     const [isLoading, setIsLoading] = React.useState(true);
 
      React.useEffect(() => {
-        const usersQuery = query(collection(db, "users"));
+        let usersQuery;
+        if (filter === 'pending') {
+            // This query requires a composite index on isTutor (asc) and validationStatus (asc)
+            usersQuery = query(
+                collection(db, "users"),
+                where("isTutor", "==", true),
+                where("validationStatus", "==", "pending")
+            );
+        } else {
+            usersQuery = query(collection(db, "users"));
+        }
         
         const unsubscribe = onSnapshot(usersQuery, (querySnapshot) => {
-            let usersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-
-            if (filter === 'pending') {
-                usersData = usersData.filter(user => user.isTutor && user.validationStatus === 'pending');
-            }
-
+            const usersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
             setUsers(usersData);
             setIsLoading(false);
         }, (error) => {
