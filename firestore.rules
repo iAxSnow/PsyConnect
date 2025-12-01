@@ -1,10 +1,7 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // DEVELOPMENT ONLY: Allow public read/write access to all data.
-    // This is insecure and should be changed before production.
     match /{document=**} {
       allow read, write: if true;
     }
@@ -13,8 +10,6 @@ service cloud.firestore {
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // DEVELOPMENT ONLY: Allow public read/write access to all files.
-    // This is insecure and should be changed before production.
     match /{allPaths=**} {
       allow read, write: if true;
     }
