@@ -4,7 +4,7 @@
 import * as React from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Edit, Calendar, History, ArrowLeft, MessageSquare, Star } from "lucide-react"
+import { Edit, Calendar, History, ArrowLeft, MessageSquare, Star, Mail } from "lucide-react"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { auth, db } from "@/lib/firebase"
 import { getStudentSessions } from "@/services/sessions"
@@ -78,7 +78,7 @@ const SessionRow = ({ session, router, isPsychologist }: { session: Session; rou
                 {getStatusText(session.status)}
             </Badge>
           </TableCell>
-          <TableCell className="text-right">
+           <TableCell className="text-right">
             {session.status === 'completed' && !isPsychologist && (
                 <RatingDialog>
                     <Button variant="outline" size="sm">
@@ -86,10 +86,13 @@ const SessionRow = ({ session, router, isPsychologist }: { session: Session; rou
                     </Button>
                 </RatingDialog>
             )}
-            {session.status === 'accepted' && (
-                 <Button variant="outline" size="sm" onClick={() => router.push(`/sessions/${session.id}`)}>
-                    <MessageSquare className="mr-2 h-4 w-4"/> Ir al Chat
-                </Button>
+            {session.status === 'accepted' && !isPsychologist && (
+                <div className="flex flex-col items-end gap-1 text-xs">
+                    <span className="font-semibold">Contactar por correo:</span>
+                    <a href={`mailto:${session.tutor.email}`} className="text-primary hover:underline flex items-center gap-1">
+                       <Mail className="h-3 w-3" /> {session.tutor.email}
+                    </a>
+                </div>
             )}
           </TableCell>
         </TableRow>

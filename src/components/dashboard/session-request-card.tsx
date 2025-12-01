@@ -39,11 +39,8 @@ export function SessionRequestCard({ request, onUpdate }: SessionRequestCardProp
         title: `Solicitud ${status === 'accepted' ? 'Aceptada' : 'Rechazada'}`,
         description: `La solicitud de sesión ha sido actualizada.`,
       })
-      if (status === 'accepted') {
-        router.push(`/sessions/${request.id}`);
-      } else {
-        onUpdate(request.id);
-      }
+      // Always remove the card from the view after an action
+      onUpdate(request.id);
     } catch (error) {
       console.error("Error updating session status:", error)
       toast({

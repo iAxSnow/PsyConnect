@@ -113,14 +113,15 @@ export default function BookSessionPage() {
     setIsBooking(true)
     try {
         await addDoc(collection(db, "sessions"), {
-            studentId: currentUser.uid,
-            tutorId: psychologist.uid, // Use uid here
+            studentId: appUser.uid,
+            tutorId: psychologist.uid,
             status: 'pending',
             createdAt: serverTimestamp(),
             course: selectedSpecialty, 
-             tutor: {
+            tutor: {
                 name: psychologist.name,
                 imageUrl: psychologist.imageUrl,
+                email: psychologist.email,
             },
             student: {
                 name: appUser.name,

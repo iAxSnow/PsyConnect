@@ -14,7 +14,7 @@ export interface Session {
   createdAt: Timestamp;
   sessionDate?: Timestamp; // The scheduled date/time for the session, to be agreed upon in chat
   // Denormalized data for easier access
-  tutor: Pick<User, 'name' | 'imageUrl'>;
+  tutor: Pick<User, 'name' | 'imageUrl' | 'email'>;
   student: Pick<User, 'name' | 'imageUrl' | 'age'>;
 }
 
