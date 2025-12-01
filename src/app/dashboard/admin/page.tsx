@@ -28,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+// HMR Refresh
 const getStatusVariant = (status: string) => {
   switch (status) {
     case 'Pendiente':
@@ -123,18 +124,13 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
     const [isLoading, setIsLoading] = React.useState(true);
 
      React.useEffect(() => {
-        // This is the simplified query. We fetch ALL users for 'all' filter
-        // and only tutors for 'pending' filter, then filter client-side.
-        const usersQuery = filter === 'pending' 
-            ? query(collection(db, "users"), where("isTutor", "==", true))
-            : query(collection(db, "users"));
+        const usersQuery = query(collection(db, "users"));
         
         const unsubscribe = onSnapshot(usersQuery, (querySnapshot) => {
             let usersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
 
             if (filter === 'pending') {
-                // Client-side filtering for pending validation
-                usersData = usersData.filter(user => user.validationStatus === 'pending');
+                usersData = usersData.filter(user => user.isTutor && user.validationStatus === 'pending');
             }
 
             setUsers(usersData);
@@ -283,5 +279,3 @@ export default function AdminDashboardPage() {
         </Tabs>
     )
 }
-
-    
