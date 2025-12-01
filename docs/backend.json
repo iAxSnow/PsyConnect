@@ -58,9 +58,6 @@
       "description": "Represents a user of the application.",
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string"
-        },
         "uid": {
           "type": "string"
         },
@@ -107,7 +104,7 @@
           "type": "string"
         }
       },
-      "required": ["id", "uid", "name", "age", "email", "imageUrl", "isTutor"]
+      "required": ["uid", "name", "age", "email", "imageUrl", "isTutor"]
     },
      "Report": {
       "title": "Report",

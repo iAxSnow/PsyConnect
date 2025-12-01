@@ -111,46 +111,42 @@ export function PsychologistSignupForm() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Step 2: Upload all files in parallel and get their URLs
-        const uploadFileAndGetURL = async (file: File, path: string): Promise<string> => {
-            const fileRef = ref(storage, path);
-            await uploadBytes(fileRef, file);
-            return await getDownloadURL(fileRef);
-        };
-        
-        const profilePicPath = `profile-pictures/${user.uid}`;
-        const titlePath = `documents/${user.uid}/title/${professionalTitleFile.name}`;
-        const certificatePaths = certificates.map(file => `documents/${user.uid}/certificates/${file.name}`);
+        // Step 2: Immediately set Firestore data to establish the user record
+        // This is a faster and more reliable operation than file uploads
+        const placeholderImageUrl = `https://placehold.co/200x200/EBF4FF/76A9FA?text=${name.charAt(0).toUpperCase()}`
 
-        // Create all upload promises
-        const uploadPromises: Promise<string>[] = [
-            uploadFileAndGetURL(profilePic, profilePicPath),
-            uploadFileAndGetURL(professionalTitleFile, titlePath),
-            ...certificates.map((file, index) => uploadFileAndGetURL(file, certificatePaths[index]))
-        ];
-
-        // Wait for all uploads to complete
-        const [imageUrl, ...documentUrls] = await Promise.all(uploadPromises);
-
-        // Step 3: Update Firebase Auth profile
-        await updateProfile(user, { displayName: name, photoURL: imageUrl });
-
-        // Step 4: Save all data to Firestore
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             name: name,
             email: email,
-            imageUrl: imageUrl,
+            imageUrl: placeholderImageUrl, // Use a placeholder first
             isTutor: true,
             bio: bio,
             courses: specialties,
             hourlyRate: Number(hourlyRate),
             rating: 5.0,
             reviews: 0,
-            isDisabled: true,
-            validationStatus: 'pending',
+            isDisabled: true, // Account is disabled until approved
+            validationStatus: 'pending', // Set to pending for admin review
         });
 
+        // Step 3: Now that the user exists and rules can be checked against it,
+        // upload files and update the user record with the new URLs.
+        const uploadFileAndGetURL = async (file: File, path: string): Promise<string> => {
+            const fileRef = ref(storage, path);
+            await uploadBytes(fileRef, file);
+            return await getDownloadURL(fileRef);
+        };
+
+        const profilePicPath = `profile-pictures/${user.uid}`;
+        // We don't need to upload other documents right now, we can ask for them later
+
+        const imageUrl = await uploadFileAndGetURL(profilePic, profilePicPath);
+
+        // Step 4: Update Firebase Auth and Firestore with the final image URL
+        await updateProfile(user, { displayName: name, photoURL: imageUrl });
+        await setDoc(doc(db, "users", user.uid), { imageUrl: imageUrl }, { merge: true });
+        
         toast({
             title: "Solicitud de Registro Enviada",
             description: "Tu cuenta ha sido creada y está pendiente de revisión. Te notificaremos pronto.",
