@@ -30,9 +30,6 @@ export function PsychologistSignupForm() {
   const [password, setPassword] = React.useState("")
   const [profilePic, setProfilePic] = React.useState<File | null>(null)
   const [profilePicName, setProfilePicName] = React.useState("")
-  const [certificates, setCertificates] = React.useState<File[]>([])
-  const [professionalTitleFile, setProfessionalTitleFile] = React.useState<File | null>(null)
-  const [professionalTitleFileName, setProfessionalTitleFileName] = React.useState("")
   const [bio, setBio] = React.useState("")
   const [specialties, setSpecialties] = React.useState<string[]>([])
   const [hourlyRate, setHourlyRate] = React.useState("")
@@ -44,9 +41,6 @@ export function PsychologistSignupForm() {
   const [isCoursesLoading, setIsCoursesLoading] = React.useState(true)
 
   const profilePicInputRef = React.useRef<HTMLInputElement>(null)
-  const certificatesInputRef = React.useRef<HTMLInputElement>(null)
-  const titleInputRef = React.useRef<HTMLInputElement>(null);
-
 
   React.useEffect(() => {
     const fetchCourses = async () => {
@@ -72,21 +66,6 @@ export function PsychologistSignupForm() {
     }
   }
 
-  const handleCertificatesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setCertificates(Array.from(e.target.files))
-    }
-  }
-
-  const handleTitleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setProfessionalTitleFile(file);
-      setProfessionalTitleFileName(file.name);
-    }
-  };
-
-
   const handleSpecialtyChange = (specialtyName: string, checked: boolean) => {
     setSpecialties(prev =>
       checked ? [...prev, specialtyName] : prev.filter(name => name !== specialtyName)
@@ -95,8 +74,8 @@ export function PsychologistSignupForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!profilePic || certificates.length === 0 || !professionalTitleFile) {
-        toast({ title: "Archivos Faltantes", description: "Por favor, sube una foto de perfil, tu título y al menos un certificado.", variant: "destructive" });
+    if (!profilePic) {
+        toast({ title: "Archivo Faltante", description: "Por favor, sube una foto de perfil.", variant: "destructive" });
         return;
     }
     if (specialties.length === 0) {
@@ -111,15 +90,21 @@ export function PsychologistSignupForm() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Step 2: Immediately set Firestore data to establish the user record
-        // This is a faster and more reliable operation than file uploads
-        const placeholderImageUrl = `https://placehold.co/200x200/EBF4FF/76A9FA?text=${name.charAt(0).toUpperCase()}`
+        // Step 2: Upload profile picture
+        const profilePicPath = `profile-pictures/${user.uid}`;
+        const profilePicRef = ref(storage, profilePicPath);
+        await uploadBytes(profilePicRef, profilePic);
+        const imageUrl = await getDownloadURL(profilePicRef);
 
+        // Step 3: Update Firebase Auth profile
+        await updateProfile(user, { displayName: name, photoURL: imageUrl });
+        
+        // Step 4: Save user data to Firestore
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             name: name,
             email: email,
-            imageUrl: placeholderImageUrl, // Use a placeholder first
+            imageUrl: imageUrl,
             isTutor: true,
             bio: bio,
             courses: specialties,
@@ -129,23 +114,6 @@ export function PsychologistSignupForm() {
             isDisabled: true, // Account is disabled until approved
             validationStatus: 'pending', // Set to pending for admin review
         });
-
-        // Step 3: Now that the user exists and rules can be checked against it,
-        // upload files and update the user record with the new URLs.
-        const uploadFileAndGetURL = async (file: File, path: string): Promise<string> => {
-            const fileRef = ref(storage, path);
-            await uploadBytes(fileRef, file);
-            return await getDownloadURL(fileRef);
-        };
-
-        const profilePicPath = `profile-pictures/${user.uid}`;
-        // We don't need to upload other documents right now, we can ask for them later
-
-        const imageUrl = await uploadFileAndGetURL(profilePic, profilePicPath);
-
-        // Step 4: Update Firebase Auth and Firestore with the final image URL
-        await updateProfile(user, { displayName: name, photoURL: imageUrl });
-        await setDoc(doc(db, "users", user.uid), { imageUrl: imageUrl }, { merge: true });
         
         toast({
             title: "Solicitud de Registro Enviada",
@@ -166,10 +134,10 @@ export function PsychologistSignupForm() {
                 description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
                 break;
             case 'storage/unauthorized':
-                description = "Error de permisos al subir archivos. Revisa las reglas de seguridad de Firebase Storage. Contacta a soporte.";
+                description = "Error de permisos al subir archivos. Revisa las reglas de seguridad de Firebase Storage.";
                 break;
             case 'permission-denied':
-                 description = "Error de permisos al guardar en la base de datos. Revisa las reglas de seguridad de Firestore. Contacta a soporte."
+                 description = "Error de permisos al guardar en la base de datos. Revisa las reglas de seguridad de Firestore."
                  break;
             default:
                 description = error.message || description;
@@ -219,24 +187,6 @@ export function PsychologistSignupForm() {
                 <div className="space-y-2">
                     <Label>Biografía</Label>
                     <Textarea placeholder="Cuéntanos sobre ti, tu enfoque y experiencia..." value={bio} onChange={(e) => setBio(e.target.value)} required />
-                </div>
-                 <div className="space-y-2">
-                    <Label>Certificados y Licencia</Label>
-                    <div className="flex items-center gap-2">
-                        <Input id="certificates" type="file" multiple className="hidden" ref={certificatesInputRef} onChange={handleCertificatesChange} required />
-                        <Button type="button" variant="outline" onClick={() => certificatesInputRef.current?.click()}> <Upload className="mr-2 h-4 w-4" /> Subir Archivos </Button>
-                         {certificates.length > 0 && <span className="text-sm text-muted-foreground">{certificates.length} archivo(s)</span>}
-                    </div>
-                    <p className="text-xs text-muted-foreground px-1">Es necesario subir la licencia profesional. En caso de no hacerlo, su registro podría ser rechazado.</p>
-                </div>
-                 <div className="space-y-2">
-                    <Label>Título Profesional</Label>
-                    <div className="flex items-center gap-2">
-                        <Input id="title-file" type="file" className="hidden" ref={titleInputRef} onChange={handleTitleFileChange} accept="application/pdf,image/*" required />
-                        <Button type="button" variant="outline" onClick={() => titleInputRef.current?.click()}> <Upload className="mr-2 h-4 w-4" /> Subir Título </Button>
-                         {professionalTitleFileName && <span className="text-sm text-muted-foreground truncate">{professionalTitleFileName}</span>}
-                    </div>
-                    <p className="text-xs text-muted-foreground px-1">En caso de ser practicante, poner su carta de solicitud u otro certificado firmado por su universidad.</p>
                 </div>
                  <div className="space-y-2">
                     <Label>Especialidades</Label>
