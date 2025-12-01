@@ -34,7 +34,7 @@ import { useToast } from "@/hooks/use-toast"
 import { SheetTitle } from "@/components/ui/sheet"
 
 
-const ADMIN_EMAILS = ["jp.caro.cornejo@gmail.com", "carlos.rodriguez5@mail.udp.cl", "sebastian.gulfo@mail.udp.cl", "luciano.silva@mail.udp.cl", "sebastian.varas@mail.udp.cl"];
+const ADMIN_EMAILS = ["admin@psyconnect.com", "jp.caro.cornejo@gmail.com", "carlos.rodriguez5@mail.udp.cl", "sebastian.gulfo@mail.udp.cl", "luciano.silva@mail.udp.cl", "sebastian.varas@mail.udp.cl"];
 
 export default function DashboardLayout({
   children,
