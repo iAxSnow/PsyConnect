@@ -128,30 +128,23 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
     const [isLoading, setIsLoading] = React.useState(true);
 
      React.useEffect(() => {
-        let usersQuery;
-        if (filter === 'pending') {
-            // This query is more efficient and requires a composite index in Firestore
-            // which Firebase will prompt you to create in the console logs.
-            usersQuery = query(
-                collection(db, "users"), 
-                where("isTutor", "==", true),
-                where("validationStatus", "==", "pending")
-            );
-        } else {
-            usersQuery = query(collection(db, "users"));
-        }
+        const usersQuery = query(collection(db, "users"));
         
         const unsubscribe = onSnapshot(usersQuery, async (querySnapshot) => {
             const reportsQuery = query(collection(db, "reports"));
             const reportsSnapshot = await getDocs(reportsQuery);
             const reportsData = reportsSnapshot.docs.map(doc => doc.data() as Report);
 
-            const usersData = querySnapshot.docs.map(doc => {
+            let usersData = querySnapshot.docs.map(doc => {
                 const user = { id: doc.id, ...doc.data() } as User;
                 const reportsReceived = reportsData.filter(r => r.reportedUserId === user.uid).length;
                 const reportsMade = reportsData.filter(r => r.reportedByUserId === user.uid).length;
                 return { ...user, reportsReceived, reportsMade };
             });
+
+            if (filter === 'pending') {
+                usersData = usersData.filter(user => user.isTutor && user.validationStatus === 'pending');
+            }
 
             setUsers(usersData.sort((a,b) => b.reportsReceived - a.reportsReceived));
             setIsLoading(false);
