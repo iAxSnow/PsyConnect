@@ -5,7 +5,7 @@ import * as React from "react"
 import Image from "next/image"
 import { notFound, useRouter, useParams } from "next/navigation"
 import { ArrowLeft, Brain, CheckCircle } from "lucide-react"
-import { doc, getDoc, addDoc, collection, serverTimestamp } from "firebase/firestore"
+import { doc, getDoc, addDoc, collection, serverTimestamp, type Firestore } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase"
 import { useAuthState } from "react-firebase-hooks/auth"
 import type { User as AppUser, User } from "@/lib/types"
@@ -16,6 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 
 export default function BookSessionPage() {
@@ -60,10 +62,9 @@ export default function BookSessionPage() {
         ]);
 
         if (!userDoc.exists()) {
-            // THIS IS THE FIX: User is authenticated but has no DB record.
             console.error("User profile not found in Firestore. Logging out.");
             toast({ title: "Error de Cuenta", description: "No se encontró tu perfil de usuario. Por favor, inicia sesión de nuevo.", variant: "destructive" });
-            auth.signOut(); // Sign out the "ghost" user
+            auth.signOut();
             router.push("/");
             return;
         }
@@ -111,41 +112,44 @@ export default function BookSessionPage() {
     }
 
     setIsBooking(true)
-    try {
-        await addDoc(collection(db, "sessions"), {
-            studentId: appUser.uid,
-            tutorId: psychologist.uid,
-            status: 'pending',
-            createdAt: serverTimestamp(),
-            course: selectedSpecialty, 
-            tutor: {
-                name: psychologist.name,
-                imageUrl: psychologist.imageUrl,
-                email: psychologist.email,
-            },
-            student: {
-                name: appUser.name,
-                imageUrl: appUser.imageUrl,
-                age: appUser.age
-            }
-        });
+    
+    const sessionData = {
+        studentId: appUser.uid,
+        tutorId: psychologist.uid,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        course: selectedSpecialty, 
+        tutor: {
+            name: psychologist.name,
+            imageUrl: psychologist.imageUrl,
+            email: psychologist.email,
+        },
+        student: {
+            name: appUser.name,
+            imageUrl: appUser.imageUrl,
+            age: appUser.age
+        }
+    };
 
+    addDoc(collection(db, "sessions"), sessionData)
+      .then(() => {
         toast({
             title: "Solicitud Enviada",
-            description: `Tu solicitud de sesión con ${psychologist.name} ha sido enviada.`,
+            description: `Tu solicitud de sesión con ${psychologist!.name} ha sido enviada.`,
         })
         router.push("/dashboard");
-
-    } catch (error) {
-        console.error("Error booking session:", error)
-        toast({
-            title: "Error",
-            description: "No se pudo enviar la solicitud. Inténtalo de nuevo.",
-            variant: "destructive",
-        })
-    } finally {
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: "/sessions/{sessionId}",
+          operation: 'create',
+          requestResourceData: sessionData,
+        }, serverError);
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
         setIsBooking(false)
-    }
+      });
   }
 
   if (isLoading || loadingAuth) {
@@ -220,7 +224,7 @@ export default function BookSessionPage() {
             </Button>
 
              <p className="text-xs text-muted-foreground text-center">
-                Tu solicitud será enviada al psicólogo para su confirmación. Se te notificará cuando sea aceptada y podrás coordinar la sesión por el chat.
+                Tu solicitud será enviada al psicólogo para su confirmación. Se te notificará cuando sea aceptada y podrás coordinar la sesión.
             </p>
 
         </CardContent>
