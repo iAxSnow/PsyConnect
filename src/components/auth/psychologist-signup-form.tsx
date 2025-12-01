@@ -107,23 +107,37 @@ export function PsychologistSignupForm() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // 2. Upload files and get URLs
-        const profilePicRef = ref(storage, `profile-pictures/${user.uid}/${profilePic.name}`);
-        await uploadBytes(profilePicRef, profilePic);
-        const imageUrl = await getDownloadURL(profilePicRef);
+        let imageUrl = '';
+        try {
+            // 2. Upload profile picture
+            const profilePicRef = ref(storage, `profile-pictures/${user.uid}/${profilePic.name}`);
+            await uploadBytes(profilePicRef, profilePic);
+            imageUrl = await getDownloadURL(profilePicRef);
 
-        const titleRef = ref(storage, `documents/${user.uid}/title/${professionalTitleFile.name}`);
-        await uploadBytes(titleRef, professionalTitleFile);
-        
-        for (const file of certificates) {
-            const certificateRef = ref(storage, `documents/${user.uid}/certificates/${file.name}`);
-            await uploadBytes(certificateRef, file);
+            // 3. Upload professional title
+            const titleRef = ref(storage, `documents/${user.uid}/title/${professionalTitleFile.name}`);
+            await uploadBytes(titleRef, professionalTitleFile);
+
+            // 4. Upload certificates
+            for (const file of certificates) {
+                const certificateRef = ref(storage, `documents/${user.uid}/certificates/${file.name}`);
+                await uploadBytes(certificateRef, file);
+            }
+        } catch (uploadError: any) {
+            // This is the critical new error handling block
+            if (uploadError.code === 'storage/unauthorized') {
+                console.error("Storage permission error:", uploadError);
+                throw new Error("Error de permisos al subir archivos. Revisa las reglas de seguridad de Firebase Storage.");
+            }
+            console.error("File upload error:", uploadError);
+            throw new Error("No se pudieron subir los archivos. Inténtalo de nuevo.");
         }
 
-        // 3. Update Firebase Auth profile
+
+        // 5. Update Firebase Auth profile
         await updateProfile(user, { displayName: name, photoURL: imageUrl });
 
-        // 4. Save all data to Firestore
+        // 6. Save all data to Firestore
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             name: name,
@@ -149,6 +163,7 @@ export function PsychologistSignupForm() {
     } catch (error: any) {
         console.error("Signup Error:", error);
         let description = "Ocurrió un error inesperado durante el registro.";
+        // Enhanced error handling
         switch (error.code) {
             case 'auth/email-already-in-use':
                 description = "Este correo electrónico ya está en uso. Por favor, utiliza otro.";
@@ -156,10 +171,8 @@ export function PsychologistSignupForm() {
             case 'auth/weak-password':
                 description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
                 break;
-            case 'storage/unauthorized':
-                description = "Error de permisos al subir archivos. Revisa las reglas de seguridad de Firebase Storage.";
-                break;
             default:
+                 // Use the specific message from the thrown error if available
                 description = error.message || description;
                 break;
         }
