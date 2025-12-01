@@ -1,7 +1,7 @@
 // @/components/FirebaseErrorListener.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { errorEmitter } from '@/firebase/error-emitter';
 
 // This is a client-side only component that will be used to display
