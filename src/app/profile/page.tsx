@@ -87,9 +87,9 @@ const SessionRow = ({ session, router, isPsychologist }: { session: Session; rou
                 </RatingDialog>
             )}
             {session.status === 'accepted' && !isPsychologist && (
-                <div className="flex flex-col items-end gap-1 text-xs">
-                    <span className="font-semibold">Contactar por correo:</span>
-                    <a href={`mailto:${session.tutor.email}`} className="text-primary hover:underline flex items-center gap-1">
+                <div className="flex items-center justify-end gap-1 text-xs">
+                    <span className="text-muted-foreground">Contacta mandando un correo aquí:</span>
+                    <a href={`mailto:${session.tutor.email}`} className="text-primary hover:underline flex items-center gap-1 font-semibold">
                        <Mail className="h-3 w-3" /> {session.tutor.email}
                     </a>
                 </div>
