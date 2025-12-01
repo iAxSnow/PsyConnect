@@ -112,13 +112,9 @@ export default function BookSessionPage() {
 
     setIsBooking(true)
     try {
-        const studentName = appUser.name;
-        const studentImageUrl = appUser.imageUrl;
-        const studentAge = appUser.age;
-
         await addDoc(collection(db, "sessions"), {
             studentId: currentUser.uid,
-            tutorId: psychologist.id,
+            tutorId: psychologist.uid, // Use uid here
             status: 'pending',
             createdAt: serverTimestamp(),
             course: selectedSpecialty, 
@@ -127,9 +123,9 @@ export default function BookSessionPage() {
                 imageUrl: psychologist.imageUrl,
             },
             student: {
-                name: studentName,
-                imageUrl: studentImageUrl,
-                age: studentAge
+                name: appUser.name,
+                imageUrl: appUser.imageUrl,
+                age: appUser.age
             }
         });
 
