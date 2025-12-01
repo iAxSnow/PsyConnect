@@ -14,7 +14,6 @@ import type { Course } from "@/lib/types"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
 
-
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -48,7 +47,7 @@ export function PsychologistSignupForm() {
         setAllCourses(coursesList)
       } catch (error) {
         console.error("Error fetching courses:", error)
-        toast({ title: "Error", description: "No se pudieron cargar las especialidades. Verifique sus reglas de seguridad de Firestore.", variant: "destructive" })
+        toast({ title: "Error", description: "No se pudieron cargar las especialidades.", variant: "destructive" })
       } finally {
         setIsCoursesLoading(false)
       }
@@ -95,37 +94,33 @@ export function PsychologistSignupForm() {
             hourlyRate: Number(hourlyRate),
             rating: 5.0,
             reviews: 0,
-            isDisabled: true,
-            validationStatus: 'pending',
+            isDisabled: true, // Account is disabled until approved by an admin
+            validationStatus: 'pending', // This is the crucial field for the admin panel
         };
 
-        setDoc(userDocRef, userData)
-            .then(() => {
-                toast({
-                    title: "Solicitud de Registro Enviada",
-                    description: "Tu cuenta ha sido creada y está pendiente de revisión. Te notificaremos pronto.",
-                });
-                router.push("/");
-            })
-            .catch(async (serverError) => {
-                setIsLoading(false);
-                if (serverError.code === 'permission-denied') {
-                    const permissionError = new FirestorePermissionError({
-                      path: userDocRef.path,
-                      operation: 'create',
-                      requestResourceData: userData,
-                    });
-                    errorEmitter.emit('permission-error', permissionError);
-                } else {
-                     toast({ title: "Error de Base de Datos", description: serverError.message, variant: "destructive" });
-                }
-            });
+        await setDoc(userDocRef, userData)
+        
+        toast({
+            title: "Solicitud de Registro Enviada",
+            description: "Tu cuenta ha sido creada y está pendiente de revisión. Te notificaremos pronto.",
+        });
+        router.push("/");
 
     } catch (error: any) {
         setIsLoading(false);
         console.error("Signup Error:", error);
+
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+              path: `users/${auth.currentUser?.uid}`,
+              operation: 'create',
+              requestResourceData: { name, email /* other user data */ },
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            return;
+        }
+
         let description = "Ocurrió un error inesperado durante el registro.";
-        
         switch (error.code) {
             case 'auth/email-already-in-use':
                 description = "Este correo electrónico ya está en uso. Por favor, utiliza otro.";
