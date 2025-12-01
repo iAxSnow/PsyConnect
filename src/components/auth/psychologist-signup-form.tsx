@@ -103,33 +103,33 @@ export function PsychologistSignupForm() {
     setIsLoading(true);
 
     try {
-        // 1. Create user in Firebase Auth to get UID
+        // Step 1: Create user in Firebase Auth
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // 2. Upload profile picture and get URL
+        // Step 2: Upload profile picture and get URL
         const profilePicRef = ref(storage, `profile-pictures/${user.uid}/${profilePic.name}`);
         await uploadBytes(profilePicRef, profilePic);
         const imageUrl = await getDownloadURL(profilePicRef);
 
-        // 3. Upload professional title
+        // Step 3: Upload professional title
         const titleRef = ref(storage, `documents/${user.uid}/title/${professionalTitleFile.name}`);
         await uploadBytes(titleRef, professionalTitleFile);
 
-        // 4. Upload certificates
+        // Step 4: Upload certificates
         for (const file of certificates) {
             const certificateRef = ref(storage, `documents/${user.uid}/certificates/${file.name}`);
             await uploadBytes(certificateRef, file);
         }
 
-        // 5. Update Firebase Auth profile
+        // Step 5: Update Firebase Auth profile
         await updateProfile(user, { displayName: name, photoURL: imageUrl });
 
-        // 6. Save all data to Firestore
+        // Step 6: Save all data to Firestore
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             name: name,
-            email: email, // Added email
+            email: email,
             imageUrl: imageUrl,
             isTutor: true,
             bio: bio,
