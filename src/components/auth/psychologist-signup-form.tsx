@@ -4,12 +4,11 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, DollarSign, Upload } from "lucide-react"
+import { Eye, EyeOff, DollarSign } from "lucide-react"
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
 import { doc, setDoc } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { useToast } from "@/hooks/use-toast"
-import { auth, db, storage } from "@/lib/firebase"
+import { auth, db } from "@/lib/firebase"
 import { getAllCourses } from "@/services/courses"
 import type { Course } from "@/lib/types"
 
@@ -31,10 +30,6 @@ export function PsychologistSignupForm() {
   const [bio, setBio] = React.useState("")
   const [specialties, setSpecialties] = React.useState<string[]>([])
   const [hourlyRate, setHourlyRate] = React.useState("")
-
-  // File State
-  const [titleFile, setTitleFile] = React.useState<File | null>(null);
-  const [certificateFiles, setCertificateFiles] = React.useState<FileList | null>(null);
 
   // UI State
   const [showPassword, setShowPassword] = React.useState(false)
@@ -74,10 +69,6 @@ export function PsychologistSignupForm() {
         toast({ title: "Tarifa Faltante", description: "Debes ingresar una tarifa por sesión.", variant: "destructive" });
         return;
     }
-    if (!titleFile) {
-        toast({ title: "Título Faltante", description: "Debes adjuntar tu título profesional.", variant: "destructive" });
-        return;
-    }
 
     setIsLoading(true);
 
@@ -88,28 +79,10 @@ export function PsychologistSignupForm() {
 
         const placeholderImageUrl = `https://placehold.co/200x200/EBF4FF/76A9FA?text=${name.charAt(0).toUpperCase()}`;
 
-        // 2. Upload files in parallel
-        const uploadPromises: Promise<string>[] = [];
-        
-        // Title upload promise
-        const titleRef = ref(storage, `documents/${user.uid}/title/${titleFile.name}`);
-        uploadPromises.push(uploadBytes(titleRef, titleFile).then(snapshot => getDownloadURL(snapshot.ref)));
-        
-        // Certificate upload promises
-        if (certificateFiles) {
-            Array.from(certificateFiles).forEach(file => {
-                const certRef = ref(storage, `documents/${user.uid}/certificates/${file.name}`);
-                uploadPromises.push(uploadBytes(certRef, file).then(snapshot => getDownloadURL(snapshot.ref)));
-            });
-        }
-        
-        // Wait for all uploads to complete
-        await Promise.all(uploadPromises);
-
-        // 3. Update Auth Profile
+        // 2. Update Auth Profile
         await updateProfile(user, { displayName: name, photoURL: placeholderImageUrl });
         
-        // 4. Save user data to Firestore
+        // 3. Save user data to Firestore
         const userDocRef = doc(db, "users", user.uid);
         const userData = {
             uid: user.uid,
@@ -123,7 +96,7 @@ export function PsychologistSignupForm() {
             rating: 5.0,
             reviews: 0,
             isDisabled: true, // Account is disabled until approved by an admin
-            validationStatus: 'pending' as 'pending' | 'approved' | 'rejected', // This is the crucial field for the admin panel
+            validationStatus: 'pending' as 'pending' | 'approved' | 'rejected',
         };
 
         await setDoc(userDocRef, userData)
@@ -146,9 +119,6 @@ export function PsychologistSignupForm() {
             case 'auth/weak-password':
                 description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
                 break;
-            case 'storage/unauthorized':
-                 description = "Error de permisos al subir archivos. Revisa las reglas de seguridad de Storage.";
-                 break;
             default:
                 description = error.message || description;
                 break;
@@ -210,14 +180,6 @@ export function PsychologistSignupForm() {
                         <Input id="rate" type="number" placeholder="30000" className="pl-10" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} required />
                     </div>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="title-file">Título Profesional (PDF, JPG, PNG)</Label>
-                    <Input id="title-file" type="file" required onChange={e => setTitleFile(e.target.files?.[0] ?? null)} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="certificates">Certificados y/o Licencia (opcional)</Label>
-                    <Input id="certificates" type="file" multiple onChange={e => setCertificateFiles(e.target.files)} />
-                </div>
             </div>
         </div>
         <div className="mt-8 flex flex-col gap-4">
@@ -233,5 +195,3 @@ export function PsychologistSignupForm() {
     </form>
   )
 }
-
-    
