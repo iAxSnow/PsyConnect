@@ -7,9 +7,8 @@ import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Upload, DollarSign, Brain } from "lucide-react"
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
 import { doc, setDoc } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { useToast } from "@/hooks/use-toast"
-import { auth, db, storage } from "@/lib/firebase"
+import { auth, db } from "@/lib/firebase"
 import { getAllCourses } from "@/services/courses"
 import type { Course } from "@/lib/types"
 
@@ -28,8 +27,6 @@ export function PsychologistSignupForm() {
   const [name, setName] = React.useState("")
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
-  const [profilePic, setProfilePic] = React.useState<File | null>(null)
-  const [profilePicName, setProfilePicName] = React.useState("")
   const [bio, setBio] = React.useState("")
   const [specialties, setSpecialties] = React.useState<string[]>([])
   const [hourlyRate, setHourlyRate] = React.useState("")
@@ -40,8 +37,6 @@ export function PsychologistSignupForm() {
   const [allCourses, setAllCourses] = React.useState<Course[]>([])
   const [isCoursesLoading, setIsCoursesLoading] = React.useState(true)
 
-  const profilePicInputRef = React.useRef<HTMLInputElement>(null)
-
   React.useEffect(() => {
     const fetchCourses = async () => {
       setIsCoursesLoading(true)
@@ -50,21 +45,13 @@ export function PsychologistSignupForm() {
         setAllCourses(coursesList)
       } catch (error) {
         console.error("Error fetching courses:", error)
-        toast({ title: "Error", description: "No se pudieron cargar las especialidades.", variant: "destructive" })
+        toast({ title: "Error", description: "No se pudieron cargar las especialidades. Verifique sus reglas de seguridad de Firestore.", variant: "destructive" })
       } finally {
         setIsCoursesLoading(false)
       }
     }
     fetchCourses()
   }, [toast])
-
-  const handleProfilePicChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      setProfilePicName(file.name)
-      setProfilePic(file)
-    }
-  }
 
   const handleSpecialtyChange = (specialtyName: string, checked: boolean) => {
     setSpecialties(prev =>
@@ -74,12 +61,12 @@ export function PsychologistSignupForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!profilePic) {
-        toast({ title: "Archivo Faltante", description: "Por favor, sube una foto de perfil.", variant: "destructive" });
-        return;
-    }
     if (specialties.length === 0) {
         toast({ title: "Especialidades Faltantes", description: "Debes seleccionar al menos una especialidad.", variant: "destructive" });
+        return;
+    }
+    if (!hourlyRate) {
+        toast({ title: "Tarifa Faltante", description: "Debes ingresar una tarifa por sesión.", variant: "destructive" });
         return;
     }
 
@@ -90,28 +77,25 @@ export function PsychologistSignupForm() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Step 2: Upload profile picture
-        const profilePicPath = `profile-pictures/${user.uid}`;
-        const profilePicRef = ref(storage, profilePicPath);
-        await uploadBytes(profilePicRef, profilePic);
-        const imageUrl = await getDownloadURL(profilePicRef);
+        // Step 2: Define a placeholder image URL
+        const placeholderImageUrl = `https://placehold.co/200x200/EBF4FF/76A9FA?text=${name.charAt(0).toUpperCase()}`;
 
         // Step 3: Update Firebase Auth profile
-        await updateProfile(user, { displayName: name, photoURL: imageUrl });
+        await updateProfile(user, { displayName: name, photoURL: placeholderImageUrl });
         
         // Step 4: Save user data to Firestore
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             name: name,
             email: email,
-            imageUrl: imageUrl,
+            imageUrl: placeholderImageUrl,
             isTutor: true,
             bio: bio,
             courses: specialties,
             hourlyRate: Number(hourlyRate),
             rating: 5.0,
             reviews: 0,
-            isDisabled: true, // Account is disabled until approved
+            isDisabled: true, // Account is disabled until approved by an admin
             validationStatus: 'pending', // Set to pending for admin review
         });
         
@@ -120,6 +104,7 @@ export function PsychologistSignupForm() {
             description: "Tu cuenta ha sido creada y está pendiente de revisión. Te notificaremos pronto.",
         });
 
+        // Step 5: Redirect on success
         router.push("/");
 
     } catch (error: any) {
@@ -133,11 +118,8 @@ export function PsychologistSignupForm() {
             case 'auth/weak-password':
                 description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
                 break;
-            case 'storage/unauthorized':
-                description = "Error de permisos al subir archivos. Revisa las reglas de seguridad de Firebase Storage.";
-                break;
             case 'permission-denied':
-                 description = "Error de permisos al guardar en la base de datos. Revisa las reglas de seguridad de Firestore."
+                 description = "Error de permisos de Firestore. No se pudo guardar el perfil de usuario. Revisa tus reglas de seguridad."
                  break;
             default:
                 description = error.message || description;
@@ -174,14 +156,6 @@ export function PsychologistSignupForm() {
                         <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground" onClick={() => setShowPassword(!showPassword)} >
                             {showPassword ? <EyeOff /> : <Eye />}
                         </Button>
-                    </div>
-                </div>
-                 <div className="space-y-2">
-                    <Label>Foto de Perfil</Label>
-                    <div className="flex items-center gap-2">
-                        <Input id="profile-picture" type="file" className="hidden" ref={profilePicInputRef} onChange={handleProfilePicChange} accept="image/*" required />
-                        <Button type="button" variant="outline" onClick={() => profilePicInputRef.current?.click()}> <Upload className="mr-2 h-4 w-4" /> Subir Foto </Button>
-                        {profilePicName && <span className="text-sm text-muted-foreground truncate">{profilePicName}</span>}
                     </div>
                 </div>
                 <div className="space-y-2">
