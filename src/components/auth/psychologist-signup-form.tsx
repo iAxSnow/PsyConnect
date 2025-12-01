@@ -99,6 +99,10 @@ export function PsychologistSignupForm() {
         toast({ title: "Archivos Faltantes", description: "Por favor, sube una foto de perfil, tu título y al menos un certificado.", variant: "destructive" });
         return;
     }
+    if (specialties.length === 0) {
+        toast({ title: "Especialidades Faltantes", description: "Debes seleccionar al menos una especialidad.", variant: "destructive" });
+        return;
+    }
 
     setIsLoading(true);
 
@@ -107,25 +111,31 @@ export function PsychologistSignupForm() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Step 2: Upload profile picture and get URL
-        const profilePicRef = ref(storage, `profile-pictures/${user.uid}/${profilePic.name}`);
-        await uploadBytes(profilePicRef, profilePic);
-        const imageUrl = await getDownloadURL(profilePicRef);
+        // Step 2: Upload all files in parallel and get their URLs
+        const uploadFileAndGetURL = async (file: File, path: string): Promise<string> => {
+            const fileRef = ref(storage, path);
+            await uploadBytes(fileRef, file);
+            return await getDownloadURL(fileRef);
+        };
+        
+        const profilePicPath = `profile-pictures/${user.uid}`;
+        const titlePath = `documents/${user.uid}/title/${professionalTitleFile.name}`;
+        const certificatePaths = certificates.map(file => `documents/${user.uid}/certificates/${file.name}`);
 
-        // Step 3: Upload professional title
-        const titleRef = ref(storage, `documents/${user.uid}/title/${professionalTitleFile.name}`);
-        await uploadBytes(titleRef, professionalTitleFile);
+        // Create all upload promises
+        const uploadPromises: Promise<string>[] = [
+            uploadFileAndGetURL(profilePic, profilePicPath),
+            uploadFileAndGetURL(professionalTitleFile, titlePath),
+            ...certificates.map((file, index) => uploadFileAndGetURL(file, certificatePaths[index]))
+        ];
 
-        // Step 4: Upload certificates
-        for (const file of certificates) {
-            const certificateRef = ref(storage, `documents/${user.uid}/certificates/${file.name}`);
-            await uploadBytes(certificateRef, file);
-        }
+        // Wait for all uploads to complete
+        const [imageUrl, ...documentUrls] = await Promise.all(uploadPromises);
 
-        // Step 5: Update Firebase Auth profile
+        // Step 3: Update Firebase Auth profile
         await updateProfile(user, { displayName: name, photoURL: imageUrl });
 
-        // Step 6: Save all data to Firestore
+        // Step 4: Save all data to Firestore
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             name: name,
@@ -160,10 +170,10 @@ export function PsychologistSignupForm() {
                 description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
                 break;
             case 'storage/unauthorized':
-                description = "Error de permisos al subir archivos. Revisa las reglas de seguridad de Firebase Storage.";
+                description = "Error de permisos al subir archivos. Revisa las reglas de seguridad de Firebase Storage. Contacta a soporte.";
                 break;
             case 'permission-denied':
-                 description = "Error de permisos al guardar en la base de datos. Revisa las reglas de seguridad de Firestore."
+                 description = "Error de permisos al guardar en la base de datos. Revisa las reglas de seguridad de Firestore. Contacta a soporte."
                  break;
             default:
                 description = error.message || description;
