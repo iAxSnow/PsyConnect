@@ -7,7 +7,7 @@ import { getStorage } from "firebase/storage";
 const firebaseConfig = {
   projectId: "profe-udp-connect",
   appId: "1:385500074412:web:89271e8fec47225f4b2a09",
-  storageBucket: "profe-udp-connect.firebasestorage.app",
+  storageBucket: "profe-udp-connect.appspot.com",
   apiKey: "AIzaSyCzSFSmqwZfpo9UprwIv8zBKxJYJDSna98",
   authDomain: "profe-udp-connect.firebaseapp.com",
   messagingSenderId: "385500074412",
