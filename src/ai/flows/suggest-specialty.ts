@@ -1,3 +1,5 @@
+// This file is no longer used. The functionality has been moved to /src/app/api/suggest-specialty/route.ts
+// It is kept here for reference or future use but is not active in the application.
 'use server';
 /**
  * @fileOverview An AI agent that suggests a specialty based on a user's problem.

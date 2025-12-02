@@ -6,7 +6,6 @@ import { Search, Sparkles, Send } from "lucide-react"
 import { collection, query, where, getDocs } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
-import { suggestSpecialty } from "@/ai/flows/suggest-specialty" 
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getAvailableSpecialties } from "@/services/courses"
 
@@ -31,18 +30,32 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
     setIsLoading(true)
     
     try {
-        const result = await suggestSpecialty({ problemDescription: problem })
+        const response = await fetch('/api/suggest-specialty', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ problemDescription: problem }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Error en la respuesta del servidor.");
+        }
+        
+        const result = await response.json();
+
         onSpecialtySuggest(result.specialty)
         toast({
             title: "Sugerencia de la IA",
             description: result.reasoning,
         })
         setProblem("") // Clear input after successful suggestion
-    } catch (error) {
+    } catch (error: any) {
         console.error("AI suggestion failed:", error);
         toast({
             title: "Asistente IA no disponible",
-            description: "Esta función requiere conexión al servidor y no está disponible en la versión móvil. Por favor, utiliza los filtros de búsqueda.",
+            description: "No se pudo conectar con el asistente de IA. Por favor, intenta de nuevo más tarde o usa los filtros de búsqueda.",
             variant: "destructive"
         })
     } finally {
