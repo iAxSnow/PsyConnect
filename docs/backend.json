@@ -102,11 +102,6 @@
         },
         "bio": {
           "type": "string"
-        },
-        "professionalLink": {
-            "type": "string",
-            "format": "uri",
-            "description": "A link to the user's professional profile, e.g., LinkedIn."
         }
       },
       "required": ["uid", "name", "age", "email", "imageUrl", "isTutor"]

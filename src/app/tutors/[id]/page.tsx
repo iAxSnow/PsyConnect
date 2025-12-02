@@ -5,7 +5,7 @@ import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound, useRouter, useParams } from "next/navigation"
-import { Star, Brain, Calendar, ArrowLeft, AlertCircle, Linkedin } from "lucide-react"
+import { Star, Brain, Calendar, ArrowLeft, AlertCircle } from "lucide-react"
 import { doc, getDoc } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
@@ -136,22 +136,12 @@ export default function PsychologistProfilePage() {
               </div>
               <span>({psychologist.reviews} reseñas)</span>
             </div>
-            <div className="flex gap-2 mt-6 w-full">
-              { currentUser?.uid !== psychologist.uid && (
-                <Button size="lg" className="flex-1" onClick={handleBookSession}>
-                  <Calendar className="mr-2 h-5 w-5" /> 
-                  Enviar Solicitud
+            { currentUser?.uid !== psychologist.uid && (
+                 <Button size="lg" className="mt-6 w-full max-w-sm" onClick={handleBookSession}>
+                    <Calendar className="mr-2 h-5 w-5" /> 
+                    Enviar Solicitud
                 </Button>
-              )}
-              {psychologist.professionalLink && (
-                <Button size="lg" variant="outline" asChild className="flex-1">
-                  <Link href={psychologist.professionalLink} target="_blank">
-                    <Linkedin className="mr-2 h-5 w-5" />
-                    Ver Perfil Profesional
-                  </Link>
-                </Button>
-              )}
-            </div>
+            )}
           </div>
 
           <div className="mt-8">

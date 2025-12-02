@@ -4,11 +4,12 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, DollarSign, Link as LinkIcon } from "lucide-react"
+import { Eye, EyeOff, DollarSign, Upload } from "lucide-react"
 import { createUserWithEmailAndPassword, updateProfile, deleteUser } from "firebase/auth"
 import { doc, setDoc } from "firebase/firestore"
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { useToast } from "@/hooks/use-toast"
-import { auth, db } from "@/lib/firebase"
+import { auth, db, storage } from "@/lib/firebase"
 import { getAllCourses } from "@/services/courses"
 import type { Course } from "@/lib/types"
 
@@ -30,7 +31,10 @@ export function PsychologistSignupForm() {
   const [bio, setBio] = React.useState("")
   const [specialties, setSpecialties] = React.useState<string[]>([])
   const [hourlyRate, setHourlyRate] = React.useState("")
-  const [professionalLink, setProfessionalLink] = React.useState("")
+  
+  // File State
+  const [titleDoc, setTitleDoc] = React.useState<File | null>(null);
+  const [certsDoc, setCertsDoc] = React.useState<File | null>(null);
 
   // UI State
   const [showPassword, setShowPassword] = React.useState(false)
@@ -60,6 +64,19 @@ export function PsychologistSignupForm() {
     )
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'title' | 'certs') => {
+      if (e.target.files && e.target.files[0]) {
+          const file = e.target.files[0];
+          if (file.type !== "application/pdf") {
+              toast({ title: "Archivo Inválido", description: "Por favor, sube solo archivos PDF.", variant: "destructive" });
+              return;
+          }
+          if (fileType === 'title') setTitleDoc(file);
+          if (fileType === 'certs') setCertsDoc(file);
+      }
+  }
+
+
  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (specialties.length === 0) {
@@ -70,8 +87,8 @@ export function PsychologistSignupForm() {
         toast({ title: "Tarifa Faltante", description: "Debes ingresar una tarifa por sesión.", variant: "destructive" });
         return;
     }
-    if (!professionalLink) {
-        toast({ title: "Enlace Profesional Faltante", description: "Debes agregar un enlace a tu perfil profesional.", variant: "destructive" });
+    if (!titleDoc) {
+        toast({ title: "Título Profesional Requerido", description: "Por favor, sube tu título profesional en formato PDF.", variant: "destructive"});
         return;
     }
 
@@ -84,10 +101,23 @@ export function PsychologistSignupForm() {
 
         const placeholderImageUrl = `https://placehold.co/200x200/EBF4FF/76A9FA?text=${name.charAt(0).toUpperCase()}`;
 
-        // 2. Update Auth Profile
+        // 2. Upload documents to Storage
+        const uploadFile = async (file: File, path: string) => {
+            const storageRef = ref(storage, path);
+            await uploadBytes(storageRef, file);
+            return getDownloadURL(storageRef);
+        };
+
+        const titleUrl = await uploadFile(titleDoc, `documents/${user.uid}/title.pdf`);
+        let certsUrl = "";
+        if (certsDoc) {
+            certsUrl = await uploadFile(certsDoc, `documents/${user.uid}/certificates.pdf`);
+        }
+
+        // 3. Update Auth Profile
         await updateProfile(user, { displayName: name, photoURL: placeholderImageUrl });
         
-        // 3. Save user data to Firestore
+        // 4. Save user data to Firestore
         const userDocRef = doc(db, "users", user.uid);
         const userData = {
             uid: user.uid,
@@ -98,7 +128,6 @@ export function PsychologistSignupForm() {
             bio: bio,
             courses: specialties,
             hourlyRate: Number(hourlyRate),
-            professionalLink: professionalLink,
             rating: 5.0,
             reviews: 0,
             isDisabled: true, 
@@ -109,7 +138,7 @@ export function PsychologistSignupForm() {
         
         toast({
             title: "¡Registro Completado!",
-            description: "Tu solicitud ha sido enviada correctamente.",
+            description: "Tu solicitud ha sido enviada correctamente. Un administrador la revisará pronto.",
             duration: 5000,
         });
         
@@ -197,13 +226,18 @@ export function PsychologistSignupForm() {
                         <Input id="rate" type="number" placeholder="30000" className="pl-10" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} required />
                     </div>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="professionalLink">Perfil Profesional (LinkedIn, etc.)</Label>
-                    <div className="relative">
-                         <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input id="professionalLink" type="url" placeholder="https://linkedin.com/in/tu-perfil" className="pl-10" value={professionalLink} onChange={(e) => setProfessionalLink(e.target.value)} required />
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="title-doc">Título Profesional (PDF)</Label>
+                        <Input id="title-doc" type="file" accept=".pdf" onChange={(e) => handleFileChange(e, 'title')} required 
+                               className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
                     </div>
-                </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="certs-doc">Certificados / Licencia (PDF)</Label>
+                        <Input id="certs-doc" type="file" accept=".pdf" onChange={(e) => handleFileChange(e, 'certs')} 
+                               className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
+                    </div>
+                 </div>
             </div>
         </div>
         <div className="mt-8 flex flex-col gap-4">

@@ -35,7 +35,6 @@ export interface User {
   hourlyRate?: number;
   courses?: string[]; // Represents specialties
   bio?: string;
-  professionalLink?: string; // Link to professional profile (e.g., LinkedIn)
 }
 
 export interface Report {

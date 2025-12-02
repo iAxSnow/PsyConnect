@@ -3,10 +3,10 @@
 
 import * as React from "react"
 import { useParams, notFound, useRouter } from 'next/navigation'
-import Image from "next/image"
 import Link from "next/link"
 import { doc, onSnapshot, getDocs, collection, query, where, updateDoc, getDoc } from "firebase/firestore"
-import { db, auth } from "@/lib/firebase"
+import { db, auth, storage } from "@/lib/firebase"
+import { ref, listAll, getDownloadURL } from "firebase/storage"
 import { onAuthStateChanged } from "firebase/auth"
 import type { User, Report } from "@/lib/types"
 
@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { User as UserIcon, Stethoscope, FileText, Ban, CheckCircle, AlertTriangle, Eye, ShieldCheck, ShieldX, Linkedin } from "lucide-react"
+import { User as UserIcon, Stethoscope, FileText, Ban, CheckCircle, AlertTriangle, Eye, ShieldCheck, ShieldX, Download, FileArchive } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 export default function UserDetailsPage() {
@@ -27,6 +27,7 @@ export default function UserDetailsPage() {
     const userId = params.id as string;
     
     const [user, setUser] = React.useState<User | null>(null);
+    const [userDocs, setUserDocs] = React.useState<{ name: string; url: string }[]>([]);
     const [reportsAgainst, setReportsAgainst] = React.useState<Report[]>([]);
     const [reportsBy, setReportsBy] = React.useState<Report[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
@@ -41,7 +42,6 @@ export default function UserDetailsPage() {
             }
 
             try {
-                // Check if the current user is really an admin
                 if (currentUser.email !== "admin@connect.udp.cl") {
                      toast({
                         title: "Acceso denegado",
@@ -52,18 +52,6 @@ export default function UserDetailsPage() {
                     return;
                 }
                 
-                // Double check with Firestore just to be safe (optional but recommended)
-                const adminDoc = await getDoc(doc(db, "users", currentUser.uid));
-                if (!adminDoc.exists() || adminDoc.data()?.email !== "admin@connect.udp.cl") {
-                     toast({
-                        title: "Acceso denegado",
-                        description: "Perfil de administrador inválido.",
-                        variant: "destructive"
-                    });
-                    router.push("/dashboard");
-                    return;
-                }
-
                 setIsCheckingRole(false); // Valid admin
             } catch (error) {
                 console.error("Auth check error:", error);
@@ -84,6 +72,9 @@ export default function UserDetailsPage() {
             if (docSnap.exists()) {
                 const userData = { id: docSnap.id, ...docSnap.data() } as User;
                 setUser(userData);
+                 if (userData.isTutor) {
+                    fetchUserDocuments(userData.uid);
+                }
             } else {
                 setUser(null);
             }
@@ -92,6 +83,22 @@ export default function UserDetailsPage() {
             console.error("Error fetching user:", error);
             setIsLoading(false);
         });
+
+        const fetchUserDocuments = async (uid: string) => {
+            const docsRef = ref(storage, `documents/${uid}`);
+            try {
+                const res = await listAll(docsRef);
+                const docPromises = res.items.map(async (itemRef) => {
+                    const url = await getDownloadURL(itemRef);
+                    return { name: itemRef.name, url: url };
+                });
+                const fetchedDocs = await Promise.all(docPromises);
+                setUserDocs(fetchedDocs);
+            } catch (error) {
+                console.error("Error fetching user documents:", error);
+                setUserDocs([]);
+            }
+        };
 
         const fetchReports = async () => {
              const reportsRef = collection(db, "reports");
@@ -232,15 +239,34 @@ export default function UserDetailsPage() {
                             </Button>
                         )}
                      </div>
-                     {user.isTutor && user.professionalLink && (
-                        <Button asChild variant="outline">
-                            <Link href={user.professionalLink} target="_blank">
-                                <Linkedin className="mr-2"/> Ver Perfil Profesional
-                            </Link>
-                        </Button>
-                     )}
                 </CardFooter>
             </Card>
+
+            {user.isTutor && (
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                           <FileArchive /> Documentos para Verificación
+                        </CardTitle>
+                    </CardHeader>
+                     <CardContent>
+                        {userDocs.length > 0 ? (
+                            <div className="space-y-2">
+                                {userDocs.map(doc => (
+                                     <Button asChild key={doc.name} variant="outline" className="w-full justify-start">
+                                        <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                                            <Download className="mr-2" />
+                                            {doc.name === 'title.pdf' ? 'Título Profesional' : 'Certificados y Licencia'}
+                                        </a>
+                                    </Button>
+                                ))}
+                            </div>
+                        ): (
+                            <p className="text-muted-foreground text-sm">No se encontraron documentos para este usuario.</p>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
 
             <div className="grid md:grid-cols-2 gap-6">
                 <Card>
