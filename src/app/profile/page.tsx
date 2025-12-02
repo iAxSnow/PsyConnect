@@ -113,19 +113,16 @@ export default function ProfilePage() {
   }, []);
 
   React.useEffect(() => {
-    // 1. Wait until auth state is loaded.
     if (loadingAuth) {
       setIsLoading(true);
       return;
     }
-
-    // 2. If no user is authenticated, redirect to login.
+    
     if (!user) {
       router.push("/");
       return;
     }
 
-    // 3. User is authenticated, fetch their data.
     const fetchUserData = async () => {
       setIsLoading(true);
       try {
@@ -135,12 +132,12 @@ export default function ProfilePage() {
         if (userDoc.exists()) {
           const userData = { id: userDoc.id, ...userDoc.data() } as AppUser;
           setAppUser(userData);
-          // 4. Fetch sessions ONLY after user data is confirmed
+          // Fetch sessions ONLY after user data is confirmed
           const sessionsList = await getStudentSessions(userData.uid);
           setSessions(sessionsList);
         } else {
-          // User exists in Auth, but not in Firestore. This is an inconsistent state.
-          // Log them out and ask them to sign up again.
+          // This case should be handled gracefully. Maybe the user was deleted from DB but not from Auth.
+          // Logging out and redirecting is a good way to handle this inconsistency.
           await signOut(auth);
           toast({
             title: "Perfil no encontrado",
@@ -149,7 +146,6 @@ export default function ProfilePage() {
             duration: 5000,
           });
           router.push("/"); // Redirect to login page
-          return; // Stop further execution
         }
       } catch (error) {
         console.error("Error fetching user data or sessions: ", error)
@@ -197,8 +193,6 @@ export default function ProfilePage() {
   }
 
   if (!appUser) {
-    // This state should ideally not be reached due to the redirect logic,
-    // but it's a good fallback.
     return (
         <div className="flex flex-col items-center justify-center h-96 gap-4">
             <h2 className="text-2xl font-bold">Cargando perfil...</h2>
