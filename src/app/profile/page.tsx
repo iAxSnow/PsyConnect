@@ -106,40 +106,43 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = React.useState(true)
   
   React.useEffect(() => {
+    if (loadingAuth) {
+      // Still checking for the auth user, do nothing yet.
+      return;
+    }
+    if (!user) {
+      // No user, redirect to login.
+      router.push("/");
+      return;
+    }
+
     const fetchUserData = async () => {
-      if (user) {
-        setIsLoading(true);
-        try {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-              setAppUser({ id: userDoc.id, ...userDoc.data() } as AppUser);
-          }
-        } catch (error) {
-          console.error("Error fetching user data: ", error)
-        } finally {
-          setIsLoading(false)
+      setIsLoading(true);
+      try {
+        // Fetch user profile
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          const userData = { id: userDoc.id, ...userDoc.data() } as AppUser;
+          setAppUser(userData);
+
+          // Fetch sessions only after user data is confirmed
+          const sessionsList = await getStudentSessions(userData.uid);
+          setSessions(sessionsList);
+        } else {
+          // Handle case where user exists in Auth but not Firestore
+          console.error("User document not found in Firestore.");
         }
-      } else if (!loadingAuth) {
-        router.push("/");
+      } catch (error) {
+        console.error("Error fetching user data or sessions: ", error)
+      } finally {
+        setIsLoading(false)
       }
     };
+    
     fetchUserData();
   }, [user, loadingAuth, router])
-
-  React.useEffect(() => {
-    if (!appUser?.uid) return;
-
-    const fetchSessions = async () => {
-      try {
-        const sessionsList = await getStudentSessions(appUser.uid);
-        setSessions(sessionsList);
-      } catch (error) {
-        console.error("Error fetching sessions: ", error);
-      }
-    };
-    fetchSessions();
-  }, [appUser?.uid]);
 
   const handleProfileUpdate = React.useCallback((updatedUser: Partial<AppUser>) => {
     setAppUser(prevUser => prevUser ? { ...prevUser, ...updatedUser } : null);
@@ -175,7 +178,14 @@ export default function ProfilePage() {
   }
 
   if (!appUser) {
-    return null; 
+    // This can happen if the user doc doesn't exist in Firestore
+    return (
+        <div className="flex flex-col items-center justify-center h-96 gap-4">
+            <h2 className="text-2xl font-bold">No se pudieron cargar los datos del perfil.</h2>
+            <p className="text-muted-foreground">Por favor, intenta iniciar sesión de nuevo.</p>
+            <Button onClick={() => auth.signOut()}>Cerrar Sesión</Button>
+        </div>
+    );
   }
 
   const isPsychologist = appUser.isTutor;
