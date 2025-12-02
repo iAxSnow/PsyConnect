@@ -1,7 +1,7 @@
 // @/scripts/seed.ts
 import { collection, doc, setDoc, writeBatch, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { specialties, studentUser, psychologistUser, approvedPsychologistUser, testSession } from '../lib/seed-data';
+import { specialties, studentUser, psychologistUser, approvedPsychologistUser, adminUser, testSession } from '../lib/seed-data';
 import * as admin from 'firebase-admin';
 
 // --- INITIALIZE ADMIN SDK ---
@@ -124,6 +124,7 @@ async function seedUsers() {
     console.log('Seeding users...');
     
     try {
+        await seedUser(adminUser, testPassword);
         await seedUser(studentUser, testPassword);
         await seedUser(psychologistUser, testPassword);
         await seedUser(approvedPsychologistUser, testPassword);
@@ -168,6 +169,7 @@ async function main() {
     console.log('--------------------------------------');
     console.log('¡Proceso de siembra completado!');
     console.log('\nUsuarios de prueba creados:');
+    console.log(`- Administrador: ${adminUser.email} (password: ${testPassword})`);
     console.log(`- Estudiante: ${studentUser.email} (password: ${testPassword})`);
     console.log(`- Psicólogo por validar: ${psychologistUser.email} (password: ${testPassword})`);
     console.log(`- Psicólogo aprobado: ${approvedPsychologistUser.email} (password: ${testPassword})`);

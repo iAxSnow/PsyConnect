@@ -5,6 +5,17 @@ import { Timestamp } from 'firebase/firestore';
 
 // This data is for seeding the database for testing and demonstration purposes.
 
+// --- ADMIN USER ---
+export const adminUser: Omit<User, 'id'> = {
+  uid: 'admin_test_uid',
+  name: 'Admin',
+  email: 'admin@connect.udp.cl',
+  imageUrl: 'https://placehold.co/200x200/EBF4FF/76A9FA?text=AD',
+  isTutor: false,
+  age: 99,
+};
+
+
 // --- TEST USERS ---
 // Note: Passwords are not stored here. They should be manually created
 // or handled via a secure admin process. For this script, we'll create them with fixed UIDs.
@@ -30,6 +41,7 @@ export const psychologistUser: Omit<User, 'id'> = {
   age: 38,
   courses: ['Psicología Clínica', 'Terapia Cognitivo-Conductual (TCC)', 'Trastornos de Ansiedad'],
   bio: 'Psicóloga clínica con más de 15 años de experiencia. Me especializo en terapia cognitivo-conductual para tratar la ansiedad, la depresión y el estrés. Mi enfoque es colaborativo y centrado en soluciones.',
+  professionalLink: "https://www.linkedin.com/in/ana-molina-psicologa",
   validationStatus: 'pending', // Set to pending for admin review
   isDisabled: true, // Account is disabled until approved
 };
@@ -46,6 +58,7 @@ export const approvedPsychologistUser: Omit<User, 'id'> = {
   age: 42,
   courses: ['Terapia de Pareja y Familia', 'Psicología Humanista', 'Mindfulness y Bienestar'],
   bio: 'Con un enfoque humanista, ayudo a individuos y parejas a navegar por los desafíos de la vida. Creo firmemente en el poder de la conexión y el crecimiento personal para sanar.',
+  professionalLink: "https://www.linkedin.com/in/sofia-reyes-psicologa",
   validationStatus: 'approved', // This user is already approved
   isDisabled: false, // This account is active
 };
@@ -86,6 +99,7 @@ export const testSession: Omit<Session, 'id'> = {
     tutor: {
         name: psychologistUser.name,
         imageUrl: psychologistUser.imageUrl,
+        email: psychologistUser.email,
     },
     createdAt: Timestamp.now(),
 }
