@@ -9,6 +9,8 @@ import { useAuthState } from "react-firebase-hooks/auth"
 import { auth, db } from "@/lib/firebase"
 import { getStudentSessions } from "@/services/sessions"
 import { doc, getDoc } from "firebase/firestore"
+import { signOut } from "firebase/auth"
+import { useToast } from "@/hooks/use-toast"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -100,39 +102,50 @@ const SessionRow = ({ session, router, isPsychologist }: { session: Session; rou
 
 export default function ProfilePage() {
   const router = useRouter()
+  const { toast } = useToast();
   const [user, loadingAuth] = useAuthState(auth)
   const [appUser, setAppUser] = React.useState<AppUser | null>(null);
   const [sessions, setSessions] = React.useState<Session[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   
+  const handleProfileUpdate = React.useCallback((updatedUser: Partial<AppUser>) => {
+    setAppUser(prevUser => prevUser ? { ...prevUser, ...updatedUser } : null);
+  }, []);
+
   React.useEffect(() => {
     if (loadingAuth) {
-      // Still checking for the auth user, do nothing yet.
-      return;
+      return; // Wait until auth state is loaded.
     }
     if (!user) {
-      // No user, redirect to login.
-      router.push("/");
+      router.push("/"); // Redirect if not authenticated.
       return;
     }
 
     const fetchUserData = async () => {
       setIsLoading(true);
       try {
-        // Fetch user profile
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
         
         if (userDoc.exists()) {
           const userData = { id: userDoc.id, ...userDoc.data() } as AppUser;
           setAppUser(userData);
-
           // Fetch sessions only after user data is confirmed
           const sessionsList = await getStudentSessions(userData.uid);
           setSessions(sessionsList);
         } else {
-          // Handle case where user exists in Auth but not Firestore
-          console.error("User document not found in Firestore.");
+          // User exists in Auth, but not in Firestore. This is an inconsistent state.
+          // Log them out and ask them to sign up again.
+          console.error("User document not found in Firestore. Logging out.");
+          await signOut(auth);
+          toast({
+            title: "Perfil no encontrado",
+            description: "No se encontraron los datos de tu perfil. Por favor, regístrate de nuevo.",
+            variant: "destructive",
+            duration: 5000,
+          });
+          router.push("/signup"); // Redirect to signup page
+          return; // Stop further execution
         }
       } catch (error) {
         console.error("Error fetching user data or sessions: ", error)
@@ -142,11 +155,8 @@ export default function ProfilePage() {
     };
     
     fetchUserData();
-  }, [user, loadingAuth, router])
+  }, [user, loadingAuth, router, toast])
 
-  const handleProfileUpdate = React.useCallback((updatedUser: Partial<AppUser>) => {
-    setAppUser(prevUser => prevUser ? { ...prevUser, ...updatedUser } : null);
-  }, []);
   
   if (isLoading || loadingAuth) {
     return (
@@ -178,12 +188,12 @@ export default function ProfilePage() {
   }
 
   if (!appUser) {
-    // This can happen if the user doc doesn't exist in Firestore
+    // This state should ideally not be reached due to the redirect logic,
+    // but it's a good fallback.
     return (
         <div className="flex flex-col items-center justify-center h-96 gap-4">
-            <h2 className="text-2xl font-bold">No se pudieron cargar los datos del perfil.</h2>
-            <p className="text-muted-foreground">Por favor, intenta iniciar sesión de nuevo.</p>
-            <Button onClick={() => auth.signOut()}>Cerrar Sesión</Button>
+            <h2 className="text-2xl font-bold">Cargando perfil...</h2>
+            <p className="text-muted-foreground">Si esto tarda mucho, por favor, recarga la página.</p>
         </div>
     );
   }
