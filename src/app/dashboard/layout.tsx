@@ -34,7 +34,7 @@ import { useToast } from "@/hooks/use-toast"
 import { SheetTitle } from "@/components/ui/sheet"
 
 
-const ADMIN_EMAILS = ["admin@psyconnect.com", "jp.caro.cornejo@gmail.com", "carlos.rodriguez5@mail.udp.cl", "sebastian.gulfo@mail.udp.cl", "luciano.silva@mail.udp.cl", "sebastian.varas@mail.udp.cl"];
+const ADMIN_EMAIL = "admin@connect.udp.cl";
 
 export default function DashboardLayout({
   children,
@@ -62,7 +62,7 @@ export default function DashboardLayout({
     const checkUserRole = async () => {
         if (user) {
             // Check for admin role first
-            if (ADMIN_EMAILS.includes(user.email || '')) {
+            if (user.email === ADMIN_EMAIL) {
                 setIsAdmin(true);
             } else {
                 setIsAdmin(false);
