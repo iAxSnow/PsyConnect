@@ -35,39 +35,36 @@ export function SignupForm() {
       
       const displayName = name.trim();
       
-      // 2. Update Firebase Auth profile
-      await updateProfile(user, { displayName: displayName, photoURL: `https://placehold.co/200x200/EBF4FF/76A9FA?text=${displayName.charAt(0).toUpperCase()}` });
+      try {
+        // 2. Update Firebase Auth profile
+        await updateProfile(user, { displayName: displayName, photoURL: `https://placehold.co/200x200/EBF4FF/76A9FA?text=${displayName.charAt(0).toUpperCase()}` });
 
 
-      // 3. Save user data to Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        email: email,
-        isTutor: false, // This is a regular user, not a psychologist
-        name: displayName,
-        age: Number(age),
-        imageUrl: `https://placehold.co/200x200/EBF4FF/76A9FA?text=${displayName.charAt(0).toUpperCase()}`,
-      });
+        // 3. Save user data to Firestore
+        await setDoc(doc(db, "users", user.uid), {
+            uid: user.uid,
+            email: email,
+            isTutor: false, // This is a regular user, not a psychologist
+            name: displayName,
+            age: Number(age),
+            imageUrl: `https://placehold.co/200x200/EBF4FF/76A9FA?text=${displayName.charAt(0).toUpperCase()}`,
+        });
 
-      toast({
-        title: "Cuenta Creada",
-        description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión.",
-      })
+        toast({
+            title: "Cuenta Creada",
+            description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión.",
+        })
 
-      router.push("/")
+        router.push("/")
+
+      } catch (firestoreError) {
+         // If Firestore fails, delete the user from Auth to prevent inconsistent state
+         console.error("Firestore write failed, cleaning up Auth user...", firestoreError);
+         await deleteUser(user);
+         throw firestoreError; // Re-throw the error to be caught by the outer catch block
+      }
 
     } catch (error: any) {
-       // Cleanup if Firestore fails but Auth succeeded
-       const currentUser = auth.currentUser;
-       if (currentUser) {
-           try {
-               await deleteUser(currentUser);
-               console.log("Cleaned up phantom user after failed registration.");
-           } catch (cleanupError) {
-               console.error("Failed to cleanup user:", cleanupError);
-           }
-       }
-
        let description = "Ocurrió un error inesperado al crear tu cuenta."
        
        if (error.code) {
