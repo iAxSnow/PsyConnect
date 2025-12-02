@@ -94,17 +94,18 @@ export default function DashboardLayout({
 
   const getPageTitle = () => {
     if (pathname === '/dashboard') return "Panel";
+    if (pathname === '/dashboard/admin/reports/details') return "Detalle del Reporte";
+    if (pathname === '/dashboard/admin/users/details') return "Detalle de Usuario";
     if (pathname.startsWith('/dashboard/admin')) return "Panel de Administrador";
-    if (pathname.startsWith('/dashboard/admin/reports/')) return "Detalle del Reporte";
-    if (pathname.startsWith('/dashboard/admin/users/')) return "Detalle de Usuario";
+    
     const item = navItems.find(item => pathname.startsWith(item.href) && item.href !== '/dashboard');
     if (item) return item.label;
-    if (pathname.startsWith('/psychologists/')) return "Perfil del Psicólogo";
-    if (pathname.startsWith('/sessions/')) return "Sala de Sesión";
+    if (pathname.startsWith('/tutors/profile')) return "Perfil del Psicólogo";
+    if (pathname.startsWith('/tutors/book')) return "Agendar Sesión";
     return "Panel";
   }
   
-  const showBackButton = pathname.startsWith('/dashboard/admin/reports/') || pathname.startsWith('/dashboard/admin/users/');
+  const showBackButton = pathname === '/dashboard/admin/reports/details' || pathname === '/dashboard/admin/users/details';
 
   return (
     <SidebarProvider>

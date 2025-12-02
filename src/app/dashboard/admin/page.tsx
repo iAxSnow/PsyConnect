@@ -94,7 +94,7 @@ function ReportsTable() {
             </TableHeader>
             <TableBody>
                 {reports.length > 0 ? reports.map((report) => (
-                    <TableRow key={report.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/dashboard/admin/reports/${report.id}`)}>
+                    <TableRow key={report.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/dashboard/admin/reports/details?id=${report.id}`)}>
                         <TableCell className="font-medium">{report.reportedUserName}</TableCell>
                         <TableCell>{report.reportedByUserName}</TableCell>
                         <TableCell className="max-w-xs truncate">{report.reason}</TableCell>
@@ -103,7 +103,7 @@ function ReportsTable() {
                             <Badge variant={getStatusVariant(report.status)}>{report.status}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/reports/${report.id}`)}}>
+                            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/reports/details?id=${report.id}`)}}>
                                 <Eye className="mr-2 h-4 w-4" /> Ver
                             </Button>
                         </TableCell>
@@ -175,7 +175,7 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
             </TableHeader>
             <TableBody>
                 {users.length > 0 ? users.map((user) => (
-                    <TableRow key={user.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/dashboard/admin/users/${user.id}`)}>
+                    <TableRow key={user.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/dashboard/admin/users/details?id=${user.id}`)}>
                         <TableCell className="font-medium">
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
@@ -202,7 +202,7 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
                             )}
                         </TableCell>
                         <TableCell className="text-right">
-                             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/users/${user.id}`)}}>
+                             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/admin/users/details?id=${user.id}`)}}>
                                 <Eye className="mr-2 h-4 w-4" /> {filter === 'pending' ? 'Revisar Perfil' : 'Ver Perfil'}
                             </Button>
                         </TableCell>

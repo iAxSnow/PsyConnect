@@ -1,0 +1,7 @@
+{
+  "name": "PsyConnect",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "custom"
+}
