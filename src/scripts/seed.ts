@@ -96,7 +96,11 @@ async function seedUser(userData: any, password: any) {
     
     // Now set the data in Firestore
     try {
-        await setDoc(doc(db, 'users', userData.uid), userData);
+        const firestoreData = { ...userData };
+        // Ensure properties that shouldn't be in Firestore are removed if necessary
+        // delete firestoreData.password; 
+
+        await setDoc(doc(db, 'users', userData.uid), firestoreData);
         console.log(`Successfully set user data in Firestore for: ${userData.email} (Doc ID: ${userData.uid})`);
     } catch (firestoreError) {
         console.error(`Error writing user data to Firestore for ${userData.email}:`, firestoreError);
@@ -148,7 +152,6 @@ async function main() {
 
   try {
     // 1. Clear ALL Auth users first to prevent "ghost" data
-    console.log('Clearing ALL users from Firebase Auth...');
     await clearAllAuthUsers();
 
     // 2. Clear Firestore collections
