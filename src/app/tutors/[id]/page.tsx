@@ -5,7 +5,7 @@ import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound, useRouter, useParams } from "next/navigation"
-import { Star, Brain, Calendar, ArrowLeft, AlertCircle } from "lucide-react"
+import { Star, Brain, Calendar, ArrowLeft, AlertCircle, Linkedin } from "lucide-react"
 import { doc, getDoc } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
@@ -136,12 +136,21 @@ export default function PsychologistProfilePage() {
               </div>
               <span>({psychologist.reviews} reseñas)</span>
             </div>
-            { currentUser?.uid !== psychologist.uid && (
-                 <Button size="lg" className="mt-6 w-full max-w-sm" onClick={handleBookSession}>
-                    <Calendar className="mr-2 h-5 w-5" /> 
-                    Enviar Solicitud
-                </Button>
-            )}
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+                 { currentUser?.uid !== psychologist.uid && (
+                     <Button size="lg" className="w-full max-w-xs" onClick={handleBookSession}>
+                        <Calendar className="mr-2 h-5 w-5" /> 
+                        Enviar Solicitud
+                    </Button>
+                )}
+                {psychologist.professionalLink && (
+                    <Button size="lg" variant="outline" asChild className="w-full max-w-xs">
+                        <a href={psychologist.professionalLink} target="_blank" rel="noopener noreferrer">
+                           <Linkedin className="mr-2 h-5 w-5" /> Ver Perfil Profesional
+                        </a>
+                    </Button>
+                )}
+            </div>
           </div>
 
           <div className="mt-8">

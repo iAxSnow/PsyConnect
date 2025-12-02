@@ -19,6 +19,11 @@ export interface Session {
   student: Pick<User, 'name' | 'imageUrl' | 'age'>;
 }
 
+export interface SpecialtyRate {
+    name: string;
+    price: number;
+}
+
 export interface User {
   id: string; // Document ID from Firestore
   uid: string; // UID from Firebase Auth
@@ -32,9 +37,11 @@ export interface User {
   // Psychologist-specific fields (optional)
   rating?: number;
   reviews?: number;
-  hourlyRate?: number;
-  courses?: string[]; // Represents specialties
+  hourlyRate?: number; // Base rate or deprecated in favor of specialtyRates
+  specialtyRates?: SpecialtyRate[]; // Array of specialties with their specific prices
+  courses?: string[]; // Represents specialties (legacy, kept for compatibility but should map to specialtyRates names)
   bio?: string;
+  professionalLink?: string;
 }
 
 export interface Report {

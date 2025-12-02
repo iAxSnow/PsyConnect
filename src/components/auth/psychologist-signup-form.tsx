@@ -4,12 +4,11 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, DollarSign, Upload } from "lucide-react"
+import { Eye, EyeOff, DollarSign, Linkedin } from "lucide-react"
 import { createUserWithEmailAndPassword, updateProfile, deleteUser } from "firebase/auth"
 import { doc, setDoc } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { useToast } from "@/hooks/use-toast"
-import { auth, db, storage } from "@/lib/firebase"
+import { auth, db } from "@/lib/firebase"
 import { getAllCourses } from "@/services/courses"
 import type { Course } from "@/lib/types"
 
@@ -19,6 +18,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
+
+interface SpecialtyPrice {
+    name: string;
+    price: string;
+}
 
 export function PsychologistSignupForm() {
   const router = useRouter()
@@ -30,11 +34,8 @@ export function PsychologistSignupForm() {
   const [password, setPassword] = React.useState("")
   const [bio, setBio] = React.useState("")
   const [specialties, setSpecialties] = React.useState<string[]>([])
-  const [hourlyRate, setHourlyRate] = React.useState("")
-  
-  // File State
-  const [titleDoc, setTitleDoc] = React.useState<File | null>(null);
-  const [certsDoc, setCertsDoc] = React.useState<File | null>(null);
+  const [specialtyPrices, setSpecialtyPrices] = React.useState<SpecialtyPrice[]>([])
+  const [professionalLink, setProfessionalLink] = React.useState("")
 
   // UI State
   const [showPassword, setShowPassword] = React.useState(false)
@@ -59,23 +60,25 @@ export function PsychologistSignupForm() {
   }, [toast])
 
   const handleSpecialtyChange = (specialtyName: string, checked: boolean) => {
-    setSpecialties(prev =>
-      checked ? [...prev, specialtyName] : prev.filter(name => name !== specialtyName)
-    )
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'title' | 'certs') => {
-      if (e.target.files && e.target.files[0]) {
-          const file = e.target.files[0];
-          if (file.type !== "application/pdf") {
-              toast({ title: "Archivo Inválido", description: "Por favor, sube solo archivos PDF.", variant: "destructive" });
-              return;
-          }
-          if (fileType === 'title') setTitleDoc(file);
-          if (fileType === 'certs') setCertsDoc(file);
+    setSpecialties(prev => {
+      const newSpecialties = checked 
+        ? [...prev, specialtyName] 
+        : prev.filter(name => name !== specialtyName);
+      
+      if (checked) {
+          setSpecialtyPrices(prevPrices => [...prevPrices, { name: specialtyName, price: "" }]);
+      } else {
+          setSpecialtyPrices(prevPrices => prevPrices.filter(sp => sp.name !== specialtyName));
       }
+      return newSpecialties;
+    })
   }
 
+  const handlePriceChange = (specialtyName: string, price: string) => {
+      setSpecialtyPrices(prev => prev.map(sp => 
+          sp.name === specialtyName ? { ...sp, price } : sp
+      ));
+  }
 
  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -83,15 +86,13 @@ export function PsychologistSignupForm() {
         toast({ title: "Especialidades Faltantes", description: "Debes seleccionar al menos una especialidad.", variant: "destructive" });
         return;
     }
-    if (!hourlyRate) {
-        toast({ title: "Tarifa Faltante", description: "Debes ingresar una tarifa por sesión.", variant: "destructive" });
-        return;
+    
+    const missingPrice = specialtyPrices.some(sp => !sp.price);
+    if (missingPrice) {
+         toast({ title: "Precios Faltantes", description: "Por favor define un precio para cada especialidad seleccionada.", variant: "destructive" });
+         return;
     }
-    if (!titleDoc) {
-        toast({ title: "Título Profesional Requerido", description: "Por favor, sube tu título profesional en formato PDF.", variant: "destructive"});
-        return;
-    }
-
+    
     setIsLoading(true);
 
     try {
@@ -101,24 +102,15 @@ export function PsychologistSignupForm() {
 
         const placeholderImageUrl = `https://placehold.co/200x200/EBF4FF/76A9FA?text=${name.charAt(0).toUpperCase()}`;
 
-        // 2. Upload documents to Storage
-        const uploadFile = async (file: File, path: string) => {
-            const storageRef = ref(storage, path);
-            await uploadBytes(storageRef, file);
-            return getDownloadURL(storageRef);
-        };
-
-        const titleUrl = await uploadFile(titleDoc, `documents/${user.uid}/title.pdf`);
-        let certsUrl = "";
-        if (certsDoc) {
-            certsUrl = await uploadFile(certsDoc, `documents/${user.uid}/certificates.pdf`);
-        }
-
-        // 3. Update Auth Profile
+        // 2. Update Auth Profile
         await updateProfile(user, { displayName: name, photoURL: placeholderImageUrl });
         
-        // 4. Save user data to Firestore
+        // 3. Save user data to Firestore
         const userDocRef = doc(db, "users", user.uid);
+        
+        const prices = specialtyPrices.map(sp => Number(sp.price)).filter(p => !isNaN(p));
+        const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+
         const userData = {
             uid: user.uid,
             name: name,
@@ -126,8 +118,10 @@ export function PsychologistSignupForm() {
             imageUrl: placeholderImageUrl,
             isTutor: true,
             bio: bio,
-            courses: specialties,
-            hourlyRate: Number(hourlyRate),
+            courses: specialties, 
+            specialtyRates: specialtyPrices.map(sp => ({ name: sp.name, price: Number(sp.price) })),
+            hourlyRate: minPrice, 
+            professionalLink: professionalLink,
             rating: 5.0,
             reviews: 0,
             isDisabled: true, 
@@ -145,24 +139,16 @@ export function PsychologistSignupForm() {
         router.push("/");
 
     } catch (error: any) {
-        // Cleanup if user was created in Auth but something else failed
         const currentUser = auth.currentUser;
         if (currentUser && currentUser.email === email) {
-            console.log("Limpiando usuario creado parcialmente...");
-            try {
-                await deleteUser(currentUser);
-                console.log("Limpieza completada.");
-            } catch (cleanupError) {
-                console.error("Fallo al limpiar usuario:", cleanupError);
-            }
+             try { await deleteUser(currentUser); } catch (e) {}
         }
 
         setIsLoading(false);
 
         let description = "Ocurrió un error inesperado.";
-        
         if (error.code === 'auth/email-already-in-use') {
-             description = "El correo electrónico que ingresaste ya se encuentra registrado.";
+             description = "El correo electrónico ya está registrado.";
         }
 
         toast({ 
@@ -200,54 +186,65 @@ export function PsychologistSignupForm() {
                         </Button>
                     </div>
                 </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="professionalLink">Perfil Profesional (LinkedIn, etc.)</Label>
+                    <div className="relative">
+                         <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                         <Input id="professionalLink" type="url" placeholder="https://linkedin.com/in/tu-perfil" required value={professionalLink} onChange={e => setProfessionalLink(e.target.value)} className="pl-9" />
+                    </div>
+                </div>
                 <div className="space-y-2">
                     <Label>Biografía</Label>
                     <Textarea placeholder="Cuéntanos sobre ti, tu enfoque y experiencia..." value={bio} onChange={(e) => setBio(e.target.value)} required />
                 </div>
-                 <div className="space-y-2">
-                    <Label>Especialidades</Label>
+                 <div className="space-y-4 border rounded-md p-4">
+                    <Label className="text-base font-semibold">Especialidades y Tarifas</Label>
+                    <p className="text-sm text-muted-foreground mb-2">Selecciona tus especialidades y define el precio por sesión (CLP) para cada una.</p>
+                    
                     {isCoursesLoading ? (
                         <Skeleton className="h-20 w-full" />
                     ) : (
-                        <div className="space-y-2 max-h-40 overflow-y-auto pr-2 border rounded-md p-2">
-                            {allCourses.map(course => (
-                                <div key={course.id} className="flex items-center space-x-2">
-                                    <Checkbox id={course.id} onCheckedChange={(checked) => handleSpecialtyChange(course.name, !!checked)} checked={specialties.includes(course.name)} />
-                                    <label htmlFor={course.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{course.name}</label>
-                                </div>
-                            ))}
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                            {allCourses.map(course => {
+                                const isSelected = specialties.includes(course.name);
+                                const currentPrice = specialtyPrices.find(sp => sp.name === course.name)?.price || "";
+
+                                return (
+                                    <div key={course.id} className="flex items-center justify-between gap-4 p-2 border rounded-sm">
+                                        <div className="flex items-center space-x-2 flex-grow">
+                                            <Checkbox 
+                                                id={course.id} 
+                                                onCheckedChange={(checked) => handleSpecialtyChange(course.name, !!checked)} 
+                                                checked={isSelected} 
+                                            />
+                                            <label htmlFor={course.id} className="text-sm font-medium leading-none cursor-pointer">
+                                                {course.name}
+                                            </label>
+                                        </div>
+                                        {isSelected && (
+                                            <div className="relative w-32">
+                                                 <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                                                 <Input 
+                                                    type="number" 
+                                                    className="h-8 pl-6 text-sm" 
+                                                    placeholder="Precio" 
+                                                    value={currentPrice}
+                                                    onChange={(e) => handlePriceChange(course.name, e.target.value)}
+                                                    required
+                                                 />
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="rate">Tarifa por Sesión (CLP)</Label>
-                    <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input id="rate" type="number" placeholder="30000" className="pl-10" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} required />
-                    </div>
-                </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="title-doc">Título Profesional (PDF)</Label>
-                        <Input id="title-doc" type="file" accept=".pdf" onChange={(e) => handleFileChange(e, 'title')} required 
-                               className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="certs-doc">Certificados / Licencia (PDF)</Label>
-                        <Input id="certs-doc" type="file" accept=".pdf" onChange={(e) => handleFileChange(e, 'certs')} 
-                               className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
-                    </div>
-                 </div>
             </div>
         </div>
         <div className="mt-8 flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                    <span className="flex items-center gap-2">
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                        Enviando...
-                    </span>
-                ) : "Registrarme y Enviar a Revisión"}
+                {isLoading ? "Finalizando Registro..." : "Registrarme y Enviar a Revisión"}
             </Button>
             <div className="text-center text-sm text-muted-foreground">
                  <Link href="/signup" className="font-medium text-primary underline-offset-4 hover:underline">

@@ -5,8 +5,7 @@ import * as React from "react"
 import { useParams, notFound, useRouter } from 'next/navigation'
 import Link from "next/link"
 import { doc, onSnapshot, getDocs, collection, query, where, updateDoc, getDoc } from "firebase/firestore"
-import { db, auth, storage } from "@/lib/firebase"
-import { ref, listAll, getDownloadURL } from "firebase/storage"
+import { db, auth } from "@/lib/firebase"
 import { onAuthStateChanged } from "firebase/auth"
 import type { User, Report } from "@/lib/types"
 
@@ -17,7 +16,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { User as UserIcon, Stethoscope, FileText, Ban, CheckCircle, AlertTriangle, Eye, ShieldCheck, ShieldX, Download, FileArchive } from "lucide-react"
+import { User as UserIcon, Stethoscope, FileText, Ban, CheckCircle, AlertTriangle, Eye, ShieldCheck, ShieldX, Linkedin } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 export default function UserDetailsPage() {
@@ -27,7 +26,6 @@ export default function UserDetailsPage() {
     const userId = params.id as string;
     
     const [user, setUser] = React.useState<User | null>(null);
-    const [userDocs, setUserDocs] = React.useState<{ name: string; url: string }[]>([]);
     const [reportsAgainst, setReportsAgainst] = React.useState<Report[]>([]);
     const [reportsBy, setReportsBy] = React.useState<Report[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
@@ -72,9 +70,6 @@ export default function UserDetailsPage() {
             if (docSnap.exists()) {
                 const userData = { id: docSnap.id, ...docSnap.data() } as User;
                 setUser(userData);
-                 if (userData.isTutor) {
-                    fetchUserDocuments(userData.uid);
-                }
             } else {
                 setUser(null);
             }
@@ -83,22 +78,6 @@ export default function UserDetailsPage() {
             console.error("Error fetching user:", error);
             setIsLoading(false);
         });
-
-        const fetchUserDocuments = async (uid: string) => {
-            const docsRef = ref(storage, `documents/${uid}`);
-            try {
-                const res = await listAll(docsRef);
-                const docPromises = res.items.map(async (itemRef) => {
-                    const url = await getDownloadURL(itemRef);
-                    return { name: itemRef.name, url: url };
-                });
-                const fetchedDocs = await Promise.all(docPromises);
-                setUserDocs(fetchedDocs);
-            } catch (error) {
-                console.error("Error fetching user documents:", error);
-                setUserDocs([]);
-            }
-        };
 
         const fetchReports = async () => {
              const reportsRef = collection(db, "reports");
@@ -197,7 +176,7 @@ export default function UserDetailsPage() {
         <div className="max-w-6xl mx-auto space-y-6">
             <Card>
                 <CardHeader>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-start gap-4">
                          <Avatar className="h-16 w-16 border">
                             <AvatarImage src={user.imageUrl} />
                             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -205,8 +184,16 @@ export default function UserDetailsPage() {
                         <div>
                              <CardTitle className="text-2xl">{user.name}</CardTitle>
                              <CardDescription>{user.email}</CardDescription>
+                             {user.isTutor && user.professionalLink && (
+                                <Button asChild variant="link" className="px-0 h-auto mt-1">
+                                    <a href={user.professionalLink} target="_blank" rel="noopener noreferrer">
+                                        <Linkedin className="mr-2"/>
+                                        Ver Perfil Profesional
+                                    </a>
+                                </Button>
+                             )}
                         </div>
-                        <div className="ml-auto flex items-center gap-4">
+                        <div className="ml-auto flex flex-col items-end gap-2">
                             <Badge variant={user.isTutor ? "secondary" : "outline"} className="text-sm">
                                 {user.isTutor ? <Stethoscope className="mr-2 h-4 w-4"/> : <UserIcon className="mr-2 h-4 w-4"/>}
                                 {user.isTutor ? 'Psicólogo' : 'Usuario'}
@@ -230,7 +217,7 @@ export default function UserDetailsPage() {
                                 </Button>
                             </div>
                         ) : (
-                            <Button 
+                             <Button 
                                 variant={user.isDisabled ? "success" : "destructive"}
                                 onClick={handleAccountStatusToggle}
                             >
@@ -241,32 +228,6 @@ export default function UserDetailsPage() {
                      </div>
                 </CardFooter>
             </Card>
-
-            {user.isTutor && (
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                           <FileArchive /> Documentos para Verificación
-                        </CardTitle>
-                    </CardHeader>
-                     <CardContent>
-                        {userDocs.length > 0 ? (
-                            <div className="space-y-2">
-                                {userDocs.map(doc => (
-                                     <Button asChild key={doc.name} variant="outline" className="w-full justify-start">
-                                        <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                                            <Download className="mr-2" />
-                                            {doc.name === 'title.pdf' ? 'Título Profesional' : 'Certificados y Licencia'}
-                                        </a>
-                                    </Button>
-                                ))}
-                            </div>
-                        ): (
-                            <p className="text-muted-foreground text-sm">No se encontraron documentos para este usuario.</p>
-                        )}
-                    </CardContent>
-                </Card>
-            )}
 
             <div className="grid md:grid-cols-2 gap-6">
                 <Card>

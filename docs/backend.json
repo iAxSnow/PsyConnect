@@ -102,6 +102,11 @@
         },
         "bio": {
           "type": "string"
+        },
+        "professionalLink": {
+          "type": "string",
+          "format": "uri",
+          "description": "A link to the psychologist's professional profile (e.g., LinkedIn)."
         }
       },
       "required": ["uid", "name", "age", "email", "imageUrl", "isTutor"]
