@@ -12,8 +12,7 @@ import {
   ArrowLeft,
 } from "lucide-react"
 import { signOut } from "firebase/auth"
-import { doc, getDoc } from "firebase/firestore"
-import { auth, db } from "@/lib/firebase"
+import { auth } from "@/lib/firebase"
 import { useAuthState } from "react-firebase-hooks/auth"
 
 import {
@@ -45,7 +44,6 @@ export default function DashboardLayout({
   const router = useRouter()
   const { toast } = useToast()
   const [user, loading, error] = useAuthState(auth)
-  const [isPsychologist, setIsPsychologist] = React.useState(false)
   const [isAdmin, setIsAdmin] = React.useState(false)
 
   React.useEffect(() => {
@@ -59,35 +57,12 @@ export default function DashboardLayout({
   }, [error, toast]);
 
   React.useEffect(() => {
-    const checkUserRole = async () => {
-        if (user) {
-            // Check for admin role first
-            if (user.email === ADMIN_EMAIL) {
-                setIsAdmin(true);
-            } else {
-                setIsAdmin(false);
-            }
-
-            // Check for psychologist role
-            try {
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists() && userDoc.data().isTutor) {
-                    setIsPsychologist(true);
-                } else {
-                    setIsPsychologist(false);
-                }
-            } catch (e) {
-                console.error("Error fetching user role from Firestore:", e);
-                setIsPsychologist(false);
-            }
-        } else if (!loading) {
-            // Reset roles if user logs out or is not loaded
-            setIsAdmin(false);
-            setIsPsychologist(false);
-        }
+    if (user) {
+        setIsAdmin(user.email === ADMIN_EMAIL);
+    } else if (!loading) {
+        // Reset roles if user logs out or is not loaded
+        setIsAdmin(false);
     }
-    checkUserRole();
   }, [user, loading])
 
 
@@ -109,12 +84,12 @@ export default function DashboardLayout({
   }
 
   const navItems = [
-    { href: "/dashboard", icon: PanelLeft, label: "Panel", psychologistOnly: false, adminOnly: false },
-    { href: "/profile", icon: User, label: "Perfil", psychologistOnly: false, adminOnly: false },
+    { href: "/dashboard", icon: PanelLeft, label: "Panel" },
+    { href: "/profile", icon: User, label: "Perfil" },
   ];
   
   const adminNavItems = [
-     { href: "/dashboard/admin", icon: Shield, label: "Panel de Admin", adminOnly: true }
+     { href: "/dashboard/admin", icon: Shield, label: "Panel de Admin" }
   ]
 
   const getPageTitle = () => {
@@ -141,11 +116,7 @@ export default function DashboardLayout({
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.filter(item => {
-                if(item.adminOnly) return isAdmin;
-                if(isPsychologist) return true;
-                return !item.psychologistOnly;
-              }).map((item) => (
+              {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <Link href={item.href}>
                     <SidebarMenuButton

@@ -224,43 +224,25 @@ export default function AdminDashboardPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isCheckingRole, setIsCheckingRole] = React.useState(true);
+    const [isAdmin, setIsAdmin] = React.useState(false);
 
     React.useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                router.push("/login"); // Redirect to login if not authenticated
-                return;
-            }
-
-            try {
-                const userDocRef = doc(db, "users", user.uid);
-                const userDoc = await getDoc(userDocRef);
-
-                if (userDoc.exists()) {
-                    const userData = userDoc.data() as User;
-                    if (userData.email !== "admin@connect.udp.cl") { // Check if user is admin
-                         toast({
-                            title: "Acceso denegado",
-                            description: "No tienes permisos de administrador para ver esta página.",
-                            variant: "destructive"
-                        });
-                        router.push("/dashboard"); // Redirect regular users to dashboard
-                    } else {
-                        setIsCheckingRole(false); // User is admin, allow access
-                    }
+            if (user) {
+                if (user.email === "admin@connect.udp.cl") {
+                    setIsAdmin(true);
                 } else {
-                    // Handle edge case where user is in Auth but not in Firestore (should not happen normally)
-                     router.push("/login");
+                    toast({
+                        title: "Acceso denegado",
+                        description: "No tienes permisos de administrador para ver esta página.",
+                        variant: "destructive"
+                    });
+                    router.push("/dashboard");
                 }
-            } catch (error) {
-                console.error("Error checking admin role:", error);
-                 toast({
-                    title: "Error",
-                    description: "Ocurrió un error al verificar tus permisos.",
-                    variant: "destructive"
-                });
-                router.push("/dashboard");
+            } else {
+                router.push("/login");
             }
+            setIsCheckingRole(false);
         });
 
         return () => unsubscribe();
@@ -275,6 +257,10 @@ export default function AdminDashboardPage() {
                </div>
             </div>
         )
+    }
+
+    if (!isAdmin) {
+        return null; // Don't render anything if user is not admin (already handled by redirect, but as a safeguard)
     }
 
     return (
