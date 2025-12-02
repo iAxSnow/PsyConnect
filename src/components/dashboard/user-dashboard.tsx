@@ -6,7 +6,7 @@ import { Search, Sparkles, Send } from "lucide-react"
 import { collection, query, where, getDocs } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
-// import { suggestSpecialty } from "@/app/actions" 
+import { suggestSpecialty } from "@/ai/flows/suggest-specialty" 
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getAvailableSpecialties } from "@/services/courses"
 
@@ -30,28 +30,23 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
     
     setIsLoading(true)
     
-    // Simulate AI delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Fallback for static export
-    const result = { success: false, error: "El asistente IA no está disponible en la versión móvil (APK) por el momento. Por favor usa los filtros de búsqueda.", data: undefined as any };
-    // const result = await suggestSpecialty({ problemDescription: problem })
-    
-    setIsLoading(false)
-
-    if (result.success && result.data) {
-      onSpecialtySuggest(result.data.specialty)
-      toast({
-        title: "Sugerencia de la IA",
-        description: result.data.reasoning,
-      })
-      setProblem("") // Clear input after successful suggestion
-    } else {
-      toast({
-        title: "Asistente IA",
-        description: result.error || "No se pudo obtener una sugerencia. Inténtalo de nuevo.",
-        variant: "destructive" // Changed to destructive or default depending on intent
-      })
+    try {
+        const result = await suggestSpecialty({ problemDescription: problem })
+        onSpecialtySuggest(result.specialty)
+        toast({
+            title: "Sugerencia de la IA",
+            description: result.reasoning,
+        })
+        setProblem("") // Clear input after successful suggestion
+    } catch (error) {
+        console.error("AI suggestion failed:", error);
+        toast({
+            title: "Asistente IA no disponible",
+            description: "Esta función requiere conexión al servidor y no está disponible en la versión móvil. Por favor, utiliza los filtros de búsqueda.",
+            variant: "destructive"
+        })
+    } finally {
+        setIsLoading(false)
     }
   }
 
