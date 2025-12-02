@@ -5,7 +5,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
+import { createUserWithEmailAndPassword, updateProfile, deleteUser } from "firebase/auth"
 import { doc, setDoc } from "firebase/firestore"
 
 import { Button } from "@/components/ui/button"
@@ -57,6 +57,17 @@ export function SignupForm() {
       router.push("/")
 
     } catch (error: any) {
+       // Cleanup if Firestore fails but Auth succeeded
+       const currentUser = auth.currentUser;
+       if (currentUser) {
+           try {
+               await deleteUser(currentUser);
+               console.log("Cleaned up phantom user after failed registration.");
+           } catch (cleanupError) {
+               console.error("Failed to cleanup user:", cleanupError);
+           }
+       }
+
        let description = "Ocurrió un error inesperado al crear tu cuenta."
        
        if (error.code) {

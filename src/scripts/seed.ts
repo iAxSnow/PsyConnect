@@ -5,10 +5,6 @@ import { specialties, studentUser, psychologistUser, approvedPsychologistUser, t
 import * as admin from 'firebase-admin';
 
 // --- INITIALIZE ADMIN SDK ---
-// This is crucial for managing users programmatically.
-
-// Ensure you have the service account key file (don't commit it to git!)
-// For this environment, we can use application default credentials if the key isn't explicitly set.
 if (admin.apps.length === 0) {
     let credential;
     if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
@@ -33,18 +29,22 @@ if (admin.apps.length === 0) {
 
 // --- HELPER FUNCTIONS ---
 
-// Helper to clear test users from Firebase Authentication
-async function clearAuthUsers(uids: string[]) {
+// Helper to clear ALL users from Firebase Authentication
+async function clearAllAuthUsers() {
     try {
-        await admin.auth().deleteUsers(uids);
-        console.log('Successfully deleted test users from Firebase Auth.');
-    } catch (error: any) {
-        // It's okay if users are not found, it just means they were already deleted.
-        if (error.code === 'auth/user-not-found' || error.message.includes("Some users not found")) {
-            console.log('One or more test users were not found in Auth for deletion, which is okay.');
+        console.log('Listing all users in Firebase Auth...');
+        const listUsersResult = await admin.auth().listUsers(1000); // Batch size 1000
+        const uids = listUsersResult.users.map(user => user.uid);
+
+        if (uids.length > 0) {
+            console.log(`Found ${uids.length} users. Deleting...`);
+            await admin.auth().deleteUsers(uids);
+            console.log('Successfully deleted all users from Firebase Auth.');
         } else {
-            console.error('Error deleting users from auth:', error.message);
+            console.log('No users found in Firebase Auth.');
         }
+    } catch (error: any) {
+        console.error('Error deleting users from auth:', error.message);
     }
 }
 
@@ -144,12 +144,11 @@ async function seedSessions() {
 async function main() {
   console.log('--- Starting database seed process ---');
   const testPassword = 'password123456';
-  const testUserUids = [studentUser.uid, psychologistUser.uid, approvedPsychologistUser.uid];
 
   try {
-    // 1. Clear Auth users first to prevent "ghost" data
-    console.log('Clearing old test users from Firebase Auth...');
-    await clearAuthUsers(testUserUids);
+    // 1. Clear ALL Auth users first to prevent "ghost" data
+    console.log('Clearing ALL users from Firebase Auth...');
+    await clearAllAuthUsers();
 
     // 2. Clear Firestore collections
     console.log('Clearing Firestore collections...');
@@ -176,7 +175,7 @@ async function main() {
     process.exit(0);
 
   } catch (error) {
-    console.error('\nSe produjo un error durante el proceso de siembra. El script se ha detenido.');
+    console.error('\nSe produjo un error durante el proceso de siembra. El script se ha detenido.', error);
     process.exit(1);
   }
 }

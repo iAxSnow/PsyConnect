@@ -30,20 +30,36 @@ export function LoginForm() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Check if user account is disabled
+      // Check if user account is disabled or pending approval
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
 
-      if (userDoc.exists() && userDoc.data().isDisabled) {
-        // Log the user out immediately
-        await auth.signOut();
-        toast({
-          title: "Cuenta Suspendida",
-          description: "Esta cuenta ha sido suspendida. Por favor, contacta a soporte.",
-          variant: "destructive",
-        })
-        setIsLoading(false);
-        return;
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        
+        if (userData.isDisabled) {
+          // Log the user out immediately
+          await auth.signOut();
+          
+          let title = "Acceso Denegado";
+          let description = "Esta cuenta ha sido deshabilitada.";
+
+          if (userData.validationStatus === 'pending') {
+             title = "Cuenta en Revisión";
+             description = "Tu solicitud de registro como psicólogo está pendiente de aprobación por un administrador.";
+          } else if (userData.validationStatus === 'rejected') {
+             title = "Solicitud Rechazada";
+             description = "Tu solicitud de registro ha sido rechazada. Contacta a soporte para más detalles.";
+          }
+
+          toast({
+            title: title,
+            description: description,
+            variant: "destructive",
+          })
+          setIsLoading(false);
+          return;
+        }
       }
       
       toast({

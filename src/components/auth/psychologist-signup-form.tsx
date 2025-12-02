@@ -5,7 +5,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, DollarSign, Upload } from "lucide-react"
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
+import { createUserWithEmailAndPassword, updateProfile, deleteUser } from "firebase/auth"
 import { doc, setDoc } from "firebase/firestore"
 import { ref, uploadBytes } from "firebase/storage"
 import { useToast } from "@/hooks/use-toast"
@@ -38,10 +38,14 @@ export function PsychologistSignupForm() {
   // UI State
   const [showPassword, setShowPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
+  const [loadingStep, setLoadingStep] = React.useState<string>("") // Para mostrar qué está pasando
   const [allCourses, setAllCourses] = React.useState<Course[]>([])
   const [isCoursesLoading, setIsCoursesLoading] = React.useState(true)
 
   React.useEffect(() => {
+    // Debug inicial del storage
+    console.log("Configuración de Firebase Storage detectada:", storage.app.options.storageBucket);
+
     const fetchCourses = async () => {
       setIsCoursesLoading(true)
       try {
@@ -77,40 +81,108 @@ export function PsychologistSignupForm() {
         toast({ title: "Título Faltante", description: "Debes subir tu título profesional.", variant: "destructive" });
         return;
     }
+    // Validación de tamaño de archivo (máx 5MB)
+    if (titleFile.size > 5 * 1024 * 1024) {
+         toast({ title: "Archivo muy grande", description: "El título profesional no debe superar los 5MB.", variant: "destructive" });
+         return;
+    }
 
     setIsLoading(true);
+    setLoadingStep("Iniciando registro...");
+    console.log("--- INICIO PROCESO REGISTRO ---");
 
     try {
         // 1. Create User in Auth
+        setLoadingStep("Creando cuenta de usuario...");
+        console.log("1. auth.createUserWithEmailAndPassword...");
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
+        console.log("   > Usuario creado OK. UID:", user.uid);
 
         // 2. Upload documents to Storage
+        setLoadingStep("Subiendo documentos (esto puede tardar)...");
+        console.log("2. Iniciando carga de archivos a Storage...");
+        console.log("   Bucket:", storage.app.options.storageBucket);
+        
         const uploadPromises = [];
         
-        // Upload Title
-        const titleRef = ref(storage, `documents/${user.uid}/title/${titleFile.name}`);
-        uploadPromises.push(uploadBytes(titleRef, titleFile));
+        // Prepare Title Upload
+        const titleExt = titleFile.name.split('.').pop() || 'pdf';
+        const titleSafeName = `title_${Date.now()}.${titleExt}`;
+        const titlePath = `documents/${user.uid}/${titleSafeName}`;
+        const titleRef = ref(storage, titlePath);
+        
+        console.log(`   > Preparando subida Título: ${titlePath} (${titleFile.size} bytes)`);
+        
+        const metadata = {
+            contentType: titleFile.type || 'application/pdf',
+            customMetadata: { originalName: titleFile.name }
+        };
 
-        // Upload Certificates
+        const uploadTitlePromise = uploadBytes(titleRef, titleFile, metadata)
+            .then(snapshot => {
+                console.log("   > Título subido EXITOSAMENTE:", snapshot.ref.fullPath);
+                return snapshot;
+            })
+            .catch(err => {
+                console.error("   > ERROR subiendo título:", err);
+                throw err;
+            });
+        
+        uploadPromises.push(uploadTitlePromise);
+
+        // Prepare Certificates Upload
         if (certificateFiles) {
             for (let i = 0; i < certificateFiles.length; i++) {
                 const file = certificateFiles[i];
-                const certificateRef = ref(storage, `documents/${user.uid}/certificates/${file.name}`);
-                uploadPromises.push(uploadBytes(certificateRef, file));
+                if (file.size > 5 * 1024 * 1024) {
+                    console.warn(`   > Omitiendo certificado ${file.name} por ser muy grande (>5MB)`);
+                    continue;
+                }
+
+                const certExt = file.name.split('.').pop() || 'pdf';
+                const certSafeName = `cert_${i}_${Date.now()}.${certExt}`;
+                const certPath = `documents/${user.uid}/certificates/${certSafeName}`;
+                const certificateRef = ref(storage, certPath);
+                
+                console.log(`   > Preparando subida Certificado ${i+1}: ${certPath}`);
+
+                const certMetadata = {
+                    contentType: file.type || 'application/pdf',
+                };
+
+                const uploadCertPromise = uploadBytes(certificateRef, file, certMetadata)
+                     .then(snapshot => {
+                         console.log(`   > Certificado ${i+1} subido EXITOSAMENTE.`);
+                         return snapshot;
+                     })
+                     .catch(err => {
+                         console.error(`   > ERROR subiendo certificado ${i+1}:`, err);
+                         throw err;
+                     });
+                uploadPromises.push(uploadCertPromise);
             }
         }
         
-        // Wait for all uploads to complete
-        await Promise.all(uploadPromises);
+        // Timeout
+        const uploadTimeout = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("TIMEOUT_UPLOAD")), 45000)
+        );
+
+        await Promise.race([Promise.all(uploadPromises), uploadTimeout]);
+        console.log("2. Carga de archivos COMPLETADA.");
 
 
         const placeholderImageUrl = `https://placehold.co/200x200/EBF4FF/76A9FA?text=${name.charAt(0).toUpperCase()}`;
 
         // 3. Update Auth Profile
+        setLoadingStep("Configurando perfil...");
+        console.log("3. updateProfile...");
         await updateProfile(user, { displayName: name, photoURL: placeholderImageUrl });
         
         // 4. Save user data to Firestore
+        setLoadingStep("Guardando datos finales...");
+        console.log("4. setDoc (Firestore)...");
         const userDocRef = doc(db, "users", user.uid);
         const userData = {
             uid: user.uid,
@@ -123,41 +195,58 @@ export function PsychologistSignupForm() {
             hourlyRate: Number(hourlyRate),
             rating: 5.0,
             reviews: 0,
-            isDisabled: true, // Account is disabled until approved by an admin
+            isDisabled: true, 
             validationStatus: 'pending' as 'pending' | 'approved' | 'rejected',
         };
 
         await setDoc(userDocRef, userData)
+        console.log("   > Datos Firestore guardados OK.");
+        console.log("--- PROCESO EXITOSO ---");
         
         toast({
-            title: "Solicitud de Registro Enviada",
-            description: "Tu cuenta ha sido creada y está pendiente de revisión. Te notificaremos pronto.",
+            title: "¡Registro Completado!",
+            description: "Tu solicitud ha sido enviada correctamente.",
+            duration: 5000,
         });
+        
+        setLoadingStep("Redirigiendo...");
         router.push("/");
 
     } catch (error: any) {
-        setIsLoading(false);
-        console.error("Signup Error:", error);
-
-        let description = "Ocurrió un error inesperado durante el registro.";
-        switch (error.code) {
-            case 'auth/email-already-in-use':
-                description = "Este correo electrónico ya está en uso. Por favor, utiliza otro.";
-                break;
-            case 'auth/weak-password':
-                description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
-                break;
-            case 'storage/retry-limit-exceeded':
-                description = "Se superó el tiempo de espera para subir archivos. Revisa tu conexión de red e inténtalo de nuevo.";
-                break;
-            case 'storage/unauthorized':
-                 description = "Error de permisos al subir archivos. Revisa las reglas de seguridad de Storage.";
-                 break;
-            default:
-                description = error.message || description;
-                break;
+        console.error("--- ERROR EN PROCESO DE REGISTRO ---", error);
+        setLoadingStep("");
+        
+        // Cleanup
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+            console.log("Limpiando usuario creado parcialmente...");
+            try {
+                await deleteUser(currentUser);
+                console.log("Limpieza completada.");
+            } catch (cleanupError) {
+                console.error("Fallo al limpiar usuario:", cleanupError);
+            }
         }
-        toast({ title: "Error de Registro", description, variant: "destructive" });
+
+        setIsLoading(false);
+
+        let description = "Ocurrió un error inesperado.";
+        
+        if (error.message === "TIMEOUT_UPLOAD") {
+            description = "La subida de archivos tardó demasiado. Verifica tu conexión a internet o intenta con archivos más livianos.";
+        } else if (error.code === 'storage/unauthorized') {
+            description = "Permiso denegado al subir archivos. Contacta al administrador.";
+        } else if (error.code === 'storage/retry-limit-exceeded') {
+            description = "Error de conexión al subir archivos.";
+        } else if (error.code === 'auth/email-already-in-use') {
+             description = "El correo ya está registrado.";
+        }
+
+        toast({ 
+            title: "Error de Registro", 
+            description: `${description} (Código: ${error.code || 'N/A'})`, 
+            variant: "destructive" 
+        });
     }
 };
 
@@ -215,7 +304,7 @@ export function PsychologistSignupForm() {
                     </div>
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="title-file">Título Profesional (PDF)</Label>
+                    <Label htmlFor="title-file">Título Profesional (PDF, máx 5MB)</Label>
                      <Input id="title-file" type="file" required accept="application/pdf" onChange={(e) => setTitleFile(e.target.files ? e.target.files[0] : null)} />
                 </div>
                  <div className="space-y-2">
@@ -226,7 +315,12 @@ export function PsychologistSignupForm() {
         </div>
         <div className="mt-8 flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Enviando Solicitud..." : "Registrarme y Enviar a Revisión"}
+                {isLoading ? (
+                    <span className="flex items-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        {loadingStep}
+                    </span>
+                ) : "Registrarme y Enviar a Revisión"}
             </Button>
             <div className="text-center text-sm text-muted-foreground">
                  <Link href="/signup" className="font-medium text-primary underline-offset-4 hover:underline">
