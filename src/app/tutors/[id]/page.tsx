@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ReviewSection } from "@/components/psychologist/review-section"
 import { ReportDialog } from "@/components/report-dialog"
 
 export default function PsychologistProfilePage() {
@@ -182,8 +181,7 @@ export default function PsychologistProfilePage() {
                 </li>
               ))}
             </ul>
-             <Separator className="my-6" />
-             <ReviewSection psychologistId={psychologistId} currentUser={appUser} />
+             
           </div>
         </CardContent>
       </Card>
