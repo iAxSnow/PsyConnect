@@ -1,17 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // WARNING: These rules are permissive and intended for development ONLY.
-    // Any authenticated user can read and write to the entire database.
     
+    // Function to check if the requesting user is an admin.
+    // Add the email addresses of your editors/admins to this list.
+    function isAdmin() {
+      let adminEmails = [
+        "admin@connect.udp.cl",
+        // Agrega aquí los correos de tus compañeros editores. Por ejemplo:
+        // "companero1@example.com",
+        // "companero2@example.com"
+      ];
+      return request.auth != null && request.auth.token.email in adminEmails;
+    }
+    
+    // Function to check if a user is simply signed in.
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Allow read and write access to any collection for any signed-in user.
+    // Admins have full read/write access to the entire database.
     match /{document=**} {
-      allow read, write: if isSignedIn();
+      allow read, write: if isAdmin();
     }
+    
+    // Allow any signed-in user to read psychologist profiles and specialties.
+    match /users/{userId} {
+      allow get: if isSignedIn();
+    }
+
+    match /courses/{courseId} {
+      allow list: if isSignedIn();
+    }
+
+    // Define more granular rules for non-admin users below if needed.
+    // For now, only admins can write, and signed-in users can read some data.
   }
 }
