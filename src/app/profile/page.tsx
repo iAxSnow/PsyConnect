@@ -114,10 +114,10 @@ export default function ProfilePage() {
 
   React.useEffect(() => {
     if (loadingAuth) {
-      return; // Wait until auth state is loaded.
+      return; // 1. Wait until auth state is loaded.
     }
     if (!user) {
-      router.push("/"); // Redirect if not authenticated.
+      router.push("/"); // 2. Redirect if not authenticated.
       return;
     }
 
@@ -130,7 +130,7 @@ export default function ProfilePage() {
         if (userDoc.exists()) {
           const userData = { id: userDoc.id, ...userDoc.data() } as AppUser;
           setAppUser(userData);
-          // Fetch sessions only after user data is confirmed
+          // 3. Fetch sessions ONLY after user data is confirmed
           const sessionsList = await getStudentSessions(userData.uid);
           setSessions(sessionsList);
         } else {
