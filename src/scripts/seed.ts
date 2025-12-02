@@ -1,7 +1,6 @@
 // @/scripts/seed.ts
 import { collection, doc, setDoc, writeBatch, getDocs } from 'firebase/firestore';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-import { db, app as clientApp } from '../lib/firebase'; // Renamed to avoid conflict
+import { db } from '../lib/firebase';
 import { specialties, studentUser, psychologistUser, approvedPsychologistUser, testSession } from '../lib/seed-data';
 import * as admin from 'firebase-admin';
 
@@ -9,17 +8,28 @@ import * as admin from 'firebase-admin';
 // This is crucial for managing users programmatically.
 
 // Ensure you have the service account key file (don't commit it to git!)
-// For this environment, we can use application default credentials.
-const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS
-  ? JSON.parse(Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'base64').toString('ascii'))
-  : undefined;
-
+// For this environment, we can use application default credentials if the key isn't explicitly set.
 if (admin.apps.length === 0) {
+    let credential;
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        try {
+            const serviceAccount = JSON.parse(Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'base64').toString('ascii'));
+            credential = admin.credential.cert(serviceAccount);
+        } catch (e) {
+            console.warn("Could not parse GOOGLE_APPLICATION_CREDENTIALS, falling back to application default. Error:", e);
+            credential = admin.credential.applicationDefault();
+        }
+    } else {
+        console.log("GOOGLE_APPLICATION_CREDENTIALS not found, using application default credentials.");
+        credential = admin.credential.applicationDefault();
+    }
+    
     admin.initializeApp({
-        credential: serviceAccount ? admin.credential.cert(serviceAccount) : undefined,
+        credential,
         projectId: 'profe-udp-connect',
     });
 }
+
 
 // --- HELPER FUNCTIONS ---
 
@@ -29,10 +39,9 @@ async function clearAuthUsers(uids: string[]) {
         await admin.auth().deleteUsers(uids);
         console.log('Successfully deleted test users from Firebase Auth.');
     } catch (error: any) {
-        if (error.code === 'not-found') {
-            console.log('No test users found in Firebase Auth to delete.');
-        } else if (error.code === 'auth/user-not-found') {
-            console.warn('One or more test users were not found in Auth for deletion, which is okay.');
+        // It's okay if users are not found, it just means they were already deleted.
+        if (error.code === 'auth/user-not-found' || error.message.includes("Some users not found")) {
+            console.log('One or more test users were not found in Auth for deletion, which is okay.');
         } else {
             console.error('Error deleting users from auth:', error.message);
         }
@@ -56,17 +65,28 @@ async function clearCollection(collectionName: string) {
 }
 
 // Robust helper to create a user in Auth and Firestore
-async function seedUser(auth: any, userData: any, password: any) {
-    let authUid = userData.uid;
-    
+async function seedUser(userData: any, password: any) {
     try {
         console.log(`Attempting to create user in Auth: ${userData.email}`);
-        const userCredential = await createUserWithEmailAndPassword(auth, userData.email, password);
-        authUid = userCredential.user.uid;
-        console.log(`Successfully created user in Auth with new UID: ${authUid}`);
+        
+        // Use Admin SDK to create user
+        const userRecord = await admin.auth().createUser({
+            uid: userData.uid, // Use the predefined UID
+            email: userData.email,
+            password: password,
+            displayName: userData.name,
+            photoURL: userData.imageUrl,
+            emailVerified: true, // Assume verified for seed data
+            disabled: userData.isDisabled || false,
+        });
+        
+        console.log(`Successfully created user in Auth: ${userRecord.email} (UID: ${userRecord.uid})`);
+
     } catch (error: any) {
-        if (error.code === 'auth/email-already-in-use') {
-            console.warn(`WARNING: User ${userData.email} already exists in Firebase Auth. This should not happen after clearing auth users.`);
+        if (error.code === 'auth/uid-already-exists') {
+            console.warn(`WARNING: User with UID ${userData.uid} already exists in Firebase Auth. This is okay.`);
+        } else if (error.code === 'auth/email-already-exists') {
+             console.warn(`WARNING: User with email ${userData.email} already exists. Skipping Auth creation.`);
         } else {
             console.error(`\nCRITICAL ERROR creating user ${userData.email} in Auth:`, error.message);
             console.error('The script will stop to prevent inconsistent data.\n');
@@ -74,11 +94,9 @@ async function seedUser(auth: any, userData: any, password: any) {
         }
     }
     
-    const dataToSet = { ...userData, uid: authUid };
-    
+    // Now set the data in Firestore
     try {
-        // Use the original UID for the document ID to keep it consistent
-        await setDoc(doc(db, 'users', userData.uid), dataToSet);
+        await setDoc(doc(db, 'users', userData.uid), userData);
         console.log(`Successfully set user data in Firestore for: ${userData.email} (Doc ID: ${userData.uid})`);
     } catch (firestoreError) {
         console.error(`Error writing user data to Firestore for ${userData.email}:`, firestoreError);
@@ -102,14 +120,13 @@ async function seedSpecialties() {
 }
 
 async function seedUsers() {
-    const auth = getAuth(clientApp);
     const testPassword = 'password123456'; 
     console.log('Seeding users...');
     
     try {
-        await seedUser(auth, studentUser, testPassword);
-        await seedUser(auth, psychologistUser, testPassword);
-        await seedUser(auth, approvedPsychologistUser, testPassword);
+        await seedUser(studentUser, testPassword);
+        await seedUser(psychologistUser, testPassword);
+        await seedUser(approvedPsychologistUser, testPassword);
         console.log('Successfully seeded users!');
     } catch (error) {
         console.error("\n--- A critical error occurred during user seeding. ---");
@@ -140,6 +157,7 @@ async function main() {
         clearCollection('users'),
         clearCollection('sessions'),
         clearCollection('courses'),
+        clearCollection('reports'), // Also clear reports
     ]);
     console.log('Firestore collections cleared.');
   
