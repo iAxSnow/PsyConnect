@@ -3,91 +3,148 @@
 
 import * as React from "react"
 import { Star, MessageSquare } from "lucide-react"
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { RatingDialog } from "@/components/profile/rating-dialog"
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
+import { Card, CardContent, CardHeader } from "../ui/card"
+import { Skeleton } from "../ui/skeleton"
+import type { Review, User } from "@/lib/types"
+import { getReviews, addReview } from "@/services/reviews"
+import { useToast } from "@/hooks/use-toast"
 
-// Mock data for reviews
-const initialReviews = [
-  {
-    id: 1,
-    author: "Usuario Anónimo",
-    avatar: "https://placehold.co/100x100/EBF4FF/76A9FA?text=A",
-    rating: 5,
-    comment: "La Dra. Molina es una excelente profesional. Me ayudó mucho a entender y manejar mi ansiedad. La recomiendo totalmente.",
-    date: "Hace 2 semanas",
-  },
-  {
-    id: 2,
-    author: "Usuario Anónimo",
-    avatar: "https://placehold.co/100x100/EBF4FF/76A9FA?text=B",
-    rating: 4,
-    comment: "Buena experiencia en general. Me sentí escuchado y comprendido. Las herramientas que me dio fueron útiles.",
-    date: "Hace 1 mes",
-  },
-]
 
-type Review = typeof initialReviews[0];
+interface ReviewSectionProps {
+    psychologistId: string;
+    currentUser: User | null;
+}
 
-export function ReviewSection() {
-    const [reviews, setReviews] = React.useState<Review[]>(initialReviews);
+export function ReviewSection({ psychologistId, currentUser }: ReviewSectionProps) {
+    const [reviews, setReviews] = React.useState<Review[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const { toast } = useToast();
 
-    const handleNewReview = ({ rating, comment }: { rating: number; comment: string }) => {
-        const newReview: Review = {
-            id: reviews.length + 1,
-            author: "Usuario Anónimo",
-            avatar: `https://placehold.co/100x100/EBF4FF/76A9FA?text=C`,
-            rating,
-            comment,
-            date: "Justo ahora"
+    React.useEffect(() => {
+        const fetchReviews = async () => {
+            setIsLoading(true);
+            try {
+                const fetchedReviews = await getReviews(psychologistId);
+                setReviews(fetchedReviews);
+            } catch (error) {
+                console.error("Failed to fetch reviews:", error);
+                toast({
+                    title: "Error al cargar reseñas",
+                    description: "No se pudieron obtener las reseñas en este momento.",
+                    variant: "destructive"
+                });
+            } finally {
+                setIsLoading(false);
+            }
         };
-        setReviews(prevReviews => [newReview, ...prevReviews]);
+
+        fetchReviews();
+    }, [psychologistId, toast]);
+
+    const handleNewReview = async ({ rating, comment }: { rating: number; comment: string }) => {
+        if (!currentUser) {
+             toast({
+                title: "Inicia sesión",
+                description: "Debes iniciar sesión para dejar una reseña.",
+                variant: "destructive"
+            });
+            return;
+        };
+
+        try {
+            await addReview(psychologistId, {
+                rating,
+                comment,
+                authorId: currentUser.uid,
+                authorName: currentUser.name,
+                authorImageUrl: currentUser.imageUrl,
+            });
+            // Refetch reviews to show the new one
+            const updatedReviews = await getReviews(psychologistId);
+            setReviews(updatedReviews);
+            toast({
+                title: "Reseña Publicada",
+                description: "¡Gracias por tus comentarios!",
+            });
+
+        } catch (error) {
+             console.error("Failed to submit review:", error);
+             toast({
+                title: "Error al enviar reseña",
+                description: "No se pudo guardar tu reseña. Por favor, inténtalo de nuevo.",
+                variant: "destructive",
+            });
+        }
     };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Reseñas y Calificaciones</h2>
-        <RatingDialog onReviewSubmit={handleNewReview}>
-            <Button variant="outline">
-                <MessageSquare className="mr-2 h-4 w-4" /> Escribir una reseña
-            </Button>
-        </RatingDialog>
-      </div>
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Reseñas y Calificaciones ({reviews.length})</h2>
+                 {currentUser && currentUser.uid !== psychologistId && (
+                    <RatingDialog onReviewSubmit={handleNewReview}>
+                        <Button variant="outline">
+                            <MessageSquare className="mr-2 h-4 w-4" /> Escribir una reseña
+                        </Button>
+                    </RatingDialog>
+                 )}
+            </div>
+            
+            {isLoading && (
+                <div className="space-y-4">
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-28 w-full" />
+                </div>
+            )}
 
-      <div className="space-y-6">
-        {reviews.map((review) => (
-          <Card key={review.id}>
-            <CardHeader className="p-4">
-              <div className="flex items-center gap-4">
-                <Avatar>
-                  <AvatarImage src={review.avatar} alt={review.author} data-ai-hint="person" />
-                  <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{review.author}</p>
-                  <p className="text-xs text-muted-foreground">{review.date}</p>
+            {!isLoading && reviews.length === 0 && (
+                <div className="text-center py-12 px-6 border-2 border-dashed rounded-lg">
+                    <h3 className="text-xl font-medium text-muted-foreground">Sin Reseñas Aún</h3>
+                    <p className="text-sm text-muted-foreground mt-2">Sé el primero en dejar una reseña para este psicólogo.</p>
                 </div>
-                <div className="ml-auto flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-5 w-5 ${
-                        i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                      }`}
-                    />
-                  ))}
+            )}
+
+            {!isLoading && reviews.length > 0 && (
+                <div className="space-y-6">
+                    {reviews.map((review) => (
+                    <Card key={review.id}>
+                        <CardHeader className="p-4">
+                        <div className="flex items-center gap-4">
+                            <Avatar>
+                            <AvatarImage src={review.authorImageUrl} alt={review.authorName} data-ai-hint="person" />
+                            <AvatarFallback>{review.authorName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                            <p className="font-semibold">{review.authorName}</p>
+                            <p className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(review.createdAt.toDate(), { addSuffix: true, locale: es })}
+                            </p>
+                            </div>
+                            <div className="ml-auto flex items-center gap-1">
+                            {[...Array(5)].map((_, i) => (
+                                <Star
+                                key={i}
+                                className={`h-5 w-5 ${
+                                    i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                                }`}
+                                />
+                            ))}
+                            </div>
+                        </div>
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                        <p className="text-muted-foreground">{review.comment}</p>
+                        </CardContent>
+                    </Card>
+                    ))}
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <p className="text-muted-foreground">{review.comment}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  )
+            )}
+        </div>
+    )
 }

@@ -32,6 +32,9 @@ import { RatingDialog } from "@/components/profile/rating-dialog"
 import { EditProfileDialog } from "@/components/profile/edit-profile-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Session, User as AppUser } from "@/lib/types"
+import { addReview } from "@/services/reviews"
+import { useToast } from "@/hooks/use-toast"
+
 
 const getBadgeVariant = (status: Session['status']) => {
     switch (status) {
@@ -55,8 +58,34 @@ const getStatusText = (status: Session['status']) => {
     return map[status];
 }
 
-const SessionRow = ({ session, router, isPsychologist }: { session: Session; router: ReturnType<typeof useRouter>; isPsychologist: boolean }) => {
+const SessionRow = ({ session, router, isPsychologist, currentUser }: { session: Session; router: ReturnType<typeof useRouter>; isPsychologist: boolean, currentUser: AppUser | null }) => {
     const userToShow = isPsychologist ? session.student : session.tutor;
+    const { toast } = useToast();
+
+    const handleReviewSubmit = async (review: { rating: number, comment: string }) => {
+        if (!currentUser) return;
+        
+        try {
+            await addReview(session.tutorId, {
+                ...review,
+                authorId: currentUser.uid,
+                authorName: currentUser.name,
+                authorImageUrl: currentUser.imageUrl,
+            });
+            toast({
+                title: "Reseña Enviada",
+                description: "Gracias por tus comentarios. Tu reseña ha sido publicada.",
+            });
+        } catch (error) {
+            console.error("Failed to submit review:", error);
+            toast({
+                title: "Error al enviar reseña",
+                description: "No se pudo guardar tu reseña. Por favor, inténtalo de nuevo.",
+                variant: "destructive",
+            });
+        }
+    };
+
 
     return (
         <TableRow>
@@ -80,7 +109,7 @@ const SessionRow = ({ session, router, isPsychologist }: { session: Session; rou
           </TableCell>
            <TableCell className="text-right">
             {session.status === 'completed' && !isPsychologist && (
-                <RatingDialog>
+                <RatingDialog onReviewSubmit={handleReviewSubmit}>
                     <Button variant="outline" size="sm">
                         <Star className="mr-2 h-4 w-4" /> Calificar
                     </Button>
@@ -247,7 +276,7 @@ export default function ProfilePage() {
                 </TableHeader>
                 <TableBody>
                   {activeSessions.length > 0 ? (
-                    activeSessions.map(session => <SessionRow key={session.id} session={session} router={router} isPsychologist={!!isPsychologist}/>)
+                    activeSessions.map(session => <SessionRow key={session.id} session={session} router={router} isPsychologist={!!isPsychologist} currentUser={appUser}/>)
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center h-24">
@@ -277,7 +306,7 @@ export default function ProfilePage() {
                 </TableHeader>
                 <TableBody>
                    {pastSessions.length > 0 ? (
-                    pastSessions.map(session => <SessionRow key={session.id} session={session} router={router} isPsychologist={!!isPsychologist}/>)
+                    pastSessions.map(session => <SessionRow key={session.id} session={session} router={router} isPsychologist={!!isPsychologist} currentUser={appUser}/>)
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center h-24">

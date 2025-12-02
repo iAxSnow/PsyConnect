@@ -6,7 +6,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound, useRouter, useParams } from "next/navigation"
 import { Star, Brain, Calendar, ArrowLeft, AlertCircle, Linkedin } from "lucide-react"
-import { doc, getDoc } from "firebase/firestore"
+import { doc, getDoc, onSnapshot } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
 import { useAuthState } from "react-firebase-hooks/auth"
@@ -31,34 +31,43 @@ export default function PsychologistProfilePage() {
   const psychologistId = params.id as string
 
   React.useEffect(() => {
-    if (!psychologistId) return
-    const fetchPsychologist = async () => {
-      setIsLoading(true)
-      try {
-        const psychologistDocRef = doc(db, "users", psychologistId)
-        const psychologistDoc = await getDoc(psychologistDocRef)
-        if (psychologistDoc.exists() && psychologistDoc.data().isTutor) {
-          setPsychologist({ uid: psychologistDoc.id, ...psychologistDoc.data() } as User)
-        } else {
-          notFound()
-        }
+    if (!psychologistId) {
+        setIsLoading(false);
+        notFound();
+        return;
+    };
+    
+    setIsLoading(true);
 
-        if(currentUser) {
+    // Listen for real-time updates on the psychologist's profile
+    const unsubscribe = onSnapshot(doc(db, "users", psychologistId), (doc) => {
+        if (doc.exists() && doc.data().isTutor) {
+            setPsychologist({ uid: doc.id, ...doc.data() } as User);
+        } else {
+            setPsychologist(null);
+        }
+        setIsLoading(false);
+    }, (error) => {
+        console.error("Error fetching psychologist:", error);
+        setIsLoading(false);
+        notFound();
+    });
+
+    const fetchCurrentUser = async () => {
+       if(currentUser) {
             const userDocRef = doc(db, "users", currentUser.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
                 setAppUser({ uid: userDoc.id, ...userDoc.data() } as User)
             }
         }
-      } catch (error) {
-        console.error("Error fetching psychologist:", error)
-        notFound()
-      } finally {
-        setIsLoading(false)
-      }
     }
-    fetchPsychologist()
-  }, [psychologistId, currentUser])
+
+    fetchCurrentUser();
+    
+    return () => unsubscribe(); // Cleanup listener on component unmount
+
+  }, [psychologistId, currentUser]);
 
   const handleBookSession = () => {
     router.push(`/tutors/${psychologistId}/book`);
@@ -132,9 +141,9 @@ export default function PsychologistProfilePage() {
             <div className="mt-2 flex items-center gap-2 text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                <span className="font-semibold text-lg">{psychologist.rating?.toFixed(1)}</span>
+                <span className="font-semibold text-lg">{psychologist.rating?.toFixed(1) ?? 'N/A'}</span>
               </div>
-              <span>({psychologist.reviews} reseñas)</span>
+              <span>({psychologist.reviews ?? 0} reseñas)</span>
             </div>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
                  { currentUser?.uid !== psychologist.uid && (
@@ -174,7 +183,7 @@ export default function PsychologistProfilePage() {
               ))}
             </ul>
              <Separator className="my-6" />
-             <ReviewSection />
+             <ReviewSection psychologistId={psychologistId} currentUser={appUser} />
           </div>
         </CardContent>
       </Card>

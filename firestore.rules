@@ -35,6 +35,17 @@ service cloud.firestore {
       // Updates allowed for owner but prevent changing sensitive fields
       allow update: if isOwner(userId) && 
                        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isDisabled', 'validationStatus', 'isTutor', 'rating', 'reviews']));
+      
+      // Reviews subcollection
+      match /reviews/{reviewId} {
+        // Anyone signed in can create a review for a tutor
+        allow create: if isSignedIn();
+        // Reviews are public
+        allow read: if true;
+        // Only admin or author can delete, no updates allowed to maintain integrity
+        allow delete: if isAdmin() || isOwner(resource.data.authorId);
+        allow update: if false;
+      }
     }
 
     // Sessions Collection

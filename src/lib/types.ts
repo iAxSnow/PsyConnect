@@ -54,3 +54,13 @@ export interface Report {
     status: 'Pendiente' | 'En Revisión' | 'Resuelto' | 'Descartado';
     createdAt: Timestamp;
 }
+
+export interface Review {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorImageUrl: string;
+  rating: number;
+  comment: string;
+  createdAt: Timestamp;
+}

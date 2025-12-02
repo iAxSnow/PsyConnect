@@ -126,6 +126,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "reportedUserId", "reportedUserName", "reportedByUserId", "reportedByUserName", "reason", "status", "createdAt"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Represents a review left by a user for a psychologist.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorImageUrl": { "type": "string", "format": "uri" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "authorId", "authorName", "rating", "createdAt"]
     }
   },
   "auth": {
@@ -147,6 +162,10 @@
     "/reports/{reportId}": {
       "schema": { "$ref": "#/entities/Report" },
       "description": "Stores user-generated reports."
+    },
+    "/users/{userId}/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Stores reviews for a specific psychologist."
     }
   }
 }
