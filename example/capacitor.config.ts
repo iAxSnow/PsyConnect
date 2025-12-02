@@ -5,10 +5,8 @@ const config: CapacitorConfig = {
   appName: 'PsyConnect',
   webDir: 'out',
   server: {
-    // Reemplaza <TU_IP_LOCAL> con la IP de tu computadora en tu red WiFi.
-    // Ejemplo: 'http://192.168.1.10:9003'
-    // Puedes encontrar tu IP local ejecutando `ipconfig` en Windows o `ifconfig` en macOS/Linux.
-    url: 'http://<TU_IP_LOCAL>:9003',
+    // Reemplaza la siguiente URL con la URL que te dio Firebase Hosting después de desplegar.
+    url: 'https://TU-PROYECTO.web.app',
     cleartext: true,
   },
 };
