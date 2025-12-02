@@ -113,14 +113,19 @@ export default function ProfilePage() {
   }, []);
 
   React.useEffect(() => {
+    // 1. Wait until auth state is loaded.
     if (loadingAuth) {
-      return; // 1. Wait until auth state is loaded.
-    }
-    if (!user) {
-      router.push("/"); // 2. Redirect if not authenticated.
+      setIsLoading(true);
       return;
     }
 
+    // 2. If no user is authenticated, redirect to login.
+    if (!user) {
+      router.push("/");
+      return;
+    }
+
+    // 3. User is authenticated, fetch their data.
     const fetchUserData = async () => {
       setIsLoading(true);
       try {
@@ -130,7 +135,7 @@ export default function ProfilePage() {
         if (userDoc.exists()) {
           const userData = { id: userDoc.id, ...userDoc.data() } as AppUser;
           setAppUser(userData);
-          // 3. Fetch sessions ONLY after user data is confirmed
+          // 4. Fetch sessions ONLY after user data is confirmed
           const sessionsList = await getStudentSessions(userData.uid);
           setSessions(sessionsList);
         } else {
@@ -143,18 +148,23 @@ export default function ProfilePage() {
             variant: "destructive",
             duration: 5000,
           });
-          router.push("/signup"); // Redirect to signup page
+          router.push("/"); // Redirect to login page
           return; // Stop further execution
         }
       } catch (error) {
         console.error("Error fetching user data or sessions: ", error)
+        toast({
+            title: "Error al Cargar Perfil",
+            description: "No se pudo cargar la información de tu perfil. Inténtalo de nuevo.",
+            variant: "destructive",
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     };
     
     fetchUserData();
-  }, [user, loadingAuth, router, toast])
+  }, [user, loadingAuth, router, toast]);
 
   
   if (isLoading || loadingAuth) {
