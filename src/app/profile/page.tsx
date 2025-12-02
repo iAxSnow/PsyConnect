@@ -136,7 +136,6 @@ export default function ProfilePage() {
         } else {
           // User exists in Auth, but not in Firestore. This is an inconsistent state.
           // Log them out and ask them to sign up again.
-          console.error("User document not found in Firestore. Logging out.");
           await signOut(auth);
           toast({
             title: "Perfil no encontrado",
