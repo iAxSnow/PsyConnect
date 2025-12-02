@@ -1,5 +1,5 @@
 // @/scripts/seed.ts
-import { collection, doc, setDoc, writeBatch, getDocs, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, writeBatch, getDocs, deleteDoc, addDoc, query, where } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, deleteUser } from 'firebase/auth';
 import { specialties, studentUser, psychologistUser, approvedPsychologistUser, adminUser, testSession } from '../lib/seed-data';
