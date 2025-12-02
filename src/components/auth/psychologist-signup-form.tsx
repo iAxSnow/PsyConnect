@@ -4,12 +4,11 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, DollarSign, Upload } from "lucide-react"
+import { Eye, EyeOff, DollarSign, Link as LinkIcon } from "lucide-react"
 import { createUserWithEmailAndPassword, updateProfile, deleteUser } from "firebase/auth"
 import { doc, setDoc } from "firebase/firestore"
-import { ref, uploadBytes } from "firebase/storage"
 import { useToast } from "@/hooks/use-toast"
-import { auth, db, storage } from "@/lib/firebase"
+import { auth, db } from "@/lib/firebase"
 import { getAllCourses } from "@/services/courses"
 import type { Course } from "@/lib/types"
 
@@ -31,21 +30,15 @@ export function PsychologistSignupForm() {
   const [bio, setBio] = React.useState("")
   const [specialties, setSpecialties] = React.useState<string[]>([])
   const [hourlyRate, setHourlyRate] = React.useState("")
-  const [titleFile, setTitleFile] = React.useState<File | null>(null)
-  const [certificateFiles, setCertificateFiles] = React.useState<FileList | null>(null)
-
+  const [professionalLink, setProfessionalLink] = React.useState("")
 
   // UI State
   const [showPassword, setShowPassword] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
-  const [loadingStep, setLoadingStep] = React.useState<string>("") // Para mostrar qué está pasando
   const [allCourses, setAllCourses] = React.useState<Course[]>([])
   const [isCoursesLoading, setIsCoursesLoading] = React.useState(true)
 
   React.useEffect(() => {
-    // Debug inicial del storage
-    console.log("Configuración de Firebase Storage detectada:", storage.app.options.storageBucket);
-
     const fetchCourses = async () => {
       setIsCoursesLoading(true)
       try {
@@ -77,112 +70,24 @@ export function PsychologistSignupForm() {
         toast({ title: "Tarifa Faltante", description: "Debes ingresar una tarifa por sesión.", variant: "destructive" });
         return;
     }
-    if (!titleFile) {
-        toast({ title: "Título Faltante", description: "Debes subir tu título profesional.", variant: "destructive" });
+    if (!professionalLink) {
+        toast({ title: "Enlace Profesional Faltante", description: "Debes agregar un enlace a tu perfil profesional.", variant: "destructive" });
         return;
-    }
-    // Validación de tamaño de archivo (máx 5MB)
-    if (titleFile.size > 5 * 1024 * 1024) {
-         toast({ title: "Archivo muy grande", description: "El título profesional no debe superar los 5MB.", variant: "destructive" });
-         return;
     }
 
     setIsLoading(true);
-    setLoadingStep("Iniciando registro...");
-    console.log("--- INICIO PROCESO REGISTRO ---");
 
     try {
         // 1. Create User in Auth
-        setLoadingStep("Creando cuenta de usuario...");
-        console.log("1. auth.createUserWithEmailAndPassword...");
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        console.log("   > Usuario creado OK. UID:", user.uid);
-
-        // 2. Upload documents to Storage
-        setLoadingStep("Subiendo documentos (esto puede tardar)...");
-        console.log("2. Iniciando carga de archivos a Storage...");
-        console.log("   Bucket:", storage.app.options.storageBucket);
-        
-        const uploadPromises = [];
-        
-        // Prepare Title Upload
-        const titleExt = titleFile.name.split('.').pop() || 'pdf';
-        const titleSafeName = `title_${Date.now()}.${titleExt}`;
-        const titlePath = `documents/${user.uid}/${titleSafeName}`;
-        const titleRef = ref(storage, titlePath);
-        
-        console.log(`   > Preparando subida Título: ${titlePath} (${titleFile.size} bytes)`);
-        
-        const metadata = {
-            contentType: titleFile.type || 'application/pdf',
-            customMetadata: { originalName: titleFile.name }
-        };
-
-        const uploadTitlePromise = uploadBytes(titleRef, titleFile, metadata)
-            .then(snapshot => {
-                console.log("   > Título subido EXITOSAMENTE:", snapshot.ref.fullPath);
-                return snapshot;
-            })
-            .catch(err => {
-                console.error("   > ERROR subiendo título:", err);
-                throw err;
-            });
-        
-        uploadPromises.push(uploadTitlePromise);
-
-        // Prepare Certificates Upload
-        if (certificateFiles) {
-            for (let i = 0; i < certificateFiles.length; i++) {
-                const file = certificateFiles[i];
-                if (file.size > 5 * 1024 * 1024) {
-                    console.warn(`   > Omitiendo certificado ${file.name} por ser muy grande (>5MB)`);
-                    continue;
-                }
-
-                const certExt = file.name.split('.').pop() || 'pdf';
-                const certSafeName = `cert_${i}_${Date.now()}.${certExt}`;
-                const certPath = `documents/${user.uid}/certificates/${certSafeName}`;
-                const certificateRef = ref(storage, certPath);
-                
-                console.log(`   > Preparando subida Certificado ${i+1}: ${certPath}`);
-
-                const certMetadata = {
-                    contentType: file.type || 'application/pdf',
-                };
-
-                const uploadCertPromise = uploadBytes(certificateRef, file, certMetadata)
-                     .then(snapshot => {
-                         console.log(`   > Certificado ${i+1} subido EXITOSAMENTE.`);
-                         return snapshot;
-                     })
-                     .catch(err => {
-                         console.error(`   > ERROR subiendo certificado ${i+1}:`, err);
-                         throw err;
-                     });
-                uploadPromises.push(uploadCertPromise);
-            }
-        }
-        
-        // Timeout
-        const uploadTimeout = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("TIMEOUT_UPLOAD")), 45000)
-        );
-
-        await Promise.race([Promise.all(uploadPromises), uploadTimeout]);
-        console.log("2. Carga de archivos COMPLETADA.");
-
 
         const placeholderImageUrl = `https://placehold.co/200x200/EBF4FF/76A9FA?text=${name.charAt(0).toUpperCase()}`;
 
-        // 3. Update Auth Profile
-        setLoadingStep("Configurando perfil...");
-        console.log("3. updateProfile...");
+        // 2. Update Auth Profile
         await updateProfile(user, { displayName: name, photoURL: placeholderImageUrl });
         
-        // 4. Save user data to Firestore
-        setLoadingStep("Guardando datos finales...");
-        console.log("4. setDoc (Firestore)...");
+        // 3. Save user data to Firestore
         const userDocRef = doc(db, "users", user.uid);
         const userData = {
             uid: user.uid,
@@ -193,6 +98,7 @@ export function PsychologistSignupForm() {
             bio: bio,
             courses: specialties,
             hourlyRate: Number(hourlyRate),
+            professionalLink: professionalLink,
             rating: 5.0,
             reviews: 0,
             isDisabled: true, 
@@ -200,8 +106,6 @@ export function PsychologistSignupForm() {
         };
 
         await setDoc(userDocRef, userData)
-        console.log("   > Datos Firestore guardados OK.");
-        console.log("--- PROCESO EXITOSO ---");
         
         toast({
             title: "¡Registro Completado!",
@@ -209,16 +113,12 @@ export function PsychologistSignupForm() {
             duration: 5000,
         });
         
-        setLoadingStep("Redirigiendo...");
         router.push("/");
 
     } catch (error: any) {
-        console.error("--- ERROR EN PROCESO DE REGISTRO ---", error);
-        setLoadingStep("");
-        
-        // Cleanup
+        // Cleanup if user was created in Auth but something else failed
         const currentUser = auth.currentUser;
-        if (currentUser) {
+        if (currentUser && currentUser.email === email) {
             console.log("Limpiando usuario creado parcialmente...");
             try {
                 await deleteUser(currentUser);
@@ -232,19 +132,13 @@ export function PsychologistSignupForm() {
 
         let description = "Ocurrió un error inesperado.";
         
-        if (error.message === "TIMEOUT_UPLOAD") {
-            description = "La subida de archivos tardó demasiado. Verifica tu conexión a internet o intenta con archivos más livianos.";
-        } else if (error.code === 'storage/unauthorized') {
-            description = "Permiso denegado al subir archivos. Contacta al administrador.";
-        } else if (error.code === 'storage/retry-limit-exceeded') {
-            description = "Error de conexión al subir archivos.";
-        } else if (error.code === 'auth/email-already-in-use') {
-             description = "El correo ya está registrado.";
+        if (error.code === 'auth/email-already-in-use') {
+             description = "El correo electrónico que ingresaste ya se encuentra registrado.";
         }
 
         toast({ 
             title: "Error de Registro", 
-            description: `${description} (Código: ${error.code || 'N/A'})`, 
+            description: description, 
             variant: "destructive" 
         });
     }
@@ -303,13 +197,12 @@ export function PsychologistSignupForm() {
                         <Input id="rate" type="number" placeholder="30000" className="pl-10" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} required />
                     </div>
                 </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="title-file">Título Profesional (PDF, máx 5MB)</Label>
-                     <Input id="title-file" type="file" required accept="application/pdf" onChange={(e) => setTitleFile(e.target.files ? e.target.files[0] : null)} />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="certs-file">Certificados y Licencia (PDF, opcional)</Label>
-                     <Input id="certs-file" type="file" multiple accept="application/pdf" onChange={(e) => setCertificateFiles(e.target.files)} />
+                <div className="space-y-2">
+                    <Label htmlFor="professionalLink">Perfil Profesional (LinkedIn, etc.)</Label>
+                    <div className="relative">
+                         <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input id="professionalLink" type="url" placeholder="https://linkedin.com/in/tu-perfil" className="pl-10" value={professionalLink} onChange={(e) => setProfessionalLink(e.target.value)} required />
+                    </div>
                 </div>
             </div>
         </div>
@@ -318,7 +211,7 @@ export function PsychologistSignupForm() {
                 {isLoading ? (
                     <span className="flex items-center gap-2">
                         <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                        {loadingStep}
+                        Enviando...
                     </span>
                 ) : "Registrarme y Enviar a Revisión"}
             </Button>

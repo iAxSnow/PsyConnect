@@ -2,9 +2,10 @@
 "use client"
 
 import * as React from "react"
-import { useParams, notFound } from 'next/navigation'
+import { useParams, notFound, useRouter } from 'next/navigation'
 import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { db, auth } from "@/lib/firebase"
+import { onAuthStateChanged } from "firebase/auth"
 import type { Report } from "@/lib/types"
 
 import {
@@ -43,21 +44,58 @@ type ReportStatus = "Pendiente" | "En Revisión" | "Resuelto" | "Descartado";
 
 export default function ReportDetailsPage() {
     const params = useParams();
+    const router = useRouter();
     const { toast } = useToast();
     const reportId = params.id as string;
     
     const [report, setReport] = React.useState<Report | null>(null);
     const [isLoading, setIsLoading] = React.useState(true);
+    const [isCheckingRole, setIsCheckingRole] = React.useState(true); // Role check state
 
+    // 1. Admin Role Check (Same as in users/[id]/page.tsx)
     React.useEffect(() => {
-        if (!reportId) return;
+        const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+            if (!currentUser) {
+                router.push("/login");
+                return;
+            }
+
+            try {
+                if (currentUser.email !== "admin@connect.udp.cl") {
+                     toast({
+                        title: "Acceso denegado",
+                        description: "No tienes permisos para ver este reporte.",
+                        variant: "destructive"
+                    });
+                    router.push("/dashboard");
+                    return;
+                }
+                
+                // Optional: Check Firestore admin flag if you implement it later
+                
+                setIsCheckingRole(false);
+            } catch (error) {
+                console.error("Auth check error:", error);
+                router.push("/dashboard");
+            }
+        });
+
+        return () => unsubscribeAuth();
+    }, [router, toast]);
+
+
+    // 2. Data Fetching
+    React.useEffect(() => {
+        if (isCheckingRole || !reportId) return;
+        
         const reportDocRef = doc(db, "reports", reportId);
         
         const unsubscribe = onSnapshot(reportDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 setReport({ id: docSnap.id, ...docSnap.data() } as Report);
             } else {
-                notFound();
+                // Handle not found
+                setReport(null);
             }
             setIsLoading(false);
         }, (error) => {
@@ -66,7 +104,7 @@ export default function ReportDetailsPage() {
         });
 
         return () => unsubscribe();
-    }, [reportId]);
+    }, [reportId, isCheckingRole]);
     
     const handleStatusChange = async (newStatus: ReportStatus) => {
         if (report) {
@@ -86,6 +124,17 @@ export default function ReportDetailsPage() {
                 console.error("Error updating report status:", error);
             }
         }
+    }
+
+    if (isCheckingRole) {
+         return (
+            <div className="flex h-screen w-full items-center justify-center">
+                 <div className="flex flex-col items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <p className="text-muted-foreground">Verificando permisos...</p>
+                 </div>
+            </div>
+        )
     }
 
     if (isLoading) {
@@ -109,7 +158,12 @@ export default function ReportDetailsPage() {
     }
 
     if (!report) {
-        return notFound();
+        return (
+             <div className="flex flex-col items-center justify-center h-96">
+                <h2 className="text-2xl font-bold">Reporte no encontrado</h2>
+                <Button variant="link" onClick={() => router.back()}>Volver</Button>
+            </div>
+        );
     }
     
     return (

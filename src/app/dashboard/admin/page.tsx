@@ -2,8 +2,9 @@
 "use client"
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { collection, query, onSnapshot, orderBy, where } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { collection, query, onSnapshot, orderBy, where, doc, getDoc } from "firebase/firestore"
+import { auth, db } from "@/lib/firebase"
+import { onAuthStateChanged } from "firebase/auth"
 import type { User, Report } from "@/lib/types"
 
 import {
@@ -27,6 +28,7 @@ import { Eye, Stethoscope, User as UserIcon, Check, ShieldAlert } from "lucide-r
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/hooks/use-toast"
 
 // HMR Refresh
 const getStatusVariant = (status: string) => {
@@ -219,6 +221,62 @@ function UsersTable({ filter }: { filter?: 'all' | 'pending' }) {
 
 
 export default function AdminDashboardPage() {
+    const router = useRouter();
+    const { toast } = useToast();
+    const [isCheckingRole, setIsCheckingRole] = React.useState(true);
+
+    React.useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                router.push("/login"); // Redirect to login if not authenticated
+                return;
+            }
+
+            try {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data() as User;
+                    if (userData.email !== "admin@connect.udp.cl") { // Check if user is admin
+                         toast({
+                            title: "Acceso denegado",
+                            description: "No tienes permisos de administrador para ver esta página.",
+                            variant: "destructive"
+                        });
+                        router.push("/dashboard"); // Redirect regular users to dashboard
+                    } else {
+                        setIsCheckingRole(false); // User is admin, allow access
+                    }
+                } else {
+                    // Handle edge case where user is in Auth but not in Firestore (should not happen normally)
+                     router.push("/login");
+                }
+            } catch (error) {
+                console.error("Error checking admin role:", error);
+                 toast({
+                    title: "Error",
+                    description: "Ocurrió un error al verificar tus permisos.",
+                    variant: "destructive"
+                });
+                router.push("/dashboard");
+            }
+        });
+
+        return () => unsubscribe();
+    }, [router, toast]);
+
+    if (isCheckingRole) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center">
+               <div className="flex flex-col items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <p className="text-muted-foreground">Verificando permisos...</p>
+               </div>
+            </div>
+        )
+    }
+
     return (
         <Tabs defaultValue="reports" className="space-y-6">
             <Card>

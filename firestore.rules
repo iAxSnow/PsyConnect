@@ -1,17 +1,70 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}
 
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if true;
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'admin@connect.udp.cl';
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Admin has full access
+      allow read, write: if isAdmin();
+      
+      // Users can read their own profile
+      allow get: if isOwner(userId);
+      
+      // Public access to APPROVED tutors only (for listing/searching)
+      // This matches the query in user-dashboard
+      allow list: if isSignedIn() && 
+                     (isOwner(userId) || 
+                     (resource.data.isTutor == true && resource.data.validationStatus == 'approved'));
+
+      // Creation allowed if UID matches (registration)
+      allow create: if isOwner(userId);
+      
+      // Updates allowed for owner but prevent changing sensitive fields
+      allow update: if isOwner(userId) && 
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isDisabled', 'validationStatus', 'isTutor', 'rating', 'reviews']));
+    }
+
+    // Sessions Collection
+    match /sessions/{sessionId} {
+      allow read: if isSignedIn() && (
+        isAdmin() || 
+        resource.data.studentId == request.auth.uid || 
+        resource.data.tutorId == request.auth.uid
+      );
+      
+      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
+      
+      allow update: if isSignedIn() && (
+        isAdmin() || 
+        resource.data.studentId == request.auth.uid || 
+        resource.data.tutorId == request.auth.uid
+      );
+    }
+
+    // Reports Collection
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && request.resource.data.reportedByUserId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    // Courses Collection (Specialties)
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }
