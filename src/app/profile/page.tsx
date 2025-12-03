@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation"
 import { Edit, Calendar, History, ArrowLeft, MessageSquare, Star, Mail } from "lucide-react"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { auth, db } from "@/lib/firebase"
-import { getStudentSessions } from "@/services/sessions"
-import { doc, getDoc } from "firebase/firestore"
+import { getSessionsForUser } from "@/services/sessions"
+import { doc, onSnapshot } from "firebase/firestore"
 import { signOut } from "firebase/auth"
 import { useToast } from "@/hooks/use-toast"
 
@@ -83,15 +83,15 @@ const SessionRow = ({ session, router, isPsychologist }: { session: Session; rou
             {session.status === 'completed' && !isPsychologist && (
               <RatingDialog />
             )}
-            {session.status === 'accepted' && !isPsychologist && (
+            {session.status === 'accepted' && (
                 <div className="flex items-center justify-end gap-1 text-xs">
-                    <span className="text-muted-foreground">contacta mandando un correo aqui:</span>
-                     {session.tutor.email ? (
-                        <a href={`mailto:${session.tutor.email}`} className="text-primary hover:underline font-semibold">
-                            {session.tutor.email}
+                    <span className="text-muted-foreground">Contactar vía email:</span>
+                     {userToShow.email ? (
+                        <a href={`mailto:${userToShow.email}`} className="text-primary hover:underline font-semibold">
+                            {userToShow.email}
                         </a>
                      ) : (
-                        <span className="text-destructive font-semibold">Correo no disponible. Por favor, cancela y vuelve a enviar la solicitud.</span>
+                        <span className="text-destructive font-semibold">Correo no disponible.</span>
                      )}
                 </div>
             )}
@@ -123,43 +123,55 @@ export default function ProfilePage() {
       return;
     }
 
-    const fetchUserData = async () => {
+    const fetchUserData = () => {
       setIsLoading(true);
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        
-        if (userDoc.exists()) {
-          const userData = { id: userDoc.id, ...userDoc.data() } as AppUser;
+      const userDocRef = doc(db, "users", user.uid);
+      
+      const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const userData = { id: docSnap.id, ...docSnap.data() } as AppUser;
           setAppUser(userData);
-          // Fetch sessions ONLY after user data is confirmed
-          const sessionsList = await getStudentSessions(userData.uid);
-          setSessions(sessionsList);
         } else {
-          // This case should be handled gracefully. Maybe the user was deleted from DB but not from Auth.
-          // Logging out and redirecting is a good way to handle this inconsistency.
-          await signOut(auth);
-          toast({
-            title: "Perfil no encontrado",
-            description: "No se encontraron los datos de tu perfil. Por favor, regístrate de nuevo.",
-            variant: "destructive",
-            duration: 5000,
-          });
-          router.push("/"); // Redirect to login page
+            signOut(auth);
+            toast({
+                title: "Perfil no encontrado",
+                description: "No se encontraron los datos de tu perfil. Por favor, regístrate de nuevo.",
+                variant: "destructive",
+            });
+            router.push("/");
         }
-      } catch (error) {
-        console.error("Error fetching user data or sessions: ", error)
-        toast({
-            title: "Error al Cargar Perfil",
-            description: "No se pudo cargar la información de tu perfil. Inténtalo de nuevo.",
-            variant: "destructive",
-        });
-      } finally {
         setIsLoading(false);
-      }
+      }, (error) => {
+          console.error("Error fetching user data: ", error)
+          toast({
+              title: "Error al Cargar Perfil",
+              description: "No se pudo cargar la información de tu perfil. Inténtalo de nuevo.",
+              variant: "destructive",
+          });
+          setIsLoading(false);
+      });
+      
+      return unsubscribeUser;
     };
     
-    fetchUserData();
+    const unsubscribeUser = fetchUserData();
+
+    // Setup real-time listener for sessions
+    const unsubscribeSessions = getSessionsForUser(user.uid, (newSessions) => {
+        setSessions(currentSessions => {
+            const sessionMap = new Map(currentSessions.map(s => [s.id, s]));
+            newSessions.forEach(s => sessionMap.set(s.id, s));
+            const allSessions = Array.from(sessionMap.values());
+            allSessions.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+            return allSessions;
+        });
+    });
+
+    return () => {
+        unsubscribeUser?.();
+        unsubscribeSessions();
+    };
+
   }, [user, loadingAuth, router, toast]);
 
   
