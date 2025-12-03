@@ -8,7 +8,7 @@ import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getAvailableSpecialties } from "@/services/courses"
-import { useGemini } from "@/lib/gemini"
+import { suggestSpecialty as suggestSpecialtyFlow } from "@/ai/flows/suggest-specialty"
 
 import { Input } from "@/components/ui/input"
 import { PsychologistCard } from "@/components/dashboard/psychologist-card"
@@ -23,7 +23,6 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
   const [problem, setProblem] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const { toast } = useToast()
-  const { getSpecialtySuggestion } = useGemini();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,7 +31,7 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
     setIsLoading(true)
     
     try {
-        const result = await getSpecialtySuggestion(problem);
+        const result = await suggestSpecialtyFlow(problem);
         
         onSpecialtySuggest(result.specialty)
         toast({
@@ -44,7 +43,7 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
         console.error("AI suggestion failed:", error);
         toast({
             title: "Asistente IA no disponible",
-            description: error.message || "No se pudo conectar con el asistente de IA.",
+            description: "No se pudo conectar con el asistente de IA.",
             variant: "destructive"
         })
     } finally {
