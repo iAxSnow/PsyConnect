@@ -95,6 +95,7 @@ export const testSession: Omit<Session, 'id'> = {
         name: studentUser.name,
         imageUrl: studentUser.imageUrl,
         age: studentUser.age,
+        email: studentUser.email
     },
     tutor: {
         name: psychologistUser.name,

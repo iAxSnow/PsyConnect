@@ -18,7 +18,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Check, X, User } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Check, X, User, Mail } from "lucide-react"
 
 interface SessionRequestCardProps {
   request: Session,
@@ -39,7 +40,6 @@ export function SessionRequestCard({ request, onUpdate }: SessionRequestCardProp
         title: `Solicitud ${status === 'accepted' ? 'Aceptada' : 'Rechazada'}`,
         description: `La solicitud de sesión ha sido actualizada.`,
       })
-      // Always remove the card from the view after an action
       onUpdate(request.id);
     } catch (error) {
       console.error("Error updating session status:", error)
@@ -56,7 +56,7 @@ export function SessionRequestCard({ request, onUpdate }: SessionRequestCardProp
   const student = request.student;
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader>
         <div className="flex items-center gap-4">
           <Avatar className="h-12 w-12">
@@ -71,18 +71,35 @@ export function SessionRequestCard({ request, onUpdate }: SessionRequestCardProp
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <p className="font-medium">
-            Tema: <span className="font-normal text-muted-foreground">{request.course}</span>
+            Tema: <Badge variant="secondary">{request.course}</Badge>
         </p>
       </CardContent>
-      <CardFooter className="flex gap-2">
-        <Button onClick={() => handleUpdateRequest('accepted')} disabled={isLoading} className="w-full">
-            <Check className="mr-2"/> Aceptar
-        </Button>
-        <Button onClick={() => handleUpdateRequest('declined')} disabled={isLoading} variant="outline" className="w-full">
-            <X className="mr-2"/> Rechazar
-        </Button>
+      <CardFooter className="flex flex-col items-start gap-2">
+        {request.status === 'pending' ? (
+             <div className="flex gap-2 w-full">
+                <Button onClick={() => handleUpdateRequest('accepted')} disabled={isLoading} className="w-full">
+                    <Check className="mr-2"/> Aceptar
+                </Button>
+                <Button onClick={() => handleUpdateRequest('declined')} disabled={isLoading} variant="outline" className="w-full">
+                    <X className="mr-2"/> Rechazar
+                </Button>
+            </div>
+        ) : (
+            <div className="w-full text-center">
+                 <p className="text-sm text-muted-foreground mb-2">Contacta al usuario para coordinar:</p>
+                 {request.student.email ? (
+                    <Button asChild variant="outline" className="w-full">
+                        <a href={`mailto:${request.student.email}`}>
+                            <Mail className="mr-2"/> {request.student.email}
+                        </a>
+                    </Button>
+                 ) : (
+                    <Badge variant="destructive">Correo no disponible</Badge>
+                 )}
+            </div>
+        )}
       </CardFooter>
     </Card>
   )

@@ -16,7 +16,7 @@ export interface Session {
   sessionDate?: Timestamp; // The scheduled date/time for the session, to be agreed upon in chat
   // Denormalized data for easier access
   tutor: Pick<User, 'name' | 'imageUrl' | 'email'>;
-  student: Pick<User, 'name' | 'imageUrl' | 'age'>;
+  student: Pick<User, 'name' | 'imageUrl' | 'age' | 'email'>;
 }
 
 export interface SpecialtyRate {
@@ -48,6 +48,7 @@ export interface Report {
     id: string;
     reportedUserId: string;
     reportedUserName: string;
+g
     reportedByUserId: string;
     reportedByUserName: string;
     reason: string;

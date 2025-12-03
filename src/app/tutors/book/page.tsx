@@ -125,7 +125,8 @@ function BookSessionContent() {
         student: {
             name: appUser.name,
             imageUrl: appUser.imageUrl,
-            age: appUser.age
+            age: appUser.age,
+            email: appUser.email
         }
     };
 
