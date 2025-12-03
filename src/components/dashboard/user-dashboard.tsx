@@ -8,6 +8,7 @@ import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getAvailableSpecialties } from "@/services/courses"
+import { useGemini } from "@/lib/gemini"
 
 import { Input } from "@/components/ui/input"
 import { PsychologistCard } from "@/components/dashboard/psychologist-card"
@@ -22,6 +23,7 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
   const [problem, setProblem] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const { toast } = useToast()
+  const { getSpecialtySuggestion } = useGemini();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,18 +32,7 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
     setIsLoading(true)
     
     try {
-        const response = await fetch('/api/genkit/suggest-specialty', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ problem: problem }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Error en la respuesta del servidor.");
-        }
-        
-        const result = await response.json();
+        const result = await getSpecialtySuggestion(problem);
         
         onSpecialtySuggest(result.specialty)
         toast({
