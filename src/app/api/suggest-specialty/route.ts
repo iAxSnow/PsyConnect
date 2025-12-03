@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       return new Response(JSON.stringify({ error: "La descripción del problema es requerida." }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     const availableSpecialties = await getAvailableSpecialties();
 
     const prompt = `
