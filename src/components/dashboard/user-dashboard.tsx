@@ -8,6 +8,7 @@ import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getAvailableSpecialties } from "@/services/courses"
+import { suggestSpecialty } from "@/ai/flows/suggest-specialty"
 
 import { Input } from "@/components/ui/input"
 import { PsychologistCard } from "@/components/dashboard/psychologist-card"
@@ -30,20 +31,7 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
     setIsLoading(true)
     
     try {
-        const response = await fetch('/api/suggest-specialty', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ problemDescription: problem }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Error en la respuesta del servidor.");
-        }
-        
-        const result = await response.json();
+        const result = await suggestSpecialty({ problemDescription: problem });
 
         onSpecialtySuggest(result.specialty)
         toast({
