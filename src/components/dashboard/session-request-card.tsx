@@ -72,9 +72,9 @@ export function SessionRequestCard({ request, onUpdate }: SessionRequestCardProp
         </div>
       </CardHeader>
       <CardContent className="flex-grow">
-        <p className="font-medium">
+        <div className="font-medium">
             Tema: <Badge variant="secondary">{request.course}</Badge>
-        </p>
+        </div>
       </CardContent>
       <CardFooter className="flex flex-col items-start gap-2">
         {request.status === 'pending' ? (
