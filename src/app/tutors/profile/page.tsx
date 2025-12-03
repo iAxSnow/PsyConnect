@@ -6,18 +6,20 @@ import { Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound, useRouter, useSearchParams } from "next/navigation"
-import { Star, Brain, Calendar, ArrowLeft, AlertCircle, Linkedin } from "lucide-react"
+import { Star, Brain, Calendar, ArrowLeft, AlertCircle, Linkedin, MessageSquare } from "lucide-react"
 import { doc, getDoc, onSnapshot } from "firebase/firestore"
 import { db, auth } from "@/lib/firebase"
-import type { User } from "@/lib/types"
+import type { User, Review } from "@/lib/types"
 import { useAuthState } from "react-firebase-hooks/auth"
+import { getReviewsForPsychologist } from "@/services/reviews"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ReportDialog } from "@/components/report-dialog"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 function TutorProfileContent() {
   const router = useRouter()
@@ -27,6 +29,7 @@ function TutorProfileContent() {
 
   const [psychologist, setPsychologist] = React.useState<User | null>(null)
   const [appUser, setAppUser] = React.useState<User | null>(null)
+  const [reviews, setReviews] = React.useState<Review[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
@@ -59,7 +62,17 @@ function TutorProfileContent() {
         }
     }
 
+    const fetchReviews = async () => {
+        try {
+            const fetchedReviews = await getReviewsForPsychologist(psychologistId);
+            setReviews(fetchedReviews);
+        } catch (error) {
+            console.error("Error fetching reviews:", error);
+        }
+    }
+
     fetchCurrentUser();
+    fetchReviews();
     
     return () => unsubscribe(); 
 
@@ -114,11 +127,9 @@ function TutorProfileContent() {
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(value);
   }
 
-  // Helper to find price for a specific specialty
   const getPriceForSpecialty = (specialtyName: string) => {
       const rate = psychologist.specialtyRates?.find(r => r.name === specialtyName);
       if (rate) return rate.price;
-      // Fallback to general hourlyRate if specific rate not found
       return psychologist.hourlyRate || 0;
   }
 
@@ -193,6 +204,42 @@ function TutorProfileContent() {
                 </li>
               ))}
             </ul>
+
+            <Separator className="my-6" />
+
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+                <MessageSquare className="h-5 w-5"/>
+                Reseñas de Pacientes
+            </h2>
+            <div className="mt-4 space-y-4">
+                {reviews.length > 0 ? (
+                    reviews.map((review) => (
+                        <Card key={review.id} className="bg-muted/30">
+                            <CardContent className="p-4">
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={review.authorImageUrl} />
+                                            <AvatarFallback>{review.authorName.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-semibold text-sm">{review.authorName}</p>
+                                            <p className="text-xs text-muted-foreground">{review.createdAt.toDate().toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1"/>
+                                        <span className="font-medium">{review.rating}</span>
+                                    </div>
+                                </div>
+                                <p className="mt-3 text-sm text-muted-foreground">{review.comment}</p>
+                            </CardContent>
+                        </Card>
+                    ))
+                ) : (
+                    <p className="text-muted-foreground text-center py-4">Este psicólogo aún no tiene reseñas.</p>
+                )}
+            </div>
              
           </div>
         </CardContent>
