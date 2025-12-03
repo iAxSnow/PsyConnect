@@ -8,7 +8,7 @@ import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getAvailableSpecialties } from "@/services/courses"
-import { suggestSpecialty as suggestSpecialtyFlow } from "@/ai/flows/suggest-specialty"
+import { getSpecialtySuggestion } from "@/lib/gemini"
 
 import { Input } from "@/components/ui/input"
 import { PsychologistCard } from "@/components/dashboard/psychologist-card"
@@ -31,8 +31,8 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
     setIsLoading(true)
     
     try {
-        const result = await suggestSpecialtyFlow(problem);
-        
+        const result = await getSpecialtySuggestion(problem);
+
         onSpecialtySuggest(result.specialty)
         toast({
             title: "Sugerencia de la IA",
@@ -43,7 +43,7 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
         console.error("AI suggestion failed:", error);
         toast({
             title: "Asistente IA no disponible",
-            description: "No se pudo conectar con el asistente de IA.",
+            description: "No se pudo conectar con el asistente de IA. Por favor, intenta de nuevo más tarde o usa los filtros de búsqueda.",
             variant: "destructive"
         })
     } finally {
@@ -169,11 +169,25 @@ export function UserDashboard() {
   }
 
   const handleSpecialtySuggestion = (specialty: string) => {
-    const specialtyExists = specialties.includes(specialty);
-    if(specialtyExists){
-      setSelectedSpecialty(specialty);
+    // FIX: Normalize the suggestion to match available specialties strictly
+    // Or default to searching by text if no exact match is found.
+    
+    // Find if the suggested specialty matches any of the available ones (case-insensitive partial match)
+    const exactMatch = specialties.find(s => s.toLowerCase() === specialty.toLowerCase());
+    
+    if (exactMatch) {
+      setSelectedSpecialty(exactMatch);
     } else {
-        setSearchTerm(specialty);
+        // If exact match fails, try to find a close match or fallback to text search
+        const closeMatch = specialties.find(s => specialty.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(specialty.toLowerCase()));
+        
+        if(closeMatch) {
+            setSelectedSpecialty(closeMatch);
+        } else {
+            // Fallback: Use the suggested specialty as a search term
+            setSelectedSpecialty("all"); // Reset specialty filter
+            setSearchTerm(specialty);
+        }
     }
   };
 
