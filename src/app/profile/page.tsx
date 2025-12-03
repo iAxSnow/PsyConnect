@@ -8,7 +8,7 @@ import { Edit, Calendar, History, ArrowLeft, MessageSquare, Star, Mail } from "l
 import { useAuthState } from "react-firebase-hooks/auth"
 import { auth, db } from "@/lib/firebase"
 import { getSessionsForUser } from "@/services/sessions"
-import { doc, onSnapshot } from "firebase/firestore"
+import { doc, onSnapshot, updateDoc, increment, collection, addDoc, serverTimestamp, getDoc } from "firebase/firestore"
 import { signOut } from "firebase/auth"
 import { useToast } from "@/hooks/use-toast"
 
@@ -33,7 +33,7 @@ import { Badge } from "@/components/ui/badge"
 import { RatingDialog } from "@/components/profile/rating-dialog"
 import { EditProfileDialog } from "@/components/profile/edit-profile-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { Session, User as AppUser } from "@/lib/types"
+import type { Session, User as AppUser, User } from "@/lib/types"
 
 const getBadgeVariant = (status: Session['status']) => {
     switch (status) {
@@ -59,6 +59,57 @@ const getStatusText = (status: Session['status']) => {
 
 const SessionRow = ({ session, router, isPsychologist }: { session: Session; router: ReturnType<typeof useRouter>; isPsychologist: boolean }) => {
     const userToShow = isPsychologist ? session.student : session.tutor;
+    const { toast } = useToast();
+
+    const handleReviewSubmit = async (review: { rating: number; comment: string }) => {
+        try {
+            // 1. Add review to 'reviews' collection
+            await addDoc(collection(db, "reviews"), {
+                authorId: session.studentId,
+                authorName: session.student.name,
+                authorImageUrl: session.student.imageUrl,
+                rating: review.rating,
+                comment: review.comment,
+                tutorId: session.tutorId,
+                createdAt: serverTimestamp()
+            });
+
+            // 2. Calculate and Update psychologist's rating
+            const tutorRef = doc(db, "users", session.tutorId);
+            const tutorDoc = await getDoc(tutorRef);
+
+            if (tutorDoc.exists()) {
+                const tutorData = tutorDoc.data();
+                const currentRating = tutorData.rating || 0; // Default to 0 if undefined
+                const currentReviews = tutorData.reviews || 0;
+
+                // Calculate new average
+                // (Old Avg * Old Count + New Rating) / (Old Count + 1)
+                // If it's the first review (count 0), result is just the new rating.
+                const newTotalRating = (currentRating * currentReviews) + review.rating;
+                const newReviewCount = currentReviews + 1;
+                const newAverageRating = newTotalRating / newReviewCount;
+
+                await updateDoc(tutorRef, {
+                    rating: newAverageRating,
+                    reviews: newReviewCount
+                });
+            } else {
+                 // Fallback if user doc read fails (shouldn't happen)
+                 await updateDoc(tutorRef, {
+                    reviews: increment(1)
+                    // Can't update average easily without reading
+                });
+            }
+
+            toast({ title: "Reseña Enviada", description: "¡Gracias por tu opinión! La calificación del psicólogo ha sido actualizada." });
+
+        } catch (error) {
+            console.error("Error submitting review:", error);
+            toast({ title: "Error", description: "No se pudo enviar la reseña.", variant: "destructive" });
+        }
+    };
+
     return (
         <TableRow>
           <TableCell>
@@ -81,7 +132,7 @@ const SessionRow = ({ session, router, isPsychologist }: { session: Session; rou
           </TableCell>
            <TableCell className="text-right">
             {session.status === 'completed' && !isPsychologist && (
-              <RatingDialog />
+              <RatingDialog onReviewSubmit={handleReviewSubmit} />
             )}
             {session.status === 'accepted' && (
                 <div className="flex items-center justify-end gap-1 text-xs">
