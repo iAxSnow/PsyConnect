@@ -25,7 +25,8 @@ const safetySettings = [
 
 async function getSpecialtySuggestion(problem: string): Promise<{ specialty: string; reasoning: string }> {
   if (!API_KEY) {
-    throw new Error("Gemini API Key is missing");
+    console.error("Gemini API Key is missing");
+    throw new Error("La llave de API de Gemini no está configurada.");
   }
 
   // Fetch real available specialties from Firestore to guide the AI
@@ -41,8 +42,9 @@ async function getSpecialtySuggestion(problem: string): Promise<{ specialty: str
     : "";
 
   const genAI = new GoogleGenerativeAI(API_KEY);
-  // Using gemini-pro which is generally available and stable for text tasks
-  const model = genAI.getGenerativeModel({ model: "gemini-pro", safetySettings });
+  
+  // Using the model confirmed to work with the user's API Key
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", safetySettings });
 
   const prompt = `
     Actúa como un psicólogo experto orientador. Tu tarea es analizar el problema de un paciente y sugerir la especialidad psicológica más adecuada.
@@ -71,8 +73,13 @@ async function getSpecialtySuggestion(problem: string): Promise<{ specialty: str
     const jsonString = text.replace(/```json/g, "").replace(/```/g, "").trim();
     return JSON.parse(jsonString);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching specialty suggestion:", error);
+    
+    if (error.message?.includes("404") || error.toString().includes("404")) {
+        throw new Error("El modelo de IA (gemini-2.0-flash) no está disponible o la API Key no es válida.");
+    }
+    
     throw new Error("No se pudo obtener la sugerencia de la IA.");
   }
 }

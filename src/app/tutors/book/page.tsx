@@ -151,6 +151,16 @@ function BookSessionContent() {
       });
   }
 
+  const getPriceForSpecialty = (specialtyName: string) => {
+      if (!psychologist) return 0;
+      const rate = psychologist.specialtyRates?.find(r => r.name === specialtyName);
+      return rate ? rate.price : (psychologist.hourlyRate || 0);
+  }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(value);
+  }
+
   if (isLoading || loadingAuth) {
     return (
         <div className="mx-auto max-w-lg space-y-8 p-4">
@@ -223,6 +233,11 @@ function BookSessionContent() {
                     ))}
                     </SelectContent>
                 </Select>
+                {selectedSpecialty && (
+                    <div className="mt-2 text-right text-sm text-muted-foreground">
+                        Precio estimado: <span className="font-semibold text-foreground">{formatCurrency(getPriceForSpecialty(selectedSpecialty))}</span>
+                    </div>
+                )}
             </div>
             
             <Button size="lg" className="w-full" onClick={handleBookSession} disabled={isBooking}>

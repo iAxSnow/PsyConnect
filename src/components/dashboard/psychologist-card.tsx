@@ -23,6 +23,20 @@ export function PsychologistCard({ psychologist }: PsychologistCardProps) {
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(value);
   }
 
+  const getPriceDisplay = () => {
+      if (psychologist.specialtyRates && psychologist.specialtyRates.length > 0) {
+          const prices = psychologist.specialtyRates.map(r => r.price);
+          const minPrice = Math.min(...prices);
+          const maxPrice = Math.max(...prices);
+
+          if (minPrice !== maxPrice) {
+              return `Desde ${formatCurrency(minPrice)}/sesión`;
+          }
+          return `${formatCurrency(minPrice)}/sesión`;
+      }
+      return `${formatCurrency(psychologist.hourlyRate || 0)}/sesión`;
+  }
+
   return (
     <Link href={`/tutors/profile?id=${psychologist.uid}`}>
       <Card className="h-full flex flex-col transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
@@ -48,12 +62,12 @@ export function PsychologistCard({ psychologist }: PsychologistCardProps) {
           </div>
           <div className="mt-3 flex items-center gap-2 text-sm">
              <Brain className="h-4 w-4 text-primary" />
-             <span className="font-medium">{psychologist.courses?.[0]}</span>
+             <span className="font-medium line-clamp-1">{psychologist.courses?.[0]} {psychologist.courses && psychologist.courses.length > 1 && `+${psychologist.courses.length - 1}`}</span>
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <Badge variant="secondary" className="w-full justify-center text-base">
-            {formatCurrency(psychologist.hourlyRate || 0)}/sesión
+            {getPriceDisplay()}
           </Badge>
         </CardFooter>
       </Card>

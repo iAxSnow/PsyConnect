@@ -48,7 +48,6 @@ export interface Report {
     id: string;
     reportedUserId: string;
     reportedUserName: string;
-g
     reportedByUserId: string;
     reportedByUserName: string;
     reason: string;

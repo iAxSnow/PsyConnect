@@ -32,14 +32,11 @@ function TutorProfileContent() {
   React.useEffect(() => {
     if (!psychologistId) {
         setIsLoading(false);
-        // We can't use notFound() here easily as it might break static export logic if triggered too early? 
-        // actually router.push('/404') is safer for client side
         return; 
     };
     
     setIsLoading(true);
 
-    // Listen for real-time updates on the psychologist's profile
     const unsubscribe = onSnapshot(doc(db, "users", psychologistId), (doc) => {
         if (doc.exists() && doc.data().isTutor) {
             setPsychologist({ uid: doc.id, ...doc.data() } as User);
@@ -64,7 +61,7 @@ function TutorProfileContent() {
 
     fetchCurrentUser();
     
-    return () => unsubscribe(); // Cleanup listener on component unmount
+    return () => unsubscribe(); 
 
   }, [psychologistId, currentUser]);
 
@@ -111,10 +108,18 @@ function TutorProfileContent() {
     )
   }
   
-  if (!psychologist) return null; // Should be handled above
+  if (!psychologist) return null; 
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(value);
+  }
+
+  // Helper to find price for a specific specialty
+  const getPriceForSpecialty = (specialtyName: string) => {
+      const rate = psychologist.specialtyRates?.find(r => r.name === specialtyName);
+      if (rate) return rate.price;
+      // Fallback to general hourlyRate if specific rate not found
+      return psychologist.hourlyRate || 0;
   }
 
   return (
@@ -174,7 +179,7 @@ function TutorProfileContent() {
             
             <Separator className="my-6" />
 
-            <h2 className="text-xl font-semibold">Especialidades</h2>
+            <h2 className="text-xl font-semibold">Especialidades y Tarifas</h2>
             <ul className="mt-4 space-y-3">
               {psychologist.courses?.map((course) => (
                 <li key={course} className="flex items-center justify-between rounded-lg bg-background p-3 border">
@@ -183,7 +188,7 @@ function TutorProfileContent() {
                     <span className="font-medium">{course}</span>
                   </div>
                   <Badge variant="secondary" className="text-base">
-                    {formatCurrency(psychologist.hourlyRate || 0)}/sesión
+                    {formatCurrency(getPriceForSpecialty(course))}/sesión
                   </Badge>
                 </li>
               ))}
