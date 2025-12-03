@@ -8,7 +8,6 @@ import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getAvailableSpecialties } from "@/services/courses"
-import { getSpecialtySuggestion } from "@/lib/gemini"
 
 import { Input } from "@/components/ui/input"
 import { PsychologistCard } from "@/components/dashboard/psychologist-card"
@@ -31,8 +30,19 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
     setIsLoading(true)
     
     try {
-        const result = await getSpecialtySuggestion(problem);
+        const response = await fetch('/api/genkit/suggest-specialty', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ problem: problem }),
+        });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Error en la respuesta del servidor.");
+        }
+        
+        const result = await response.json();
+        
         onSpecialtySuggest(result.specialty)
         toast({
             title: "Sugerencia de la IA",
@@ -43,7 +53,7 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
         console.error("AI suggestion failed:", error);
         toast({
             title: "Asistente IA no disponible",
-            description: "No se pudo conectar con el asistente de IA. Por favor, intenta de nuevo más tarde o usa los filtros de búsqueda.",
+            description: error.message || "No se pudo conectar con el asistente de IA.",
             variant: "destructive"
         })
     } finally {
