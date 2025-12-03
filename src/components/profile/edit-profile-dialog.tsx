@@ -6,9 +6,8 @@ import { useForm, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { doc, updateDoc } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { updateProfile } from "firebase/auth"
-import { auth, db, storage } from "@/lib/firebase"
+import { auth, db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
 import type { User } from "@/lib/types"
 
@@ -24,7 +23,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Upload } from "lucide-react"
 
 const profileSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres."),
@@ -43,9 +41,6 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
   const { toast } = useToast()
   const [open, setOpen] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
-  const [profilePic, setProfilePic] = React.useState<File | null>(null)
-  const [profilePicName, setProfilePicName] = React.useState("")
-  const profilePicInputRef = React.useRef<HTMLInputElement>(null)
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -61,19 +56,8 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
         name: user.name,
         age: user.age,
       });
-      setProfilePic(null);
-      setProfilePicName("");
     }
   }, [user, open, reset]);
-
-
-  const handleProfilePicChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      setProfilePicName(file.name)
-      setProfilePic(file)
-    }
-  }
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
     if (!auth.currentUser) return;
@@ -86,22 +70,12 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
         age: data.age,
       };
 
-      let imageUrl = user.imageUrl;
-      
-      if (profilePic) {
-        const profilePicRef = ref(storage, `profile-pictures/${auth.currentUser.uid}`);
-        const snapshot = await uploadBytes(profilePicRef, profilePic);
-        imageUrl = await getDownloadURL(snapshot.ref);
-        updatedData.imageUrl = imageUrl;
-      }
-      
-      // Update Auth Profile first
+      // Update Auth Profile display name
       await updateProfile(auth.currentUser, {
         displayName: updatedData.name,
-        photoURL: imageUrl, // Use the potentially new imageUrl
       });
 
-      // Now, update Firestore with all changes
+      // Now, update Firestore with new name and age
       await updateDoc(userDocRef, updatedData);
 
       toast({
@@ -149,14 +123,6 @@ export function EditProfileDialog({ user, children, onProfileUpdate }: EditProfi
                     <Input id="age" type="number" {...register("age")} className="col-span-3" />
                     {errors.age && <p className="text-destructive text-sm mt-1">{errors.age.message}</p>}
                </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">Foto</Label>
-                <div className="col-span-3 flex items-center gap-2">
-                    <Input id="profile-picture" type="file" className="hidden" ref={profilePicInputRef} onChange={handleProfilePicChange} accept="image/*" />
-                    <Button type="button" size="sm" variant="outline" onClick={() => profilePicInputRef.current?.click()}> <Upload className="mr-2 h-4 w-4" /> Subir </Button>
-                    {profilePicName && <span className="text-sm text-muted-foreground truncate max-w-28">{profilePicName}</span>}
-                </div>
             </div>
           </div>
           <DialogFooter>
