@@ -8,7 +8,7 @@ import { db, auth } from "@/lib/firebase"
 import type { User } from "@/lib/types"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getAvailableSpecialties } from "@/services/courses"
-import { suggestSpecialty } from "@/ai/flows/suggest-specialty"
+import { getSpecialtySuggestion } from "@/lib/gemini"
 
 import { Input } from "@/components/ui/input"
 import { PsychologistCard } from "@/components/dashboard/psychologist-card"
@@ -31,7 +31,7 @@ function AIAssistant({ onSpecialtySuggest }: { onSpecialtySuggest: (specialty: s
     setIsLoading(true)
     
     try {
-        const result = await suggestSpecialty({ problemDescription: problem });
+        const result = await getSpecialtySuggestion(problem);
 
         onSpecialtySuggest(result.specialty)
         toast({
