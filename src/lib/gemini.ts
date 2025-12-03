@@ -41,7 +41,8 @@ async function getSpecialtySuggestion(problem: string): Promise<{ specialty: str
     : "";
 
   const genAI = new GoogleGenerativeAI(API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", safetySettings });
+  // Using gemini-pro which is generally available and stable for text tasks
+  const model = genAI.getGenerativeModel({ model: "gemini-pro", safetySettings });
 
   const prompt = `
     Actúa como un psicólogo experto orientador. Tu tarea es analizar el problema de un paciente y sugerir la especialidad psicológica más adecuada.
